@@ -1,27 +1,25 @@
 import { DEFAULT_CONFIG, SPECIES, RARITIES, TOOLS, GIFTS, ASSUMPTIONS, validateConfig } from './rules.js';
-import { createGame, createChallenge, applyAction, targets, onBoard, nameOf, editRoom, addTool, recommend, replay, exportRun, importRun, isChallenge, challengeView } from './session-engine.js?v=0.5.0-4';
+import { applyAction, targets, onBoard, nameOf, editRoom, addTool, recommend, replay, exportRun, importRun, isChallenge, challengeView } from './session-engine.js?v=0.5.0-4';
 import {pairDecision} from './interaction.js';
 import {PrisonEffects} from './effects.js';
 import {goalGuide} from './goal-guide.js';
 import {PrisonScene3D} from './scene3d.js';
 import {PrisonAudio} from './audio.js?v=0.6.0-1';
 import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.5.0-4';
+import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.1-1';
 
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const STORE='ss14-prison-lab-v1';
 let state,initial,selected=0,configDraft=structuredClone(DEFAULT_CONFIG),resultShown=-1;
 let armed=false,pairTarget=null,pendingAction=null,uiMode=null,rewardChoice=null,busy=false,contextAnchor=null;
+let startupActive=true,runStorage=null;
+try{runStorage=localStorage;}catch{}
+const startupSave=readStartupSave(runStorage);
 let preferences={advice:false,motion:true,fast:false,quick:false};
 try{const saved=JSON.parse(localStorage.getItem('ss14-prison-ui-v2')||'{}');for(const key of Object.keys(preferences))if(typeof saved[key]==='boolean')preferences[key]=saved[key];}catch{}
 const effects=new PrisonEffects({enabled:()=>preferences.motion,fast:()=>preferences.fast});
 const lockIcon='<svg class="cell-lock" viewBox="0 0 24 30" aria-hidden="true"><path d="M5 12V8a7 7 0 0 1 14 0v4h2v16H3V12zm3 0h8V8a4 4 0 0 0-8 0zm4 5a2 2 0 0 0-1 4v3h2v-3a2 2 0 0 0-1-4"/></svg>';
 const eatIcon='<svg viewBox="0 0 40 36" aria-hidden="true"><path d="M3 8q17-10 34 0v12q-17 22-34 0Z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M6 6h6v12H6zm11-3h6v14h-6zm11 3h6v12h-6zM11 27h5v-6h-5zm13 0h5v-6h-5z" fill="currentColor"/></svg>';
-try {
-  const saved=localStorage.getItem(STORE);
-  if(saved){const loaded=importRun(JSON.parse(saved));state=loaded.current;initial=loaded.initial;configDraft=structuredClone(state.config);}
-} catch(e) { $('error').hidden=false;$('error').textContent=`旧存档未载入：${e.message}`; }
-if(!state){state=createGame('talos-first-run');initial=structuredClone(state);}
 const scene3d=new PrisonScene3D({stage:document.querySelector('.game-stage'),board:$('board'),motion:()=>preferences.motion,fast:()=>preferences.fast});
 const audio=new PrisonAudio({onStatus:renderAudioState});
 function renderAudioState(status){
@@ -29,6 +27,8 @@ function renderAudioState(status){
   button.setAttribute('aria-pressed',String(prefs.enabled));
   button.setAttribute('aria-label',prefs.enabled?'关闭声音':'开启声音');
   $('audio-toggle-label').textContent=prefs.enabled?'声音':'静音';
+  $('startup-audio').textContent=prefs.enabled?'声音：开启':'声音：关闭';
+  $('startup-audio').setAttribute('aria-pressed',String(prefs.enabled));
   button.dataset.unlocked=String(status.unlocked);button.dataset.voice=status.voice||'';
   button.dataset.effects=String(status.effects);button.dataset.ambience=String(status.ambiencePlaying);button.dataset.music=String(status.musicPlaying);
   $('audio-master').checked=prefs.enabled;
@@ -47,6 +47,7 @@ function renderAudioState(status){
 document.addEventListener('pointerdown',event=>audio.unlock(event),{capture:true});
 document.addEventListener('keydown',event=>{if(!event.repeat)audio.unlock(event);},{capture:true});
 $('audio-toggle').addEventListener('click',()=>audio.setPreferences({enabled:!audio.getStatus().preferences.enabled}));
+$('startup-audio').addEventListener('click',()=>audio.setPreferences({enabled:!audio.getStatus().preferences.enabled}));
 $('audio-settings-open').addEventListener('click',()=>$('audio-dialog').showModal());
 $('audio-master').addEventListener('change',event=>audio.setPreferences({enabled:event.target.checked}));
 for(const kind of ['sfx','voice','ambience','music']){
@@ -60,8 +61,41 @@ let lastSelectSound=0;
 function selectionSound(){const now=performance.now();if(now-lastSelectSound>100){lastSelectSound=now;audio.play('select');}}
 
 const positions=[[1,1],[1,2],[1,3],[1,4],[1,5],[1,6],[2,6],[3,6],[4,6],[4,5],[4,4],[4,3],[4,2],[4,1],[3,1],[2,1]];
-function persist(){try{localStorage.setItem(STORE,JSON.stringify(exportRun(state,initial)));}catch(e){showError('浏览器未能保存，请使用导出保留这局。');}}
+function persist(){
+  startupSave.run={current:structuredClone(state),initial:structuredClone(initial)};
+  const result=saveStartupRun(runStorage,startupSave.run,startupSave);
+  startupSave.error=result.error;
+  if(!result.saved)showError(result.error);
+  return result.saved;
+}
 function showError(message){$('error').hidden=false;$('error').textContent=message;}
+function showStartupError(message){$('startup-error').hidden=!message;$('startup-error').textContent=message;}
+function renderStartup(){
+  const run=startupSave.run,summary=run?startupRunSummary(run.current):null;
+  $('startup-continue').hidden=!summary;
+  if(summary){$('continue-run').textContent=summary.label;$('saved-run-summary').textContent=summary.detail;}
+  showStartupError(startupSave.error);
+}
+function showStartup(){
+  if(busy)return;
+  startupActive=true;cancelChoice();rewardChoice=null;hideGoalGuide();
+  if(state)startupSave.run={current:structuredClone(state),initial:structuredClone(initial)};
+  for(const id of ['settings-dialog','result-dialog','new-dialog'])if($(id).open)$(id).close();
+  $('game-screen').hidden=true;$('game-screen').inert=true;$('game-screen').setAttribute('aria-hidden','true');
+  $('startup-screen').hidden=false;renderStartup();
+  (startupSave.run?$('continue-run'):$('startup-empty')).focus({preventScroll:true});
+}
+function enterRun(run,{save=false}={}){
+  cancelChoice();rewardChoice=null;state=run.current;initial=run.initial;
+  configDraft=startupConfigDraft(state);selected=0;resultShown=-1;
+  for(const id of ['settings-dialog','result-dialog','new-dialog'])if($(id).open)$(id).close();
+  startupActive=false;$('startup-screen').hidden=true;
+  $('game-screen').hidden=false;$('game-screen').inert=false;$('game-screen').removeAttribute('aria-hidden');
+  $('motion-status').textContent='';delete $('motion-status').dataset.lastEffect;$('error').hidden=true;
+  audio.reset();if(save)persist();scene3d.resize();render();
+  if(!state.pending.length&&isChallenge(state)&&challengeView(state).deliveryPending)openDelivery();
+  if(!document.querySelector('dialog[open]'))document.querySelector('#destination-cards button,#center-actions button')?.focus({preventScroll:true});
+}
 let goalGuidePinned=false,goalGuideHideTimer;
 function positionGoalGuide(){
   const trigger=$('goal-details-trigger').getBoundingClientRect(),tip=$('goal-tooltip'),margin=12;
@@ -94,7 +128,7 @@ function renderGoalGuide(){
   if(!$('goal-tooltip').hidden)positionGoalGuide();
 }
 async function act(action){
-  if(busy)return;
+  if(busy||startupActive||!state)return;
   let next;try{next=applyAction(state,action);}catch(e){showError(e.message);return;}
   const before=state;busy=true;cancelChoice();rewardChoice=null;
   const audioAction=audio.actionStart(action);
@@ -103,7 +137,7 @@ async function act(action){
   document.querySelector('.game-stage').setAttribute('aria-busy','true');
   $('confirm-action').disabled=true;$('confirm-reward').disabled=true;
   $('motion-status').textContent=({eat:'囚犯吞噬中…',visit:'巡监中…',reroll:'更换囚犯…',end:'本日经营结束…',choose:'获得奖励…',fight:'暴乱演算中…',scout:'侦察路线…',deliver:'押运交付…',skipDelivery:'本次合约已放弃'})[action.type]||'';
-  state=next;persist();$('error').hidden=true;
+  state=next;$('error').hidden=true;persist();
   try{
     if(scene3d.ready)await scene3d.effectBefore(action,before);else await effects.before(action,before);
     audio.actionImpact(action,before,state,audioAction);
@@ -154,6 +188,7 @@ function offerAction(action,event){
   render();
 }
 function render(deferDialogs=false){
+  if(startupActive||!state)return;
   const active=onBoard(state),phase=state.phase;
   const challenge=isChallenge(state)?challengeView(state):null;
   const route=patrolRoute(state,pendingAction?.type==='visit'?pendingAction.room:null);
@@ -191,7 +226,7 @@ function render(deferDialogs=false){
     if(node.dataset.contentKey!==contentKey){node.innerHTML=`<span class="cell-interior" aria-hidden="true"></span><span class="room-number">${i+1}</span>${p?`<span class="cell-pedestal" aria-hidden="true"></span><span class="portrait ${p.code}"></span><span class="room-name">${speciesOf(p.code).name}</span><span class="room-rarity">${RARITIES[p.tier]}</span>${targets(state,i).length?'<span class="eat-mark" aria-label="有可吃目标">◆</span>':''}`:r.status==='closed'?`<span class="cell-door door-left" aria-hidden="true"></span><span class="cell-door door-right" aria-hidden="true"></span>${lockIcon}`:'<span class="cell-empty" aria-hidden="true">◇</span>'}${r.nest?`<span class="nest-mark">鼠巢 · ${Math.max(0,r.nest.due-state.day)} 日</span>`:''}${r.event?'<span class="event-mark">!</span>':''}${state.position===i?'<span class="current-mark" aria-label="当前位置">✧</span>':''}`;node.dataset.contentKey=contentKey;}
   });
   scene3d.sync(state,{selected,armed,pairTarget});
-  const labels={patrol:['PATROL','请选择目的地',''],manage:['MANAGEMENT',uiMode==='eat'?'请选择要吃的囚犯':'请进行决策',''],event:['SPECIAL EVENT',state.event?.kind==='chain'?'连锁反应':'处刑效率',''],riot:['PRISON RIOT','囚犯暴乱',''],finished:['RUN COMPLETE','经营结束','']};
+  const labels={patrol:['PATROL','请选择目的地',startupPhaseHelp(state)],manage:['MANAGEMENT',uiMode==='eat'?'请选择要吃的囚犯':'请进行决策',uiMode==='eat'?'选主囚犯，再选同阶可吃目标，确认吞噬。':startupPhaseHelp(state)],event:['SPECIAL EVENT',state.event?.kind==='chain'?'连锁反应':'处刑效率',''],riot:['PRISON RIOT','囚犯暴乱',''],finished:['RUN COMPLETE','经营结束','']};
   const [label,title,help]=labels[phase];
   $('phase-label').textContent=label;$('phase-title').textContent=title;$('phase-help').textContent=help;
   if(challenge?.deliveryPending){
@@ -231,7 +266,7 @@ function render(deferDialogs=false){
   $('advice').innerHTML=recommendations.map((rec,i)=>`<div class="advice-item"><div class="advice-title">${i===0?'优先参考':'备选'} · ${esc(rec.label)}</div><p>${esc(rec.reason)}</p>${buttonsFor(rec.action,'采用这个选择')}</div>`).join('')||'<p class="hint">本轮已结束，可导出记录或再开一局。</p>';
   $('log').innerHTML=state.log.slice(-9).reverse().map(item=>`<li><time>第 ${item.day} 日</time><span>${esc(item.text)}</span></li>`).join('');
   $('action-count').textContent=`${state.history.length} 次操作`;
-  $('seed-display').textContent=`种子 ${state.seed} · 自动保存本机`;
+  $('seed-display').textContent=`种子 ${state.seed} · ${startupSave.protectedSave||startupSave.error?'本局请导出保存':'自动保存本机'}`;
   $('edit-code').value=r.prisoner?.code??(r.status==='closed'?'closed':'empty');
   $('edit-tier').value=String(r.prisoner?.tier??0);
   $('edit-room').disabled=!!challenge||!['patrol','manage'].includes(phase)||!!state.pending.length;
@@ -277,6 +312,11 @@ let exportUrl;
 function syncNewMode(){
   const challenge=$('run-mode').value==='challenge';
   $('practice-presets').hidden=challenge;$('challenge-builds').hidden=!challenge;
+  $('new-mode-help').textContent=challenge?'12 日原创挑战。补给开局配给 6 名囚犯，紧编与育鼠配给 3 名；这些囚犯是初始配置。':
+    $('preset').value==='empty'?'从第 1 日、16 间未开启牢房开始，第一次巡监后才会有囚犯。':
+    $('preset').value==='normal'?'基础练习预置 6 名示例囚犯，从第 1 日巡监开始。':'专项练习预置 3 名囚犯与对应刑具，从第 1 日经营阶段开始。';
+  $('new-save-warning').hidden=!startupSave.run&&!startupSave.protectedSave;
+  $('new-save-warning').textContent=startupSave.protectedSave?'本机存档未能验证，本次不会替换原内容；新局请导出保存。':'点击开始经营会替换当前自动存档；返回或按 Escape 会保留原局。';
 }
 function deliverySelection(){
   const dialog=$('delivery-dialog');
@@ -304,9 +344,9 @@ function openDelivery(selection){
   }
   renderDeliveryStatus();if(!$('delivery-dialog').open)$('delivery-dialog').showModal();
 }
-$('run-mode').addEventListener('change',syncNewMode);
+$('run-mode').addEventListener('change',syncNewMode);$('preset').addEventListener('change',syncNewMode);
 $('delivery-dialog').addEventListener('change',renderDeliveryStatus);
-$('delivery-dialog').addEventListener('close',()=>{if(!busy&&isChallenge(state)&&challengeView(state).earlyDelivery)act({type:'cancelEarlyDelivery'});});
+$('delivery-dialog').addEventListener('close',()=>{if(!busy&&!startupActive&&isChallenge(state)&&challengeView(state).earlyDelivery)act({type:'cancelEarlyDelivery'});});
 $('confirm-delivery').addEventListener('click',()=>act({type:'deliver',...deliverySelection()}));
 function exportCurrent(){
   const data=JSON.stringify(exportRun(state,initial),null,2);
@@ -317,11 +357,10 @@ function exportCurrent(){
   $('download-run').download=`ss14-prison-day${state.day}-${state.revision}.json`;
   if(!$('export-dialog').open)$('export-dialog').showModal();
 }
-function startDialog(mode){
-  if(busy)return;cancelChoice();if($('settings-dialog').open)$('settings-dialog').close();
+function startDialog(mode='practice',preset='empty'){
+  if(busy)return;showStartup();
   $('seed-input').value=`talos-${Date.now().toString(36)}`;
-  if($('result-dialog').open)$('result-dialog').close();
-  $('run-mode').value=mode==='challenge'||isChallenge(state)?'challenge':'practice';syncNewMode();
+  $('run-mode').value=mode==='challenge'?'challenge':'practice';$('preset').value=preset;syncNewMode();
   if(!$('new-dialog').open)$('new-dialog').showModal();
 }
 function fillConfig(){
@@ -338,6 +377,7 @@ document.addEventListener('click',event=>{
   if(busy)return;
   const button=event.target.closest('button');if(!button)return;
   if(button.dataset.close){$(button.dataset.close).close();return;}
+  if(startupActive||!state)return;
   if(button.hasAttribute('data-start-challenge')){startDialog('challenge');return;}
   if(button.hasAttribute('data-open-delivery')){openDelivery();return;}
   if(button.hasAttribute('data-early-delivery')){act({type:'openEarlyDelivery'}).then(()=>openDelivery());return;}
@@ -386,12 +426,18 @@ window.addEventListener('resize',()=>{if($('context-actions').hidden)return;requ
 $('confirm-action').addEventListener('click',()=>{if(pendingAction)act(pendingAction);});
 $('cancel-action').addEventListener('click',()=>{if(!busy){audio.play('cancel');cancelChoice();render();}});
 $('confirm-reward').addEventListener('click',()=>{if(rewardChoice)act({type:'choose',id:rewardChoice});});
-$('new-game').addEventListener('click',startDialog);$('result-new').addEventListener('click',startDialog);
+$('new-game').addEventListener('click',showStartup);$('result-new').addEventListener('click',showStartup);
+$('startup-empty').addEventListener('click',()=>startDialog('practice','empty'));
+$('startup-challenge').addEventListener('click',()=>startDialog('challenge'));
+$('startup-practice').addEventListener('click',()=>startDialog('practice','normal'));
+$('startup-import').addEventListener('click',()=>$('import-file').click());
+$('continue-run').addEventListener('click',()=>{if(startupSave.run)enterRun(structuredClone(startupSave.run));});
+$('new-dialog').addEventListener('close',()=>{if(startupActive)(startupSave.run?$('continue-run'):$('startup-empty')).focus({preventScroll:true});});
 $('new-form').addEventListener('submit',event=>{
   event.preventDefault();
   if(busy)return;
-  try{cancelChoice();rewardChoice=null;const seed=$('seed-input').value||'talos';state=$('run-mode').value==='challenge'?createChallenge(seed,{build:document.querySelector('input[name="challenge-build"]:checked').value}):createGame(seed,configDraft,$('preset').value);audio.reset();initial=structuredClone(state);selected=0;resultShown=-1;$('new-dialog').close();$('motion-status').textContent='';$('error').hidden=true;persist();render();}
-  catch(e){showError(e.message);}
+  try{const run=createStartupRun({seed:$('seed-input').value||'talos',mode:$('run-mode').value,preset:$('preset').value,build:document.querySelector('input[name="challenge-build"]:checked').value,config:configDraft});enterRun(run,{save:true});}
+  catch(e){showStartupError(e.message);}
 });
 $('undo').addEventListener('click',()=>{
   if(busy)return;
@@ -402,14 +448,14 @@ $('export').addEventListener('click',exportCurrent);$('result-export').addEventL
 $('import').addEventListener('click',()=>$('import-file').click());
 $('import-file').addEventListener('change',async event=>{
   try{const file=event.target.files[0];if(!file)return;if(file.size>2*1024*1024)throw new Error('存档超过 2 MB');
-    const run=importRun(JSON.parse(await file.text()));if(busy)throw new Error('请等待当前操作完成');cancelChoice();rewardChoice=null;audio.reset();state=run.current;initial=run.initial;configDraft=structuredClone(state.config);selected=0;resultShown=-1;$('settings-dialog').close();$('motion-status').textContent='';delete $('motion-status').dataset.lastEffect;persist();render();$('error').hidden=true;
-  }catch(e){showError(`导入失败：${e.message}`);}finally{event.target.value='';}
+    const run=importRun(JSON.parse(await file.text()));if(busy)throw new Error('请等待当前操作完成');enterRun(run,{save:true});
+  }catch(e){const message=`导入失败：${e.message}`;if(startupActive)showStartupError(message);else showError(message);}finally{event.target.value='';}
 });
 $('edit-room').addEventListener('click',()=>{
-  try{state=editRoom(state,selected,$('edit-code').value,Number($('edit-tier').value));persist();render();$('error').hidden=true;}catch(e){showError(e.message);}
+  try{state=editRoom(state,selected,$('edit-code').value,Number($('edit-tier').value));$('error').hidden=true;persist();render();}catch(e){showError(e.message);}
 });
 $('add-tool').addEventListener('click',()=>{
-  try{state=addTool(state,$('add-tool-select').value);persist();render();$('error').hidden=true;}catch(e){showError(e.message);}
+  try{state=addTool(state,$('add-tool-select').value);$('error').hidden=true;persist();render();}catch(e){showError(e.message);}
 });
 $('open-rules').addEventListener('click',()=>{if(busy)return;$('settings-dialog').close();fillConfig();$('rules-dialog').showModal();});
 $('config-form').addEventListener('submit',event=>{
@@ -440,4 +486,4 @@ for(const [id,key] of [['advice-toggle','advice'],['advice-rail-toggle','advice'
 $('speed-toggle').addEventListener('click',()=>{preferences.fast=!preferences.fast;syncPreferences();});
 matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',syncPreferences);
 syncPreferences();
-render();
+showStartup();
