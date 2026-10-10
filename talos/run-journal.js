@@ -131,9 +131,17 @@ export function journalView(initial,state){
 }
 
 function iconMarkup(icon){return `<span class="journal-beast portrait ${escape(icon.code)} tier-${icon.tier}" role="img" aria-label="${escape(icon.name)}"></span>`;}
+// Rail symbols are one-color silhouettes; detailed portraits remain in the floating panel.
+const beastSilhouettes={
+  elephant:'M10 8C6 3 1 7 1 15s4 12 9 9l2-3 1 5c0 6 10 6 13 0l-4-3c-1 5-4 5-4 1l1-6 3 5c6 4 9-1 9-8s-5-12-9-7c-3-5-9-5-12 0Z',
+  lion:'M16 2 21 4 26 4 28 9 31 13 29 19 29 24 24 27 20 31 15 29 10 31 6 27 2 24 3 18 1 13 5 9 6 4 11 4ZM8 13l6 2-5 2Zm16 0-6 2 5 2Zm-12 7h8l-4 5Z',
+  wolf:'M3 2l10 5h6l10-5-2 16-4 6-7 6-7-6-4-6ZM8 12l6 3-5 1Zm16 0-6 3 5 1ZM13 22h6l-3 3Z',
+  rat:'M9 12C1 12 1 2 7 2c4 0 7 4 5 8h8c-2-4 1-8 5-8 6 0 6 10-2 10l1 8-8 10-8-10ZM9 16a2 2 0 1 0 4 0 2 2 0 1 0-4 0Zm10 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0Zm-6 8h6l-3 3Z',
+};
+function railIconMarkup(icon){return `<span class="journal-symbol journal-symbol-${escape(icon.code)}" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false" aria-hidden="true"><path fill-rule="evenodd" d="${beastSilhouettes[icon.code]??''}"/></svg></span>`;}
 function entryMarkup(entry){
   const detail=[`第 ${entry.day} 日 · ${entry.summary}`,...entry.details].join('\n');
-  return `<li class="journal-entry" data-journal-entry="${escape(entry.id)}"><button type="button" class="journal-entry-trigger" data-journal-detail="${escape(entry.id)}" title="${escape(detail)}" aria-label="${escape(detail)}"><span class="journal-entry-icons" aria-hidden="true">${entry.icons.length?entry.icons.slice(0,2).map(iconMarkup).join(''):'<span class="journal-operation-mark">◆</span>'}</span><span class="journal-entry-verb">${escape(entry.verb)}</span></button></li>`;
+  return `<li class="journal-entry" data-journal-entry="${escape(entry.id)}"><button type="button" class="journal-entry-trigger" data-journal-detail="${escape(entry.id)}" aria-label="${escape(detail)}"><span class="journal-entry-icons" aria-hidden="true">${entry.icons.length?entry.icons.slice(0,2).map(railIconMarkup).join(''):'<span class="journal-operation-mark">◆</span>'}</span><span class="journal-entry-verb">${escape(entry.verb)}</span></button></li>`;
 }
 /** Inner HTML for an independent narrow rail, not an overlay over the 16-room scene. */
 export function journalMarkup(initial,state){
@@ -151,6 +159,6 @@ export function effectsMarkup(initial,state){
     const used=['used','skipped','expired'].includes(effect.status),label=[effect.name,effect.room===null?'':`${effect.room+1}号牢房`,`第 ${effect.day} 日获得`,effect.description,effect.note].filter(Boolean).join('\n');
     const isPending=effect.status==='pending'&&state.phase==='event'&&state.event?.kind===effect.kind&&state.event.room===effect.room;
     const tag=isPending?'button':'article',icon=effect.kind==='chain'?'⛓':effect.kind==='execution'?'╱':GIFTS.find(item=>item.id===effect.itemId)?.icon??'◇';
-    return `<${tag}${isPending?' type="button" data-open-event':''} class="room-effect ${used?'is-used':''} status-${effect.status}" data-effect-id="${escape(effect.id)}" data-effect-status="${effect.status}" tabindex="0" title="${escape(label)}" aria-label="${escape(label)}"><span class="room-effect-icon" aria-hidden="true">${escape(icon)}</span><span class="room-effect-copy"><strong>${escape(effect.name)}</strong><small>${effect.room===null?(effect.kind==='gift'?'珍藏':'连锁'):`${effect.room+1} 号`} · ${effect.status==='pending'?'待处理':effect.status==='active'?'待巡监':effect.status==='skipped'?'已略过':effect.status==='expired'?'已结束':'已使用'}</small></span><span class="room-effect-description" role="tooltip">${escape(effect.description)}<em>${escape(effect.note)}</em></span></${tag}>`;
+    return `<${tag}${isPending?' type="button" data-open-event':''} class="room-effect ${used?'is-used':''} status-${effect.status}" data-effect-id="${escape(effect.id)}" data-effect-status="${effect.status}" tabindex="0" aria-label="${escape(label)}"><span class="room-effect-icon" aria-hidden="true">${escape(icon)}</span><span class="room-effect-copy"><strong>${escape(effect.name)}</strong><small>${effect.room===null?(effect.kind==='gift'?'珍藏':'连锁'):`${effect.room+1} 号`} · ${effect.status==='pending'?'待处理':effect.status==='active'?'待巡监':effect.status==='skipped'?'已略过':effect.status==='expired'?'已结束':'已使用'}</small></span><span class="room-effect-description" role="tooltip">${escape(effect.description)}<em>${escape(effect.note)}</em></span></${tag}>`;
   }).join('');
 }

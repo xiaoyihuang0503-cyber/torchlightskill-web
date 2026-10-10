@@ -14,7 +14,8 @@
 .journal-entry-trigger:hover,.journal-entry-trigger:focus-visible,.journal-entry-trigger[aria-expanded=true]{background:#332c26;border-color:#9a7955;outline:0;color:#fff0d7}
 .journal-entry-icons{display:flex;align-items:center;justify-content:center;gap:2px;min-height:25px}
 .journal-beast{display:block;position:static;width:26px;height:26px;border-radius:50%;border:1px solid #8c775f;box-shadow:inset 0 0 0 1px #000;flex:0 0 26px;filter:brightness(1.2)}
-.journal-entry-icons .journal-beast{width:23px;height:23px;flex-basis:23px}
+.journal-symbol{display:block;width:23px;height:23px;flex:0 0 23px;color:#dcc7a9}
+.journal-symbol svg{display:block;width:100%;height:100%;fill:currentColor}
 .journal-operation-mark{font-size:18px;color:#9f8061;text-shadow:0 1px 3px #000}
 .journal-entry-verb{text-shadow:0 1px 2px #000}
 .journal-warning{font-size:10px;line-height:1.5;color:#e2ac96;padding:5px 1px}
@@ -37,7 +38,7 @@
 .room-effect:hover,.room-effect:focus-visible{border-color:#d4b18a;outline:0}
 /* Host can copy the descriptions into a floating tooltip, avoiding clipping in the scroll list. */
 .room-effects-empty{color:#b9ac9c;font-size:clamp(9px,.85cqw,13px);line-height:1.7;text-shadow:0 1px 2px #000;margin:4px 0}
-@media(max-width:520px){.run-journal-heading{padding:9px 1px}.run-journal-heading h2{font-size:10px}.run-journal-heading>span{font-size:9px}.journal-entry-icons .journal-beast{width:18px;height:18px;flex-basis:18px}.journal-day h3,.journal-entry-trigger{font-size:9px}.run-journal-scroll{padding-left:1px;padding-right:1px}.room-effect{gap:3px;padding:4px}.room-effect-icon{width:19px;flex-basis:19px;min-height:19px}.room-effects-list{max-height:31cqw}}
+@media(max-width:520px){.run-journal-heading{padding:9px 1px}.run-journal-heading h2{font-size:10px}.run-journal-heading>span{font-size:9px}.journal-symbol{width:18px;height:18px;flex-basis:18px}.journal-day h3,.journal-entry-trigger{font-size:9px}.run-journal-scroll{padding-left:1px;padding-right:1px}.room-effect{gap:3px;padding:4px}.room-effect-icon{width:19px;flex-basis:19px;min-height:19px}.room-effects-list{max-height:31cqw}}
 @media(prefers-reduced-motion:reduce){.journal-entry-trigger{transition:none}}
 main.game-screen{grid-template-columns:68px minmax(0,1fr) clamp(260px,19vw,340px)}
 .game-viewport{grid-column:2}.run-sidebar{grid-column:3}

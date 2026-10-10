@@ -9,7 +9,7 @@ import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,de
 import {rewardIcon,ruleText} from './reward-icons.js?v=0.6.2-1';
 import {rainbowMarkup,animateRainbowArrivals} from './rainbow-ui.js?v=0.6.3-1';
 import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.3-1';
-import {journalMarkup,effectsMarkup,journalDetailMarkup} from './run-journal.js?v=0.6.5-1';
+import {journalMarkup,effectsMarkup,journalDetailMarkup} from './run-journal.js?v=0.6.6-1';
 
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -19,7 +19,7 @@ let startupActive=true,runStorage=null;
 let journalInitial=null,journalRevision=-1,journalPinned=false,journalAnchor=null,journalHideTimer;
 try{runStorage=localStorage;}catch{}
 const startupSave=readStartupSave(runStorage);
-let preferences={advice:false,adviceExpanded:false,motion:true,fast:false,quick:false};
+let preferences={advice:false,adviceExpanded:false,motion:true,fast:false,quick:false,journalHidden:false,sidebarHidden:false};
 try{const saved=JSON.parse(localStorage.getItem('ss14-prison-ui-v2')||'{}');for(const key of Object.keys(preferences))if(typeof saved[key]==='boolean')preferences[key]=saved[key];}catch{}
 const effects=new PrisonEffects({enabled:()=>preferences.motion,fast:()=>preferences.fast});
 const lockIcon='<svg class="cell-lock" viewBox="0 0 24 30" aria-hidden="true"><path d="M5 12V8a7 7 0 0 1 14 0v4h2v16H3V12zm3 0h8V8a4 4 0 0 0-8 0zm4 5a2 2 0 0 0-1 4v3h2v-3a2 2 0 0 0-1-4"/></svg>';
@@ -159,7 +159,7 @@ function showJournalDetail(anchor){
   if(startupActive||busy||!state)return;
   clearTimeout(journalHideTimer);const tip=$('journal-tooltip');
   if(anchor.dataset.journalDetail)tip.innerHTML=journalDetailMarkup(initial,state,anchor.dataset.journalDetail);
-  else{const description=anchor.querySelector('.room-effect-description');tip.innerHTML=`<h3>${esc(anchor.querySelector('strong')?.textContent||'房间效果')}</h3>${description?.innerHTML||esc(anchor.title)}`;}
+  else{const description=anchor.querySelector('.room-effect-description');tip.innerHTML=`<h3>${esc(anchor.querySelector('strong')?.textContent||'房间效果')}</h3>${description?.innerHTML||esc(anchor.getAttribute('aria-label')||'')}`;}
   if(!tip.innerHTML)return;
   journalAnchor?.setAttribute('aria-expanded','false');journalAnchor=anchor;anchor.setAttribute('aria-expanded','true');
   tip.hidden=false;const rect=anchor.getBoundingClientRect();
@@ -585,10 +585,31 @@ function syncPreferences(){
   $('advice-summary-state').textContent=preferences.advice?'已开启':'未开启';
   $('advice-section').open=preferences.adviceExpanded;
   document.body.classList.toggle('motion-off',!preferences.motion||matchMedia('(prefers-reduced-motion: reduce)').matches);
+  syncLayout();
   if(!scene3d.active)scene3d.finishTweens();
   scene3d.request();
   try{localStorage.setItem('ss14-prison-ui-v2',JSON.stringify(preferences));}catch{}
 }
+function syncLayout(){
+  const screen=$('game-screen'),journal=$('run-journal'),sidebar=$('run-sidebar');
+  screen.classList.toggle('journal-hidden',preferences.journalHidden);
+  screen.classList.toggle('sidebar-hidden',preferences.sidebarHidden);
+  screen.classList.toggle('immersive',preferences.journalHidden&&preferences.sidebarHidden);
+  journal.hidden=preferences.journalHidden;sidebar.hidden=preferences.sidebarHidden;
+  for(const [id,hidden,label] of [['journal-toggle',preferences.journalHidden,'经营记录'],['sidebar-toggle',preferences.sidebarHidden,'右侧栏']]){
+    const button=$(id);button.setAttribute('aria-expanded',String(!hidden));
+    button.setAttribute('aria-label',`${hidden?'展开':'收起'}${label}`);
+    button.querySelector('.layout-chevron').textContent=id==='journal-toggle'?(hidden?'›':'‹'):(hidden?'‹':'›');
+  }
+  $('immersive-toggle').checked=preferences.journalHidden&&preferences.sidebarHidden;
+}
+for(const [id,key] of [['journal-toggle','journalHidden'],['sidebar-toggle','sidebarHidden']])$(id).addEventListener('click',()=>{
+  hideJournalDetail();hideGoalGuide();hideMechanics();preferences[key]=!preferences[key];syncPreferences();
+});
+$('immersive-toggle').addEventListener('change',event=>{
+  hideJournalDetail();hideGoalGuide();hideMechanics();
+  preferences.journalHidden=event.target.checked;preferences.sidebarHidden=event.target.checked;syncPreferences();
+});
 $('lab-settings').addEventListener('click',()=>{if(!busy){cancelChoice();render();$('settings-dialog').showModal();}});
 for(const [id,key] of [['advice-toggle','advice'],['advice-rail-toggle','advice'],['motion-toggle','motion'],['quick-toggle','quick']])$(id).addEventListener('change',event=>{preferences[key]=event.target.checked;syncPreferences();render();});
 $('speed-toggle').addEventListener('click',()=>{preferences.fast=!preferences.fast;syncPreferences();});

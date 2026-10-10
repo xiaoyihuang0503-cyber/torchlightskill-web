@@ -233,3 +233,22 @@
 .game-decision #phase-title{color:#f1e7d2;font-size:clamp(12px,1.68cqw,29px);font-weight:600;text-shadow:0 2px 1px #000,1px 0 1px #000,-1px 0 1px #000,0 0 8px #000}
 .game-decision #phase-help{color:#e8ddc7;font-size:clamp(10px,.94cqw,18px);font-weight:500;line-height:1.5;text-shadow:0 2px 1px #000,0 0 5px #000;background:linear-gradient(90deg,transparent,#0a0806b3 12%,#0a0806d1 50%,#0a0806b3 88%,transparent)}
 @media(min-width:1000px){.game-decision #phase-title{font-size:clamp(16px,1.68cqw,29px)}.game-decision #phase-help{font-size:clamp(12px,.94cqw,18px)}}
+
+/* Fold outside panels without reserving a column in the prison stage. */
+main.game-screen{--journal-column:68px;--sidebar-column:clamp(260px,19vw,340px)}
+.game-viewport{position:relative}
+.layout-toggle{position:absolute;top:50%;transform:translateY(-50%);z-index:45;display:flex;flex-direction:column;align-items:center;gap:5px;width:23px;padding:10px 2px;border:1px solid #77634b77;background:#151210c9;color:#d4c4aa;font-size:11px;line-height:1.2;box-shadow:0 2px 8px #0008;opacity:.72;cursor:pointer}
+.layout-left{left:0;border-radius:0 3px 3px 0}.layout-right{right:0;border-radius:3px 0 0 3px}
+.layout-toggle:hover,.layout-toggle:focus-visible{opacity:1;border-color:#c4a779;color:#ffefd4;outline:1px solid #c4a779;outline-offset:1px}
+.layout-toggle>span:last-child{writing-mode:vertical-rl;letter-spacing:3px}.layout-chevron{font-size:20px;line-height:1}
+main.game-screen.journal-hidden{grid-template-columns:minmax(0,1fr) var(--sidebar-column)}
+main.game-screen.journal-hidden .game-viewport{grid-column:1}
+main.game-screen.journal-hidden .run-sidebar{grid-column:2}
+main.game-screen.sidebar-hidden{grid-template-columns:var(--journal-column) minmax(0,1fr)}
+main.game-screen.sidebar-hidden .game-viewport{grid-column:2}
+main.game-screen.immersive{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);padding:0;gap:0}
+main.game-screen.immersive .game-viewport{grid-column:1;grid-row:1}
+main.game-screen.immersive .lab-footer{display:none}
+@media(max-width:1000px){main.game-screen{--journal-column:60px;--sidebar-column:240px}}
+@media(max-width:700px){main.game-screen{--journal-column:50px;--sidebar-column:200px}}
+@media(max-width:520px){main.game-screen{--journal-column:44px}main.game-screen.journal-hidden:not(.sidebar-hidden){grid-template-columns:minmax(0,1fr)}main.game-screen.journal-hidden .run-sidebar{grid-column:1;grid-row:2}main.game-screen.sidebar-hidden:not(.journal-hidden){grid-template-rows:minmax(0,1fr) 20px}main.game-screen.sidebar-hidden .run-journal{grid-row:1}main.game-screen.sidebar-hidden .lab-footer{grid-row:2}.layout-toggle{width:19px;font-size:10px}}
