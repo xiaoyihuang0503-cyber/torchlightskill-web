@@ -8,7 +8,7 @@
   <title>TorchlightSkill · 火炬工具箱</title>
   <meta name="description" content="专注火炬之光：无限的玩家工具箱。火炬 AI 导师、塔罗斯监狱玩法工具，持续更新。">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=20261011-1">
+  <link rel="stylesheet" href="./style.css?v=20261011-2">
   <script src="./app.js" defer></script>
   <script src="./ambient.js?v=20261011-1" defer></script>
 </head>
@@ -46,7 +46,22 @@
 </main>
 <div class="pointer-aura" aria-hidden="true"></div>
 <div class="pointer-ring" aria-hidden="true"></div>
-<dialog id="mentor-detail" aria-labelledby="mentor-dialog-title"><button class="close-dialog" aria-label="关闭">×</button><span class="eyebrow">AI MENTOR · 内测中</span><h2 id="mentor-dialog-title">火炬 AI 导师</h2><p>围绕角色资料与当前构筑，分析伤害、生存和流派搭配，帮助你找到问题与提升顺序。</p><p>构筑诊断 · 阶段建议 · 流派诊断</p><button class="primary-button close-action">知道了</button></dialog>
+<dialog id="mentor-detail" aria-labelledby="mentor-dialog-title">
+  <button class="close-dialog" aria-label="关闭">×</button>
+  <span class="eyebrow">AI MENTOR · 内测中</span>
+  <h2 id="mentor-dialog-title">火炬 AI 导师</h2>
+  <p>围绕角色资料与当前构筑，分析伤害、生存和流派搭配，帮助你找到问题与提升顺序。</p>
+  <p>构筑诊断 · 阶段建议 · 流派诊断</p>
+  <section class="mentor-douyin" aria-label="抖音详情与内测预约">
+    <svg class="douyin-code-mask" width="0" height="0" aria-hidden="true" focusable="false">
+      <defs><clipPath id="douyin-code-clip" clipPathUnits="objectBoundingBox"><circle cx=".5014" cy=".5" r=".4958"/><circle cx=".8167" cy=".1944" r=".1125"/></clipPath></defs>
+    </svg>
+    <div class="douyin-code"><img src="./assets/douyin-mentor-code.jpg" alt="爱玩游戏的吉吉罗的抖音码，可用抖音扫一扫查看详情和预约内测资格" width="1125" height="1680"></div>
+    <a class="primary-button douyin-link" href="https://v.douyin.com/okD24Xnc6wo/" target="_blank" rel="noopener noreferrer"><span>去抖音查看详情和预约内测资格</span><span aria-hidden="true">↗</span></a>
+    <p class="douyin-hint">抖音扫一扫 · @爱玩游戏的吉吉罗</p>
+  </section>
+  <button class="mentor-dismiss close-action">知道了</button>
+</dialog>
 <dialog id="prison-detail" aria-labelledby="prison-dialog-title"><button class="close-dialog" aria-label="关闭">×</button><span class="eyebrow">SEASON TOOL · 测试中</span><h2 id="prison-dialog-title">塔罗斯监狱</h2><p>经营模拟测试版，包含囚犯配对、吞噬、条件收益辅助与声音设置。复刻练习与原创挑战，规则持续校准。点击工具卡片上的“开始试玩”即可体验。</p><p class="dialog-note">模拟规则与收益为实验设定，实际玩法以游戏内规则为准。</p><button class="primary-button close-action">知道了</button></dialog>
 </body>
 </html>

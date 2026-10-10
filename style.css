@@ -89,3 +89,15 @@ dialog{position:fixed;width:min(480px,calc(100% - 32px));padding:36px 30px;borde
 .prison-visual img{display:block;object-fit:contain;object-position:center}
 .prison-visual:after{background:none}
 @media(max-width:700px){.prison-visual{height:auto}}
+
+#mentor-detail { max-height:calc(100dvh - 32px); overflow-y:auto; overscroll-behavior:contain; }
+.mentor-douyin { position:relative; margin-top:22px; padding-top:22px; border-top:1px solid #b477f426; text-align:center; }
+.douyin-code-mask { position:absolute; }
+/* Crop the original poster in the layout, preserving every code mark and its logo. */
+.douyin-code { position:relative; width:min(220px,100%); aspect-ratio:1; overflow:hidden; margin:0 auto 20px; clip-path:url(#douyin-code-clip); }
+.douyin-code img { position:absolute; display:block; width:156.25%; height:233.3333%; max-width:none; left:-28.0556%; top:-33.4722%; }
+dialog .douyin-link { display:flex; width:100%; min-height:48px; margin:0; padding:13px 14px; gap:10px; line-height:1.6; }
+dialog .douyin-hint { margin:12px 0 0; font-size:12px; color:#a99ab9; }
+.mentor-dismiss { display:block; min-height:44px; margin:12px auto -10px; padding:8px 24px; border:0; border-radius:8px; background:transparent; color:#a99ab9; font-size:13px; cursor:pointer; }
+.mentor-dismiss:hover { background:#ffffff08; color:#eee0ff; }
+@media(max-width:420px) { #mentor-detail { padding:30px 22px; } .douyin-code { width:min(204px,100%); } dialog .douyin-link { font-size:12px; gap:8px; padding:12px 9px; } }
