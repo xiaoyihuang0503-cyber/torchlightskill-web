@@ -3,7 +3,7 @@ import { applyAction, targets, onBoard, nameOf, editRoom, addTool, recommend, re
 import {pairDecision} from './interaction.js';
 import {PrisonEffects} from './effects.js?v=0.6.3-1';
 import {goalGuide} from './goal-guide.js?v=0.6.2-1';
-import {PrisonScene3D} from './scene3d.js?v=0.6.2-1';
+import {PrisonScene3D} from './scene3d.js?v=0.6.4-1';
 import {PrisonAudio} from './audio.js?v=0.6.3-1';
 import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.6.3-1';
 import {rewardIcon,ruleText} from './reward-icons.js?v=0.6.2-1';
@@ -118,9 +118,10 @@ let mechanicsHideTimer;
 function showMechanics(){
   clearTimeout(mechanicsHideTimer);
   const tip=$('mechanics-tooltip'),anchor=$('lab-settings').getBoundingClientRect();
+  tip.style.maxHeight=`${Math.max(80,innerHeight-anchor.bottom-24)}px`;
   tip.hidden=false;$('lab-settings').setAttribute('aria-expanded','true');
   tip.style.left=`${Math.max(12,Math.min(anchor.left,innerWidth-tip.offsetWidth-12))}px`;
-  tip.style.top=`${Math.max(12,Math.min(anchor.bottom+12,innerHeight-tip.offsetHeight-12))}px`;
+  tip.style.top=`${anchor.bottom+12}px`;
 }
 function hideMechanics(){ $('mechanics-tooltip').hidden=true; $('lab-settings').setAttribute('aria-expanded','false'); }
 $('lab-settings').addEventListener('mouseenter',showMechanics);
