@@ -1,0 +1,20 @@
+/* Canvas geometry and accessible HTML rooms use the same camera projection. */
+.scene-3d-canvas{position:absolute;inset:0;display:block;width:100%;height:100%;z-index:0;pointer-events:none}
+.three-ready{background:#171a18}
+.three-ready::before{z-index:1;background:linear-gradient(90deg,#050504a8,transparent 23%,transparent 79%,#050504a0),linear-gradient(#0009,transparent 15%,transparent 65%,#0008)}
+.three-ready .scene-shell{left:0;top:0;width:100%;height:100%;perspective:none;z-index:2}
+.three-ready .arena#prison-scene{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;box-shadow:none;transform:none;background:transparent;pointer-events:none}
+.three-ready .arena#prison-scene::before{display:none}
+.three-ready #board{position:absolute;inset:0;display:block;width:100%;height:100%;padding:0;margin:0;transform:none;gap:0;pointer-events:none}
+.three-ready .courtyard,.three-ready .scene-ambient{display:none}
+.three-ready .room,.three-ready .room:hover,.three-ready .room.selected,.three-ready .room.pair-target,.three-ready .room.candidate,.three-ready .room.occupied{position:absolute;display:block;padding:0;border:0;background:transparent;box-shadow:none;outline:0;transform:none;filter:none;pointer-events:auto;transition:none;isolation:auto}
+.three-ready .room::before,.three-ready .room::after,.three-ready .cell-interior,.three-ready .cell-door,.three-ready .cell-lock,.three-ready .cell-empty,.three-ready .cell-pedestal,.three-ready .current-mark{display:none}
+.three-ready .room .portrait{opacity:0;pointer-events:none}
+.three-ready .room-number{left:var(--scene-number-x,50%);top:var(--scene-number-y);bottom:auto;transform:translate(-50%,-50%);color:#a4a399;font-size:.88cqw;line-height:1;pointer-events:none;text-shadow:0 2px 3px #000}
+.three-ready .room .room-name,.three-ready .room .room-rarity{display:block;position:absolute;left:0;right:0;bottom:auto;pointer-events:none;line-height:1.15;text-shadow:0 1px 3px #000,0 0 5px #000}
+.three-ready .room .room-name{top:calc(var(--scene-label-y) - 1.55cqw);font-size:.86cqw;color:#d3d0be}
+.three-ready .room .room-rarity{top:calc(var(--scene-label-y) - .54cqw);font-size:.78cqw;color:var(--tier-color)}
+.three-ready .room .eat-mark{display:none}
+.three-ready .room:focus-visible{outline:1px solid #c4ac71;outline-offset:2px}
+.three-ready .room .nest-mark{bottom:auto;top:calc(var(--scene-label-y) + .46cqw);left:0;right:0;font-size:.66cqw;pointer-events:none}
+.three-ready .room .event-mark{right:4%;top:4%;color:#d5ad69;pointer-events:none}

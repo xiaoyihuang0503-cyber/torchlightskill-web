@@ -1,0 +1,100 @@
+{
+  "version": 1,
+  "clips": {
+    "select": {
+      "path": "assets/audio/select.mp3",
+      "kind": "sfx",
+      "gain": 0.38
+    },
+    "confirm": {
+      "path": "assets/audio/confirm.mp3",
+      "kind": "sfx",
+      "gain": 0.5
+    },
+    "cancel": {
+      "path": "assets/audio/cancel.mp3",
+      "kind": "sfx",
+      "gain": 0.3
+    },
+    "gate": {
+      "path": "assets/audio/gate.mp3",
+      "kind": "sfx",
+      "gain": 0.55
+    },
+    "devour": {
+      "path": "assets/audio/devour.mp3",
+      "kind": "sfx",
+      "gain": 0.52
+    },
+    "upgrade": {
+      "path": "assets/audio/upgrade.mp3",
+      "kind": "sfx",
+      "gain": 0.45
+    },
+    "reroll": {
+      "path": "assets/audio/reroll.mp3",
+      "kind": "sfx",
+      "gain": 0.42
+    },
+    "reward": {
+      "path": "assets/audio/reward.mp3",
+      "kind": "sfx",
+      "gain": 0.48
+    },
+    "day": {
+      "path": "assets/audio/day.mp3",
+      "kind": "sfx",
+      "gain": 0.42
+    },
+    "riot": {
+      "path": "assets/audio/riot.mp3",
+      "kind": "sfx",
+      "gain": 0.52
+    },
+    "ambience": {
+      "path": "assets/audio/ambience.mp3",
+      "kind": "ambience",
+      "gain": 0.13
+    },
+    "voice_patrol": {
+      "path": "assets/audio/voice_patrol.mp3",
+      "kind": "voice",
+      "gain": 0.85
+    },
+    "voice_devour": {
+      "path": "assets/audio/voice_devour.mp3",
+      "kind": "voice",
+      "gain": 0.85
+    },
+    "voice_goal": {
+      "path": "assets/audio/voice_goal.mp3",
+      "kind": "voice",
+      "gain": 0.85
+    },
+    "voice_reward": {
+      "path": "assets/audio/voice_reward.mp3",
+      "kind": "voice",
+      "gain": 0.85
+    },
+    "voice_rainbow": {
+      "path": "assets/audio/voice_rainbow.mp3",
+      "kind": "voice",
+      "gain": 0.85
+    },
+    "voice_day": {
+      "path": "assets/audio/voice_day.mp3",
+      "kind": "voice",
+      "gain": 0.8
+    },
+    "voice_riot": {
+      "path": "assets/audio/voice_riot.mp3",
+      "kind": "voice",
+      "gain": 0.85
+    },
+    "voice_end": {
+      "path": "assets/audio/voice_end.mp3",
+      "kind": "voice",
+      "gain": 0.85
+    }
+  }
+}

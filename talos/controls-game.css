@@ -1,0 +1,203 @@
+/* Game control materials only. The stage, board and control placement remain in scene.css. */
+.game-stage {
+  --control-iron: #50453e;
+  --control-rust: #665045;
+  --control-text: #bdb6a9;
+  --control-bronze: #9b7850;
+}
+.game-header,.game-side-title,.scene-goal,.game-decision,.game-confirm-area,.quick-decision {
+  font-family: "Microsoft YaHei","Segoe UI",sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.game-name,.game-name h1,.remaining-days,.game-side-title,.quick-decision {
+  color: #b5ad9e;
+  text-shadow: 0 2px 2px #000,0 0 5px #000b;
+}
+.game-name h1,.remaining-days,.game-decision h2,.game-side-title { letter-spacing: .025em; }
+.remaining-days strong { color: #d1c9ba; font-weight: 500; }
+.game-help {
+  background: linear-gradient(145deg,#37302a,#171514 65%);
+  border-color: #5e5548;
+  color: #aea597;
+  box-shadow: inset 0 1px #766a5144,0 2px 3px #0009;
+}
+.game-speed {
+  border-color: #4a443b;
+  background: linear-gradient(#262320a8,#0e0c0bb8);
+  color: #aaa191;
+  box-shadow: inset 0 1px #655a4338,0 2px 3px #0008;
+}
+.game-speed[aria-pressed=true] { border-color: #857052; background: #37281da8; color: #c9b186; }
+.game-back { color: #bdb6a8; filter: drop-shadow(0 2px 1px #000); }
+.prison-gate {
+  display: inline-block;
+  width: 3cqw;
+  height: 3cqw;
+  color: transparent;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 64'%3E%3Cdefs%3E%3ClinearGradient id='m' x2='1' y2='1'%3E%3Cstop stop-color='%23847d6e'/%3E%3Cstop offset='.45' stop-color='%23453f35'/%3E%3Cstop offset='1' stop-color='%23211f1c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M7 60V30C7-1 53-1 53 30v30h-9V30c0-19-28-19-28 0v30Z' fill='url(%23m)' stroke='%235e584b'/%3E%3Cpath d='M8 27h10M10 17l10 4M16 9l8 8M27 5l1 11M39 6l-5 12M48 14l-9 6M52 25l-11 2M8 41h10M8 52h10M43 41h10M43 52h10' stroke='%23100f0d' stroke-width='2'/%3E%3Cpath d='M23 30v28M30 28v30M37 30v28' stroke='%23736d60' stroke-width='3'/%3E%3Cpath d='M20 44h20' stroke='%23322f27' stroke-width='4'/%3E%3C/svg%3E") center/contain no-repeat;
+  filter: drop-shadow(0 2px 2px #000);
+}
+.game-tools .tool-icon {
+  color: #b89a61;
+  border-style: solid;
+  border-color: #4c4034;
+  background: radial-gradient(ellipse at 35% 25%,#64503b66,transparent 62%),linear-gradient(150deg,#3c352b,#11100e 70%);
+  box-shadow: inset 0 0 0 1px #7b644334,inset 0 0 .45cqw #000,0 .2cqw .35cqw #000a;
+  text-shadow: 0 1px #15110a,0 0 .4cqw #9e78372b;
+}
+.game-tools .tool strong { color: #c6bdad; font-weight: 400; }
+.game-tools .tool:hover p,.game-tools .tool:focus-within p {
+  border: 1px solid #776451;
+  background: linear-gradient(145deg,#292019fa,#100e0cfc);
+  box-shadow: inset 0 0 0 3px #34271e88,0 8px 20px #000b;
+  color: #c3b9a7;
+}
+.rainbow-title { color: #c7a382; }
+.goal-details-trigger { color: #c6bca8; }
+.goal-condition strong { color: #bf7768; }
+.goal-info { color: #a69375; }
+.goal-details-trigger:hover .goal-info,.goal-details-trigger[aria-expanded=true] .goal-info { color: #cab28c; }
+.game-decision h2 { color: #b8ad9a; font-weight: 500; text-shadow: 0 2px 4px #000; }
+
+/* Black iron cards: a thin corroded rim, inner stone, and actual protruding teeth. */
+.decision-card {
+  border: .36cqw solid #49372d;
+  color: var(--control-text);
+  border-radius: 0;
+  background:
+    radial-gradient(ellipse at 25% 18%,#c5ac8330,transparent 52%),
+    repeating-linear-gradient(89deg,transparent 0 2.8cqw,#0005 2.82cqw 2.9cqw,transparent 2.94cqw 3.4cqw),
+    linear-gradient(180deg,#131716c9 0,#252523b8 50%,#171411d9 100%),
+    url('assets/prison-stone-v2.png') center/30cqw auto;
+  box-shadow: inset 0 0 0 1px #7768586b,inset 0 0 0 .16cqw #1c1815,inset 0 0 2cqw #000a,0 .22cqw 0 #19110c,0 .6cqw .8cqw #0009;
+  text-shadow: 0 .1cqw .15cqw #000;
+  font-weight: 500;
+}
+.decision-card[data-decision=end] {
+  background: radial-gradient(ellipse at 65% 20%,#a8987420,transparent 55%),repeating-linear-gradient(4deg,transparent 0 1.2cqw,#0003 1.23cqw 1.28cqw,transparent 1.3cqw 1.7cqw),linear-gradient(#24221fd9,#1c1815c9 85%),url('assets/prison-stone-v2.png') center/30cqw auto;
+}
+.decision-card::before,.decision-card::after {
+  left: 6%;
+  right: 6%;
+  height: 1.14cqw;
+  background: repeating-linear-gradient(94deg,#574438 0 1.7cqw,#28211c 1.73cqw 1.77cqw,#806554 1.8cqw 1.84cqw,#48372d 1.9cqw 2.2cqw);
+  clip-path: polygon(0 100%,3% 100%,5% 8%,7% 100%,15% 100%,17% 0,19% 100%,27% 100%,29% 8%,31% 100%,39% 100%,41% 0,43% 100%,51% 100%,53% 7%,55% 100%,63% 100%,65% 0,67% 100%,75% 100%,77% 7%,79% 100%,87% 100%,89% 0,91% 100%,100% 100%);
+  filter: drop-shadow(0 1px #0b0806);
+  pointer-events: none;
+}
+.decision-card::before { top: -1.38cqw; }
+.decision-card::after { bottom: -1.38cqw; }
+.decision-card:hover:not(:disabled) { filter: brightness(1.14); }
+.decision-card[aria-pressed=true] {
+  border-color: #9b7650;
+  filter: brightness(1.12);
+  box-shadow: inset 0 0 0 1px #bf936e77,inset 0 0 1.5cqw #aa6b1928,0 .22cqw 0 #19110c,0 0 .7cqw #a3712933;
+}
+.decision-card:focus-visible { outline: 1px solid #c7ac75; outline-offset: .35cqw; }
+.decision-card:disabled { filter: saturate(.5) brightness(.72); opacity: .6; }
+.decision-icon {
+  color: #b6b7aa;
+  border: .18cqw solid #686c64;
+  background: radial-gradient(ellipse at 35% 25%,#7580788a,#232b276e 47%,#0e111080 72%);
+  box-shadow: inset 0 0 0 1px #aaa98a45,inset 0 -.16cqw .3cqw #000b,0 .25cqw .4cqw #000b;
+  text-shadow: 0 1px 2px #000;
+}
+.decision-card[data-decision=reroll] .decision-icon,
+.decision-card[data-decision=end] .decision-icon,
+.decision-card[data-destination] .decision-icon {
+  border-color: transparent;
+  background-color: transparent;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  box-shadow: none;
+  font-size: 0;
+  filter: drop-shadow(0 .2cqw .16cqw #000b);
+}
+.decision-card[data-decision=reroll] .decision-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Cdefs%3E%3CradialGradient id='a' cx='.35' cy='.25'%3E%3Cstop stop-color='%23788179'/%3E%3Cstop offset='.5' stop-color='%23363f3b'/%3E%3Cstop offset='1' stop-color='%231d2521'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='40' cy='40' r='36' fill='%23111311' stroke='%23545b54' stroke-width='3'/%3E%3Ccircle cx='40' cy='40' r='32' fill='url(%23a)' stroke='%23868a78' stroke-width='1.5'/%3E%3Cpath d='M18 38c1-22 31-30 44-11l6-8 1 21-21-5 9-5c-9-11-25-5-27 8ZM62 42c-1 22-31 30-44 11l-6 8-1-21 21 5-9 5c9 11 25 5 27-8Z' fill='%23aeb7a6' stroke='%2318201a' stroke-width='1.5'/%3E%3Cpath d='M17 38c1-19 29-28 43-13M63 42c-1 19-29 28-43 13' stroke='%23c2cbb438' fill='none'/%3E%3C/svg%3E");
+}
+.decision-card[data-decision=end] .decision-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Cdefs%3E%3CradialGradient id='p' cx='.3' cy='.2'%3E%3Cstop stop-color='%23898472'/%3E%3Cstop offset='.55' stop-color='%23443f34'/%3E%3Cstop offset='1' stop-color='%23181512'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='40' cy='40' r='36' fill='%23141413' stroke='%23696454' stroke-width='2'/%3E%3Ccircle cx='40' cy='40' r='32' fill='url(%23p)' stroke='%23918a74'/%3E%3Cpath d='M47 17q-1-9 6-11q8-1 8 6q-1 6-8 6l-3 6' fill='none' stroke='%23afa78b' stroke-width='3'/%3E%3Cpath d='M48 19l8 8-5 5-9-9Z' fill='%23756e5e' stroke='%23b4ab91'/%3E%3Ccircle cx='35' cy='43' r='21' fill='%233f3b31' stroke='%23c2bca7' stroke-width='3'/%3E%3Ccircle cx='35' cy='43' r='17' fill='%231a1b18' stroke='%237c7563'/%3E%3Cpath d='M35 29v3M35 54v3M21 43h3M46 43h3M25 33l2 2M43 51l2 2M25 53l2-2M43 35l2-2M35 34v10l7 5' stroke='%23bbb49e' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='35' cy='43' r='2' fill='%23c4b68f'/%3E%3Cpath d='M61 26q6 8 0 18q-6 10-2 19' stroke='%236a6049' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+}
+.decision-card[data-destination] .decision-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Cdefs%3E%3ClinearGradient id='d' x2='1' y2='1'%3E%3Cstop stop-color='%23908f79'/%3E%3Cstop offset='.45' stop-color='%234c5147'/%3E%3Cstop offset='1' stop-color='%2320231d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M14 71V33c0-35 52-35 52 0v38H56V33c0-23-32-23-32 0v38Z' fill='url(%23d)' stroke='%236b7060' stroke-width='1.5'/%3E%3Cpath d='M14 29h11M17 19l10 4M25 11l7 8M37 8v11M49 10l-5 10M60 20l-9 5M55 39h11M14 42h11M14 56h11M55 56h11' stroke='%23171c15' stroke-width='2'/%3E%3Cpath d='M31 33v36M40 29v40M49 33v36' stroke='%237b8170' stroke-width='3'/%3E%3Cpath d='M26 46h28M26 61h28' stroke='%232d3529' stroke-width='3'/%3E%3C/svg%3E");
+}
+
+/* Iron gear teeth surround an aged bronze face, rather than a bright ridged ring. */
+.game-confirm,.game-cancel {
+  border: .65cqw solid transparent;
+  background:
+    radial-gradient(circle at 43% 35%,#6c5134 0,#594027 35%,#35281c 63%,#161411 71%,transparent 72%);
+  background-clip: padding-box;
+  color: #cec1a7;
+  box-shadow: inset 0 0 0 1px #9c876280,inset 0 0 0 .28cqw #29261f,inset 0 0 1.4cqw #0f0d0bcc,0 .25cqw .6cqw #0009;
+  text-shadow: 0 .12cqw .1cqw #000,0 -.03cqw #e4d1aa33;
+  font-weight: 500;
+  letter-spacing: .035em;
+  isolation: isolate;
+}
+.game-confirm::before,.game-cancel::before {
+  content: "";
+  position: absolute;
+  inset: -.94cqw;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 3deg,#756c5d 0deg 6deg,#24211c 6deg 9deg,transparent 9deg 15deg);
+  mask: radial-gradient(circle,transparent 0 61%,#000 62% 72%,transparent 73%);
+  -webkit-mask: radial-gradient(circle,transparent 0 61%,#000 62% 72%,transparent 73%);
+  filter: drop-shadow(0 .07cqw .07cqw #000);
+  pointer-events: none;
+  z-index: -1;
+}
+.game-confirm::after,.game-cancel::after {
+  inset: -.5cqw;
+  border: .28cqw solid #585246;
+  box-shadow: inset 0 .08cqw #c1b49266,inset 0 -.12cqw #1a1814,0 .08cqw #15120e,0 0 0 .1cqw #25221c;
+  background: none;
+}
+.game-cancel { background: radial-gradient(circle at 43% 35%,#a36a26 0,#84501d 40%,#483119 65%,#18140e 72%,transparent 73%); }
+.game-confirm:hover:not(:disabled),.game-cancel:hover { filter: brightness(1.13); }
+.game-confirm:disabled { opacity: .64; filter: saturate(.45) brightness(.76); }
+.game-confirm:focus-visible,.game-cancel:focus-visible { outline: 1px solid #b39a6f; outline-offset: .6cqw; }
+.quick-switch {
+  border: .12cqw solid #61584b;
+  background: linear-gradient(#090a08,#27261f);
+  box-shadow: inset 0 .1cqw .16cqw #000,0 1px #a1916b38;
+}
+.quick-switch::after {
+  border: .14cqw solid #84785e;
+  background: radial-gradient(ellipse at 30% 25%,#837b67,#504937 50%,#29261f);
+  box-shadow: inset 0 1px #b7ac8c66,inset 0 -1px #17140f,0 .12cqw .16cqw #000c;
+}
+.quick-decision input:checked+.quick-switch { background: linear-gradient(#6d4522,#a0783d); border-color: #8b7652; }
+.quick-decision input:focus-visible+.quick-switch { outline-color: #c3ac77; }
+
+/* Goal hover follows the same brown stone / corroded iron palette. */
+.goal-tooltip {
+  border: 1px solid #796452;
+  border-radius: 0;
+  background: radial-gradient(ellipse at 20% 0,#8e644923,transparent 60%),repeating-linear-gradient(4deg,#33251d12 0 2px,transparent 2px 7px),linear-gradient(140deg,#241d18fa,#100e0cfc);
+  color: #c8bca9;
+  box-shadow: inset 0 0 0 3px #45312788,inset 0 0 35px #0008,0 16px 38px #000c;
+  scrollbar-color: #65513d transparent;
+  font-family: "Microsoft YaHei","Segoe UI",sans-serif;
+}
+.goal-tooltip-header { border-bottom-color: #594538; }
+.goal-tooltip h2,.goal-tooltip h3 { color: #c6ad82; font-weight: 500; letter-spacing: .025em; }
+.goal-tooltip h2 { font-size: 18px; }
+.goal-status { color: #ab9e87; }
+.goal-status.complete { color: #c4b28c; }
+.goal-explanation { color: #ded0b8; }
+.goal-reward { color: #bea278; }
+.goal-current { background: #08060444; border-left-color: #9b7952; color: #c0b6a0; }
+.goal-tooltip li::marker { color: #ad8d62; }
+.goal-tooltip ul { color: #b9ab94; }
+.goal-notes { border-top-color: #4d3d30; color: #9b8d78; }
+
+/* Reward choice uses the same corroded iron and stone as the decision cards. */
+#reward-dialog{border:1px solid #75644c;border-radius:0;background:radial-gradient(ellipse at 50% 0,#68503d35,transparent 65%),#171511;box-shadow:inset 0 0 0 3px #3b3025,0 24px 80px #000c}
+.reward-choice{border:3px solid #5d4937;background:linear-gradient(#27241fba,#171410db),url('assets/prison-stone-v2.png') center/cover;box-shadow:inset 0 0 0 1px #84715b44,inset 0 0 38px #0007}
+.reward-choice[aria-pressed=true]{border-color:#a48255;box-shadow:inset 0 0 0 1px #c6a27355,0 0 18px #aa804333}
+.reward-choice:focus-visible{outline:1px solid #b89968;outline-offset:3px}
+#reward-dialog h2,.reward-choice strong{color:#ccbaa0}.reward-choice p{color:#b9ad98}
+#confirm-reward{border:2px solid #786348;background:linear-gradient(#463a2a,#201b14);color:#d1c1a4}
