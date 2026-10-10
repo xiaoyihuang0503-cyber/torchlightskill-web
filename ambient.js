@@ -59,10 +59,14 @@
       vec2 uv = gl_FragCoord.xy / uResolution;
       float aspect = uResolution.x / uResolution.y;
       vec2 p = (uv - 0.5) * vec2(aspect, 1.0);
-      float t = uTime * 0.018;
-      // Quiet charcoal material, with broad light variation rather than bright contours.
-      float material = fbm(p * 0.8 + vec2(t, -t * 0.3));
-      float shade = 0.012 + material * 0.019;
+      float t = uTime * 0.065;
+      // Two evolving currents bend the charcoal material even without pointer input.
+      vec2 current = vec2(
+        fbm(p * 1.15 + vec2(t, -t * 0.45)),
+        fbm(p * 1.15 + vec2(7.1 - t * 0.6, 2.4 + t * 0.7))
+      );
+      float material = fbm(p * 1.6 + current * 2.1 + vec2(t * 0.15, -t * 0.1));
+      float shade = 0.012 + smoothstep(0.18, 0.76, material) * 0.105;
       shade += exp(-dot(p * vec2(0.6, 1.0), p * vec2(0.6, 1.0))) * 0.012;
       float ink = 0.0;
       for (int i = 0; i < 6; i++) {
