@@ -8,13 +8,17 @@
   <title>TorchlightSkill · 火炬工具箱</title>
   <meta name="description" content="专注火炬之光：无限的玩家工具箱。火炬 AI 导师、塔罗斯监狱玩法工具，持续更新。">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css?v=20261010-2">
+  <link rel="stylesheet" href="./style.css?v=20261011-1">
   <script src="./app.js" defer></script>
+  <script src="./ambient.js?v=20261011-1" defer></script>
 </head>
 <body>
 <main class="site" id="home">
-  <div class="space-light blue-light"></div><div class="space-light orange-light"></div>
-  <div class="orbit-line orbit-one"></div><div class="orbit-line orbit-two"></div>
+  <div class="ambient-field" aria-hidden="true">
+    <div class="ambient-fallback"><i></i><i></i><i></i></div>
+    <canvas id="fluid-background"></canvas>
+    <div class="ambient-vignette"></div>
+  </div>
   <header class="site-header">
     <a class="brand" href="#home" aria-label="TorchlightSkill 首页"><span class="brand-mark" aria-hidden="true">✦</span><span>Torchlight<span class="brand-accent">Skill</span><small>火炬工具箱</small></span></a>
     <nav class="top-nav" aria-label="主导航"><a href="#products"><b>工具</b></a><a href="#about"><b>关于</b></a></nav>
@@ -40,6 +44,8 @@
   </section>
   <footer id="about"><div><strong>TorchlightSkill</strong><p>专注《火炬之光：无限》的玩家工具，更多工具持续加入。</p></div><p class="footer-note">玩家制作的独立工具网站，与游戏官方无隶属关系。<br>© 2026 TorchlightSkill</p></footer>
 </main>
+<div class="pointer-aura" aria-hidden="true"></div>
+<div class="pointer-ring" aria-hidden="true"></div>
 <dialog id="mentor-detail" aria-labelledby="mentor-dialog-title"><button class="close-dialog" aria-label="关闭">×</button><span class="eyebrow">AI MENTOR · 内测中</span><h2 id="mentor-dialog-title">火炬 AI 导师</h2><p>围绕角色资料与当前构筑，分析伤害、生存和流派搭配，帮助你找到问题与提升顺序。</p><p>构筑诊断 · 阶段建议 · 流派诊断</p><button class="primary-button close-action">知道了</button></dialog>
 <dialog id="prison-detail" aria-labelledby="prison-dialog-title"><button class="close-dialog" aria-label="关闭">×</button><span class="eyebrow">SEASON TOOL · 测试中</span><h2 id="prison-dialog-title">塔罗斯监狱</h2><p>经营模拟测试版，包含囚犯配对、吞噬、条件收益辅助与声音设置。复刻练习与原创挑战，规则持续校准。点击工具卡片上的“开始试玩”即可体验。</p><p class="dialog-note">模拟规则与收益为实验设定，实际玩法以游戏内规则为准。</p><button class="primary-button close-action">知道了</button></dialog>
 </body>

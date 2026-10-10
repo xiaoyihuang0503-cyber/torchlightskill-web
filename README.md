@@ -10,6 +10,12 @@ GitHub Pages 从 `main` 分支的仓库根目录发布，根目录 `.nojekyll` �
 - `talos/index.html`：塔罗斯经营模拟入口，对应 [https://torchlightskill.com/talos/](https://torchlightskill.com/talos/)。
 - 根目录 `CNAME`：官网域名；`talos/` 子目录与首页共用域名和 HTTPS。
 
+## 首页背景动效
+
+首页使用 `ambient.js` 绘制紫色流体背景，鼠标移动时产生局部扰动、跟随光晕，点击时出现短暂涟漪。动效不加载外部库，所有装饰层均不接收点击，保留系统鼠标指针。
+
+无法使用 WebGL 时显示 CSS 渐变背景；触屏不显示鼠标装饰。系统开启“减少动态效果”时保留静态背景。修改动效或样式后，同步更新 `index.html` 中对应资源的版本参数。
+
 ## 塔罗斯经营模拟
 
 游戏纯前端运行，图片、声音和 Three.js 随静态文件加载。经营存档与偏好保存在用户浏览器，可通过游戏内导出、导入保留或迁移。
