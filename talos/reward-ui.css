@@ -1,0 +1,274 @@
+/* Late-loaded, scoped reward/event presentation. All mechanics remain in app/engine. */
+#reward-dialog {
+  --reward-paper: #d6d0c0;
+  --reward-copy: #a8a9a2;
+  --reward-line: #656762;
+  --reward-red: #843531;
+  --reward-serif: "Songti SC", "STSong", "SimSun", Georgia, serif;
+  width: min(1160px, calc(100vw - 40px));
+  max-width: calc(100vw - 40px);
+  max-height: calc(100dvh - 40px);
+  margin: auto;
+  padding: 28px 30px 24px;
+  border: 1px solid #555751;
+  border-radius: 0;
+  color: var(--reward-paper);
+  background: linear-gradient(145deg, #1b1d1ce8, #0d100ff5 65%), url("assets/prison-stone-v2.png") center / cover;
+  box-shadow: inset 0 0 0 3px #171918, inset 0 0 0 4px #333832, 0 24px 90px #000c;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #575951 #101312;
+}
+#reward-dialog[open] { display: flex; flex-direction: column; }
+#reward-dialog::backdrop { background: #060706d9; backdrop-filter: blur(4px); }
+#reward-dialog .dialog-heading {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  margin: 0 0 26px;
+  padding: 0 12px 16px;
+  border-bottom: 1px solid #5d60563d;
+  text-align: center;
+}
+#reward-dialog .dialog-heading h2 {
+  font-family: var(--reward-serif);
+  font-size: clamp(21px, 2.25vw, 30px);
+  font-weight: 600;
+  color: #d4cebd;
+  letter-spacing: .1em;
+  line-height: 1.5;
+  text-shadow: 0 2px 3px #000;
+}
+#reward-kind:not([hidden]) { display: block; color: #838a82; font-size: 11px; letter-spacing: .22em; margin-bottom: 7px; }
+#reward-dialog .reward-options {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 17px;
+  min-width: 0;
+  padding: 3px;
+  margin: 0;
+}
+#reward-dialog .reward-options:has(.reward-choice:nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 890px; width: 100%; margin-inline: auto; }
+#reward-dialog .reward-options:has(.reward-choice:nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 650px; width: 100%; margin-inline: auto; }
+#reward-dialog .reward-options:has(.reward-choice:first-child:last-child) { grid-template-columns: minmax(0, 1fr); max-width: 320px; width: 100%; margin-inline: auto; }
+#reward-dialog .reward-choice {
+  --frame-color: #656d66;
+  --frame-light: #8e9386;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 393px;
+  margin: 0;
+  padding: 18px 18px 30px;
+  border: 1px solid var(--frame-color);
+  border-radius: 0;
+  background: radial-gradient(ellipse at 50% 21%, #66664b1a 0, transparent 48%), linear-gradient(#242724b5, #0d1111e8 67%), url("assets/prison-stone-v2.png") center / cover;
+  color: var(--reward-paper);
+  text-align: center;
+  box-shadow: inset 0 0 0 3px #111617, inset 0 0 0 4px #515a5045, inset 0 -18px 35px #0003;
+  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
+  transform: none;
+  transition: border-color .18s, background-color .18s, box-shadow .18s;
+}
+#reward-dialog .reward-choice::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  inset: 7px;
+  border: 1px solid #7780753d;
+  background: linear-gradient(135deg, var(--frame-light) 0 8px, transparent 9px) top left / 17px 17px no-repeat, linear-gradient(225deg, var(--frame-light) 0 8px, transparent 9px) top right / 17px 17px no-repeat, linear-gradient(45deg, var(--frame-light) 0 8px, transparent 9px) bottom left / 17px 17px no-repeat, linear-gradient(315deg, var(--frame-light) 0 8px, transparent 9px) bottom right / 17px 17px no-repeat;
+  opacity: .72;
+  z-index: -1;
+}
+#reward-dialog .reward-choice::after {
+  content: "";
+  position: absolute;
+  left: calc(50% - 6px);
+  bottom: 11px;
+  width: 11px;
+  height: 11px;
+  border: 1px solid #858b7c;
+  background: linear-gradient(135deg, #5b6459, #181d1c 65%);
+  box-shadow: 0 0 0 3px #121616;
+  transform: rotate(45deg);
+  opacity: .45;
+  pointer-events: none;
+}
+#reward-dialog .reward-choice:hover { border-color: #a4a897; background-color: #252924; box-shadow: inset 0 0 0 3px #151a19, inset 0 0 0 4px #838a6255, inset 0 -18px 35px #0003; transform: none; }
+#reward-dialog .reward-choice[aria-pressed="true"] {
+  --frame-color: #b86659;
+  --frame-light: #ba7b68;
+  border-color: var(--frame-color);
+  background: radial-gradient(ellipse at 50% 18%, #9b59331a, transparent 45%), linear-gradient(#342321b8, #160f10e8 69%), url("assets/prison-stone-v2.png") center / cover;
+  box-shadow: inset 0 0 0 3px #201717, inset 0 0 0 4px #8b4a3d75, inset 0 -22px 38px #3e0e1055;
+  transform: none;
+}
+#reward-dialog .reward-choice[aria-pressed="true"]::after { background: #9e4940; border-color: #daa68d; opacity: 1; }
+#reward-dialog .reward-choice:focus-visible { outline: 3px solid #d1c8b5; outline-offset: -5px; }
+#reward-dialog .reward-choice .reward-art,
+#reward-dialog .reward-choice .reward-icon {
+  display: grid;
+  place-items: center;
+  position: relative;
+  flex: 0 0 auto;
+  width: 100%;
+  height: 173px;
+  margin: 0 0 10px;
+  background: radial-gradient(ellipse at 50% 49%, #b3a77815 0, #8f81650c 30%, transparent 67%);
+  border: 0;
+  color: #c4b999;
+  font-size: 45px;
+  text-shadow: none;
+}
+#reward-dialog .reward-choice .reward-item-art { display: block; height: 100%; width: 100%; max-width: 235px; overflow: visible; }
+#reward-dialog .reward-choice .reward-name,
+#reward-dialog .reward-choice > strong {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 49px;
+  margin: 0 0 15px;
+  padding: 0 3px 11px;
+  border-bottom: 1px solid #7d82743d;
+  color: #d8d2bf;
+  font-family: var(--reward-serif);
+  font-size: clamp(16px, 1.45vw, 21px);
+  font-weight: 600;
+  letter-spacing: .06em;
+  line-height: 1.65;
+  text-shadow: 0 2px 4px #000;
+}
+#reward-dialog .reward-choice .reward-description,
+#reward-dialog .reward-choice > p {
+  flex: 1 0 auto;
+  margin: 0;
+  padding: 0 4px;
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #b5b6ae;
+  text-align: left;
+  line-height: 1.95;
+  overflow-wrap: anywhere;
+}
+.rule-term { font-weight: 500; }
+.rule-term--number { color: #c7bda1; }
+.rule-term--action { color: #d2877e; }
+.rule-term--condition { color: #88b8b4; }
+.rule-term--constraint { color: #c7c8bd; }
+.rule-term--rarity { color: #cba469; }
+.rule-rarity-0 { color: #c4c7be; }
+.rule-rarity-1 { color: #8cabbd; }
+.rule-rarity-2 { color: #c6b27c; }
+.rule-rarity-3 { color: #d4a264; }
+.rule-rarity-4 { color: #c99879; }
+.rule-rarity-5 { color: #b2a5b7; }
+#confirm-reward {
+  position: relative;
+  flex: 0 0 auto;
+  display: block;
+  width: 236px;
+  max-width: 80%;
+  min-height: 49px;
+  margin: 25px auto 0;
+  padding: 9px 22px;
+  border: 1px solid #95715e;
+  border-radius: 0;
+  color: #e0d0b9;
+  background: linear-gradient(#57332e, #2c1d1c);
+  box-shadow: inset 0 0 0 3px #251b19, inset 0 0 0 4px #92736344, 0 4px 12px #0004;
+  font-family: var(--reward-serif);
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: .2em;
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
+}
+#confirm-reward:hover:not(:disabled) { color: #e8dbc3; border-color: #b8997d; background: linear-gradient(#75433b, #3d2421); }
+#confirm-reward:focus-visible { outline: 2px solid #e1ceb2; outline-offset: -5px; }
+#confirm-reward:disabled { opacity: 1; color: #71736a; border-color: #434a44; background: linear-gradient(#272b27, #191e1a); box-shadow: inset 0 0 0 3px #171c18, inset 0 0 0 4px #59635622; }
+
+/* An existing event is rendered into this panel; choice buttons keep data-action. */
+#event-sheet {
+  --event-serif: "Songti SC", "STSong", "SimSun", Georgia, serif;
+  position: absolute;
+  inset: 14% 8% 13% 25%;
+  z-index: 9;
+  display: grid;
+  grid-template-columns: minmax(170px, .85fr) minmax(0, 1.2fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  column-gap: clamp(20px, 3vw, 50px);
+  align-content: center;
+  padding: clamp(22px, 2.9vw, 42px);
+  border: 1px solid #777d705e;
+  background: linear-gradient(110deg, #0c100fce, #0e1111f2 49%, #151916f5);
+  color: #d0cebe;
+  box-shadow: inset 0 0 0 4px #181d18, inset 0 0 0 5px #515c4940, 0 12px 50px #0008;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #575951 #101312;
+}
+#event-sheet[hidden] { display: none; }
+#event-sheet .event-art { grid-column: 1; grid-row: 1 / -1; display: grid; place-items: center; align-self: center; opacity: .78; min-width: 0; color: #7b8376; }
+#event-sheet .event-art svg { width: min(100%, 270px); height: auto; filter: drop-shadow(0 9px 9px #0009); }
+#event-sheet .event-heading { grid-column: 2; margin: 0 0 18px; padding: 0 0 16px; border-bottom: 1px solid #8587763a; font-family: var(--event-serif); font-size: clamp(22px, 2.1vw, 31px); font-weight: 600; letter-spacing: .1em; line-height: 1.5; color: #d0c8b6; text-shadow: 0 2px 3px #000; }
+#event-sheet .event-description { grid-column: 2; margin: 0 0 24px; font-family: var(--event-serif); font-size: clamp(12px, 1.1vw, 15px); line-height: 1.9; color: #91968b; }
+#event-sheet .event-rule { grid-column: 2; align-self: end; margin: 0 0 24px; padding: 20px 23px; border: 1px solid #878c7e; background: linear-gradient(145deg, #2b30254d, #171e18b3); box-shadow: inset 0 0 0 3px #111913, inset 0 0 0 4px #696f4e33, 0 2px 8px #0004; font-size: clamp(13px, 1.2vw, 17px); line-height: 1.9; color: #c7cabb; overflow-wrap: anywhere; }
+#event-sheet .event-rule .rule-term--condition { color: #8bc8c2; }
+#event-sheet .event-options { grid-column: 2; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; }
+#event-sheet .event-options .button { min-width: 100px; padding: 9px 20px; border: 1px solid #60675b; border-radius: 0; font-family: var(--event-serif); font-size: 15px; color: #bfc2b2; background: linear-gradient(#2e322b, #171e19); box-shadow: inset 0 0 0 3px #101811, inset 0 0 0 4px #70775522; }
+#event-sheet .event-options .button.gold { min-width: 142px; border-color: #977862; background: linear-gradient(#51352b, #2b211b); color: #d4c4a9; }
+#event-sheet .event-options .button:hover:not(:disabled) { border-color: #a7a58c; color: #e1d6bd; background: linear-gradient(#443e32, #23271d); }
+#event-sheet .event-options .button.gold:hover:not(:disabled) { border-color: #b99a7b; background: linear-gradient(#714237, #39241e); }
+#event-sheet .event-options .button:focus-visible { outline: 2px solid #d4c3a7; outline-offset: 3px; }
+
+@media (max-width: 920px) {
+  #reward-dialog { padding: 22px 23px; }
+  #reward-dialog .reward-options { gap: 12px; }
+  #reward-dialog .reward-choice { padding: 16px 13px 29px; min-height: 363px; }
+  #reward-dialog .reward-choice .reward-art, #reward-dialog .reward-choice .reward-icon { height: 151px; }
+  #reward-dialog .reward-choice .reward-description, #reward-dialog .reward-choice > p { font-size: 12px; line-height: 1.85; padding: 0; }
+  #event-sheet { inset: 13% 4% 10% 19%; column-gap: 24px; padding: 24px; }
+}
+@media (max-width: 760px) {
+  #reward-dialog { width: calc(100vw - 24px); max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); padding: 18px 16px; }
+  #reward-dialog .dialog-heading { margin-bottom: 16px; padding-bottom: 12px; }
+  #reward-dialog .reward-options, #reward-dialog .reward-options:has(.reward-choice:nth-child(3):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+  #reward-dialog .reward-choice { min-height: 323px; padding: 12px 15px 29px; }
+  #reward-dialog .reward-choice .reward-art, #reward-dialog .reward-choice .reward-icon { height: 139px; margin-bottom: 7px; }
+  #reward-dialog .reward-choice .reward-name, #reward-dialog .reward-choice > strong { font-size: 17px; min-height: 43px; margin-bottom: 12px; padding-bottom: 8px; }
+  #reward-dialog .reward-choice .reward-description, #reward-dialog .reward-choice > p { font-size: 12px; line-height: 1.85; }
+  #confirm-reward { margin-top: 19px; min-height: 45px; font-size: 16px; }
+  #event-sheet { inset: 12% 3% 9%; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto auto; gap: 0; padding: 22px; }
+  #event-sheet .event-art { display: none; }
+  #event-sheet .event-heading, #event-sheet .event-description, #event-sheet .event-rule, #event-sheet .event-options { grid-column: 1; }
+  #event-sheet .event-heading { margin-bottom: 14px; font-size: 23px; }
+  #event-sheet .event-description { margin-bottom: 16px; font-size: 12px; }
+  #event-sheet .event-rule { padding: 15px 18px; margin-bottom: 18px; font-size: 13px; }
+}
+@media (max-width: 430px) {
+  #reward-dialog { padding: 17px 12px; }
+  #reward-dialog .reward-options { gap: 9px; padding: 1px; }
+  #reward-dialog .reward-choice { min-height: 309px; padding: 11px 12px 29px; }
+  #reward-dialog .reward-choice .reward-art, #reward-dialog .reward-choice .reward-icon { height: 119px; }
+  #reward-dialog .reward-choice .reward-name, #reward-dialog .reward-choice > strong { font-size: 15px; min-height: 52px; letter-spacing: .02em; }
+  #reward-dialog .reward-choice .reward-description, #reward-dialog .reward-choice > p { font-size: 11px; }
+}
+@media (max-height: 620px) and (min-width: 761px) {
+  #reward-dialog { padding-top: 18px; padding-bottom: 17px; }
+  #reward-dialog .dialog-heading { margin-bottom: 16px; padding-bottom: 11px; }
+  #reward-dialog .reward-choice { min-height: 300px; padding-top: 11px; }
+  #reward-dialog .reward-choice .reward-art, #reward-dialog .reward-choice .reward-icon { height: 130px; margin-bottom: 4px; }
+  #reward-dialog .reward-choice .reward-name, #reward-dialog .reward-choice > strong { min-height: 40px; margin-bottom: 9px; }
+  #confirm-reward { margin-top: 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #reward-dialog .reward-choice { transition: none; }
+}

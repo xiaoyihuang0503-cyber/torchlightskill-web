@@ -163,8 +163,9 @@ export class PrisonScene3D {
       cell.tierRing.visible=!!prisoner;cell.tierMaterial.color.setHex(TIER_COLORS[prisoner?.tier]||TIER_COLORS[0]);
       const candidate=state.phase==='patrol'&&!state.pending.length&&state.destinations.includes(id);
       const source=armed&&selected===id,target=pairTarget===id,hover=this.hovered===id;
-      cell.highlight.visible=source||target||candidate||hover;cell.highlightMaterial.color.setHex(target?0x98d5aa:source?0xf3cf7a:candidate?0xcab778:0x9baea3);
-      cell.highlightMaterial.opacity=(source||target) ? .95 : candidate ? .65 : .42;
+      cell.highlight.visible=source||target||candidate||hover;cell.highlightMaterial.color.setHex(target?0x91c6b0:source?0xe38570:candidate?0xb7b6a2:0xcdc9ba);
+      cell.highlightMaterial.opacity=(source||target) ? 1 : candidate ? .52 : .65;
+      cell.highlight.scale.setScalar(source||target?1.09:1);
     }
     const position=this.cells[state.position]?.group.position;if(position)this.warden.position.set(position.x,.17,position.z+1.15);
     this.warden.visible=!!position;this.renderer.shadowMap.needsUpdate=true;this.layout();this.request();

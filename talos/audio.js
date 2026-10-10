@@ -1,5 +1,8 @@
 const STORAGE_KEY='ss14-prison-audio-v1';
-const DEFAULTS=Object.freeze({enabled:true,sfx:true,voice:true,ambience:true,music:true,volume:.65,musicVolume:.7});
+const DEFAULTS=Object.freeze({enabled:true,sfx:true,voice:true,ambience:true,music:true,volume:.65,musicVolume:.8});
+// The existing music is quiet (-22.7 LUFS); its .28 manifest gain attenuated it
+// again. Rebalance this bus only, keeping foreground levels and saved sliders.
+const MUSIC_MIX=Object.freeze({gain:2.8,voiceDuck:.22,devourDuck:.34});
 const KINDS=new Set(['sfx','voice','ambience','music']);
 const BEASTS=Object.freeze({elephant:'beast_elephant',lion:'beast_lion',wolf:'beast_wolf',rat:'beast_rat'});
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
@@ -7,6 +10,7 @@ function browserStorage(){try{return globalThis.localStorage;}catch{return null;
 function preferences(value={}){
   const result={...DEFAULTS};
   for(const key of ['enabled','sfx','voice','ambience','music'])if(typeof value[key]==='boolean')result[key]=value[key];
+  // A stored old default may also be a manual choice: retain every saved value.
   for(const key of ['volume','musicVolume'])if(Number.isFinite(value[key]))result[key]=clamp(value[key]);
   return result;
 }
@@ -66,9 +70,10 @@ export class PrisonAudio {
   }
   _volume(record){
     const voice=Boolean(this.currentVoice?.playing),devour=this.effects.some(effect=>effect.playing&&(effect.id==='devour'||effect.id.startsWith('beast_')));
-    const duck=record.kind==='music'?(voice ? .3:devour ? .42:1):record.kind==='ambience'&&voice ? .38:1;
+    const duck=record.kind==='music'?(voice ? MUSIC_MIX.voiceDuck:devour ? MUSIC_MIX.devourDuck:1):record.kind==='ambience'&&voice ? .38:1;
     const level=record.kind==='music'?this.preferences.musicVolume:1;
-    try{record.media.volume=clamp(this.preferences.volume*level*record.gain*duck);}catch{}
+    const mixGain=record.kind==='music'?MUSIC_MIX.gain:1;
+    try{record.media.volume=clamp(this.preferences.volume*level*record.gain*mixGain*duck);}catch{}
   }
   _start(record,done){
     const sequence=++record.playSequence;

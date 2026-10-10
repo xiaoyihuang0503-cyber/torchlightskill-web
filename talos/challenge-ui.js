@@ -5,7 +5,7 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;
 const contracts=[['混编押运',4],['精锐押运',8],['重囚押运',12]];
 
 export function challengePanel(state,{selected,pendingAction,busy=false}={}){
-  if(!state.challenge)return `<div class="challenge-kicker"><span>另一种经营目标</span><span>原创模式</span></div><h2>押运合约</h2><p>12 日经营，三次交付。保留囚犯继续养成，或按期押运换取挑战积分。</p><div class="challenge-controls"><button class="button gold" data-start-challenge>开始挑战</button></div><p class="challenge-origin">保留玩法复刻；挑战目标、调度券与结算为原创规则。</p>`;
+  if(!state.challenge)return '';
   const v=challengeView(state),active=v.contract;
   const stages=(v.contracts??contracts.map(([name,deadline],i)=>({name,deadline,status:i<v.contractIndex?'missed':i===v.contractIndex?'active':'future'}))).map(c=>`<div class="contract-stage ${c.status==='active'?'current':c.status==='completed'?'complete':c.status==='missed'?'missed':''}"><span>第 ${c.deadline} 日</span><br>${esc(c.name)}${c.status==='completed'?' ✓':c.status==='missed'?' · 未交付':''}</div>`).join('');
   const room=pendingAction?.type==='visit'?pendingAction.room:selected;
@@ -14,7 +14,7 @@ export function challengePanel(state,{selected,pendingAction,busy=false}={}){
   const delivery=v.deliveryPending?`<button class="button gold" data-open-delivery ${busy?'disabled':''}>选择交付囚犯</button>${v.earlyDelivery?`<button class="button" data-cancel-early ${busy?'disabled':''}>继续经营</button>`:`<button class="button" data-skip-delivery ${busy?'disabled':''}>放弃本次合约</button>`}`:'';
   const early=v.canOpenEarlyDelivery?`<button class="button gold" data-early-delivery ${busy?'disabled':''}>提前重囚押运</button><p class="hint">第 9 日起可提前交付。确认交付会立即结束本轮；也可继续经营到第 12 日。</p>`:'';
   const scout=state.phase==='patrol'&&!v.deliveryPending?`<button class="button" data-scout-room="${room}" ${canScout?'':'disabled'}>${v.intel?'本日已侦察':canScout?`侦察 ${room+1} 号 · 1 券`:'选择未开目的地后可侦察'}</button><p class="hint">侦察花 1 券，每日最多一次。看清陌生囚犯，再决定扩张或保留人数。</p>`:'';
-  const finished=v.status==='finished'?`<h2 class="${v.result?.success?'challenge-success':''}">${v.result?.grade==='full'?'三单全部达成':v.result?.success?'押运挑战通过':'本轮挑战结束'}</h2><p>${esc(v.summary)}</p><button class="button gold full" data-start-challenge>再开一局挑战</button>`:`<h2>${esc(active?.name??'押运挑战')}</h2><p>${esc(active?.description??'完成至少两份合约。')}</p><p class="hint">${v.deliveryPending?'本日交付开放，交付或放弃后才继续。':`本次交付：第 ${active?.deadline??12} 日结束时。`}</p>`;
+  const finished=v.status==='finished'?`<h2 class="${v.result?.success?'challenge-success':''}">${v.result?.grade==='full'?'三单全部达成':v.result?.success?'押运挑战通过':'本轮挑战结束'}</h2><p>${esc(v.summary)}</p>`:`<h2>${esc(active?.name??'押运挑战')}</h2><p>${esc(active?.description??'完成至少两份合约。')}</p><p class="hint">${v.deliveryPending?'本日交付开放，交付或放弃后才继续。':`本次交付：第 ${active?.deadline??12} 日结束时。`}</p>`;
   return `<div class="challenge-kicker"><span>押运合约 · ${esc(v.buildName??v.build)}</span><span>原创挑战</span></div><div class="challenge-metrics"><div><strong>${v.tickets}</strong><span>调度券</span></div><div><strong>${v.completed}/3</strong><span>已完成合约</span></div><div><strong>${v.score}</strong><span>挑战积分</span></div></div><div class="contract-stages">${stages}</div>${finished}${intel}<div class="challenge-controls">${delivery}${early}${scout}</div><p class="challenge-origin">交付拿走所选囚犯。至少完成 2 单且包含重囚合约才能通过，3 单为全部达成；积分只用于本挑战。</p>`;
 }
 

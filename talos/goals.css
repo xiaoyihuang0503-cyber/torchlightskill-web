@@ -1,0 +1,52 @@
+/* Shared charcoal, worn silver and oxblood treatment for the game interface. */
+:root{--prison-ink:#0f0f10;--prison-edge:#68635b;--prison-red:#9c4238;--prison-paper:#d9d3c7;--prison-heading:"Noto Serif SC","Source Han Serif SC","Songti SC","SimSun",serif}
+.run-sidebar{grid-column:2;grid-row:1;display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#51443f transparent;padding:0 2px 2px 0}
+.sidebar-section{flex:none;position:relative;min-width:0;margin:0;border:1px solid #54514c;border-radius:0;background:linear-gradient(115deg,#a8a69b08,transparent 40%),repeating-linear-gradient(89deg,#ffffff02 0 1px,transparent 1px 17px),linear-gradient(#19191b,#101112);box-shadow:inset 0 0 0 3px #0a0a0b,inset 0 0 0 4px #35333240,0 4px 12px #0005;color:#d3cfc5}
+.sidebar-section::before,.sidebar-section::after{content:"";position:absolute;top:-1px;width:8px;height:8px;border-top:2px solid #aaa296;pointer-events:none;z-index:2}
+.sidebar-section::before{left:-1px;border-left:2px solid #aaa296}.sidebar-section::after{right:-1px;border-right:2px solid #aaa296}
+.sidebar-heading,.advice-section>summary{display:flex;align-items:center;gap:9px;padding:16px 16px 13px;border-bottom:1px solid #41403c;margin:0;background:linear-gradient(#ffffff04,transparent);min-width:0}
+.sidebar-heading h2,.advice-section>summary h2{font-family:var(--prison-heading);font-size:16px;font-weight:600;letter-spacing:.1em;color:#ded8cc;margin:0;white-space:nowrap}
+.mode-label,.sidebar-caption{margin-left:auto;font-size:10px;color:#9f9b90;white-space:nowrap;letter-spacing:.04em}
+.mode-label{border-left:1px solid #5d514a;padding-left:9px;color:#b49d87}
+.practice-overview{padding:18px 16px 16px}
+.run-objective{font:600 23px/1.5 var(--prison-heading);letter-spacing:.05em;color:#e0d4bf;margin:0}
+.run-condition{font-size:12px;line-height:1.8;color:#a8a39a;margin:7px 0 18px}
+.run-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-block:1px solid #4a423b;padding:12px 0;gap:5px;background:linear-gradient(90deg,transparent,#5b34230f,transparent)}
+.run-counts>div{display:grid;text-align:center;gap:6px;border-right:1px solid #393633}.run-counts>div:last-child{border:0}
+.run-counts strong{font:400 29px/1 var(--prison-heading);color:#e4dbc9}.run-counts span{font-size:10px;color:#a49e91}
+.run-next{font:500 14px/1.7 var(--prison-heading);color:#baa58c;text-align:center;margin:12px 0 15px}
+.stage-goal{border-top:1px solid #423d36;padding-top:12px;font-size:12px;line-height:1.7;color:#b9b4a7}
+.stage-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#c5baaa;font-size:11px}.stage-goal p{margin:7px 0}.stage-goal small{display:block;font-size:11px;color:#8f8a80}.stage-goal h3{margin:0!important}
+.goal-status{font-size:10px;color:#c9a58c}.goal-status.complete{color:#98ad9c}
+.run-sidebar .challenge-panel{padding:16px;border:0}.run-sidebar .challenge-panel h2{font:500 22px/1.5 var(--prison-heading);color:#d7c7ac}
+.sound-section .audio-toolbar{padding:12px 16px 15px}.run-sidebar .audio-toggle{border:1px solid #6a6153;border-radius:0;background:linear-gradient(#302a23,#191716);color:#d1c4ae;box-shadow:inset 0 0 0 1px #0b0a09;font-size:12px}
+.advice-section>summary{cursor:pointer;list-style:none;border-bottom:0;outline-offset:-4px}.advice-section>summary::-webkit-details-marker{display:none}
+.advice-section>summary:focus-visible{outline:2px solid #cdb8a2}.advice-section[open]>summary{border-bottom:1px solid #41403c}
+.fold-mark{width:7px;height:7px;border-right:1px solid #b0a694;border-bottom:1px solid #b0a694;transform:rotate(45deg);margin:0 2px 4px 4px}.advice-section[open] .fold-mark{transform:rotate(225deg);margin-top:5px}
+.advice-control{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;color:#aaa49a;font-size:11px;border-bottom:1px solid #302c28}
+.advice-switch input{accent-color:#9f4e40}.advice-section .advice-placeholder{padding:15px 16px;font-size:12px}.advice-section .advice-placeholder p+p{margin-top:8px}
+.advice-section .assistant-drawer{padding:16px;overflow:visible}.advice-section .advice-caption{margin-bottom:10px;color:#9d9386}
+.advice-objective{border-bottom:1px solid #423d36;margin-bottom:18px;padding-bottom:15px}.advice-objective h3{font:500 15px/1.7 var(--prison-heading);color:#d0bc9f;margin:0 0 9px}.advice-objective p{font-size:12px;line-height:1.9;color:#ada699}
+.run-sidebar .button{border:1px solid #6a5c4b;border-radius:0;background:linear-gradient(#302823,#171412);color:#d8cbb6;box-shadow:inset 0 0 0 1px #080706}.run-sidebar .button.gold{background:linear-gradient(#662e28,#301915);border-color:#946858;color:#eadbca}.run-sidebar .button:hover:not(:disabled){border-color:#ad9380;background-color:#443329}
+.goal-tooltip{background:linear-gradient(130deg,#242224fb,#101011fc);border:1px solid #82786a;box-shadow:inset 0 0 0 3px #0e0d0e,0 18px 40px #000b;border-radius:0}.goal-tooltip h2,.goal-tooltip h3{font-family:var(--prison-heading);color:#d7c6ad}.goal-tooltip .goal-current{background:#3a211d50;border-color:#9f6553;color:#c3b6a1}
+.goal-heading{font:500 1.05cqw/1.5 var(--prison-heading);color:#beb4a4}.goal-main{display:block;font:600 1.35cqw/1.7 var(--prison-heading);color:#e0d0b5}.scene-goal .goal-condition{font-size:.87cqw;margin-top:.18cqw;color:#b3aca1;line-height:1.5}
+.game-name h1,.game-side-title,.game-decision h2,.decision-card,.game-confirm{font-family:var(--prison-heading)}
+.game-decision h2{letter-spacing:.06em}.tool-icon svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 2px #000)}
+.tool-icon{font-size:0}.tool strong{font-family:var(--prison-heading)}
+/* Selection is visible in both the projected room and the fixed destination card. */
+.game-stage .decision-card[data-destination][aria-pressed=true]{border-color:#c1a18a;background:radial-gradient(ellipse at 50% 30%,#bc574636,transparent 70%),linear-gradient(#412521db,#1b1313e8),url('assets/prison-stone-v2.png') center/30cqw auto;box-shadow:inset 0 0 0 1px #e0b69b,inset 0 0 0 .2cqw #241614,0 0 1.4cqw #a9433c88,0 .25cqw 0 #160b09;filter:brightness(1.16);transform:translateY(-.35cqw)}
+.decision-card[data-destination][aria-pressed=true]::before{background:#b5826f}.decision-card[data-destination][aria-pressed=true]::after{content:"已选择";height:auto;top:.35cqw;bottom:auto;left:auto;right:.45cqw;width:auto;clip-path:none;transform:none;background:#632b26e8;border:1px solid #b7836b;color:#eee0ce;padding:.12cqw .45cqw;font:500 .75cqw/1.5 var(--prison-heading);letter-spacing:.05em;filter:none}
+.three-ready .room.destination-selected .room-number{color:#ffe0c4;background:#5c2521dd;border:1px solid #d09579;min-width:1.6cqw;padding:.15cqw .38cqw;font-size:1.05cqw;box-shadow:0 0 .8cqw #a03932a0;z-index:2}
+.game-stage .game-confirm[data-intent=visit]:not(:disabled){filter:brightness(1.35);color:#ffe6c7;box-shadow:0 0 1.3cqw #98493977}.confirm-choice-label{display:block;color:#e0b99c;font:500 1.05cqw/1.5 var(--prison-heading);text-align:center;margin-bottom:.6cqw;text-shadow:0 2px 3px #000}
+.result-objective{font:500 20px/1.7 var(--prison-heading);color:#d4c2a7;text-align:center;margin-bottom:18px}.result-summary strong{font-family:var(--prison-heading)}
+.event-dialog#event-dialog{width:min(940px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);padding:0;border:0;border-radius:0;background:#101112;box-shadow:0 20px 80px #000c;overflow-y:auto}
+.event-dialog::backdrop{background:#080809d9;backdrop-filter:blur(3px)}
+.event-dialog #event-sheet{position:relative;inset:auto;min-height:420px;grid-template-rows:minmax(0,1fr);margin:0;overflow:visible}
+.event-dialog .event-content{grid-column:2;grid-row:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.event-dialog .event-kicker{color:#8f8172;letter-spacing:.18em;font-size:11px;margin-bottom:15px}
+.startup-content h1{font-family:var(--prison-heading);color:#ded0b6;letter-spacing:.12em}.startup-choice,.startup-continue{border-radius:0}.startup-choice strong{font-family:var(--prison-heading)}
+@media(max-width:1000px){.run-sidebar{gap:9px}.sidebar-heading,.advice-section>summary{padding:13px 12px 11px}.practice-overview{padding:14px 12px}.run-objective{font-size:21px}.run-counts strong{font-size:25px}.advice-section .assistant-drawer{padding:14px 12px}.sound-section .audio-toolbar{padding:12px}}
+@media(max-width:700px){.run-sidebar{gap:8px}.sidebar-heading h2,.advice-section>summary h2{font-size:14px}.mode-label{font-size:9px}.run-objective{font-size:19px}.run-condition{font-size:11px}.run-counts span{font-size:9px}.stage-heading{align-items:flex-start;flex-wrap:wrap}.advice-control{padding:12px}.sidebar-caption{font-size:9px}}
+@media(max-width:520px){.run-sidebar{grid-column:1;grid-row:2}.run-condition{margin-bottom:12px}.practice-overview{padding:13px 15px}.run-counts{padding:9px 0}.run-next{margin:10px 0}.sidebar-heading,.advice-section>summary{padding:12px 15px}}
+@media(max-width:760px){.event-dialog #event-sheet{min-height:0}.event-dialog .event-content{grid-column:1;grid-row:1}}
+@media(prefers-reduced-motion:reduce){.decision-card[data-destination][aria-pressed=true]{transform:none}}

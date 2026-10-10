@@ -2,10 +2,11 @@ import { DEFAULT_CONFIG, SPECIES, RARITIES, TOOLS, GIFTS, ASSUMPTIONS, validateC
 import { applyAction, targets, onBoard, nameOf, editRoom, addTool, recommend, replay, exportRun, importRun, isChallenge, challengeView } from './session-engine.js?v=0.5.0-4';
 import {pairDecision} from './interaction.js';
 import {PrisonEffects} from './effects.js';
-import {goalGuide} from './goal-guide.js';
-import {PrisonScene3D} from './scene3d.js';
-import {PrisonAudio} from './audio.js?v=0.6.0-1';
-import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.5.0-4';
+import {goalGuide} from './goal-guide.js?v=0.6.2-1';
+import {PrisonScene3D} from './scene3d.js?v=0.6.2-1';
+import {PrisonAudio} from './audio.js?v=0.6.2-1';
+import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.6.2-1';
+import {rewardIcon,ruleText} from './reward-icons.js?v=0.6.2-1';
 import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.1-1';
 
 const $=id=>document.getElementById(id);
@@ -15,7 +16,7 @@ let armed=false,pairTarget=null,pendingAction=null,uiMode=null,rewardChoice=null
 let startupActive=true,runStorage=null;
 try{runStorage=localStorage;}catch{}
 const startupSave=readStartupSave(runStorage);
-let preferences={advice:false,motion:true,fast:false,quick:false};
+let preferences={advice:false,adviceExpanded:false,motion:true,fast:false,quick:false};
 try{const saved=JSON.parse(localStorage.getItem('ss14-prison-ui-v2')||'{}');for(const key of Object.keys(preferences))if(typeof saved[key]==='boolean')preferences[key]=saved[key];}catch{}
 const effects=new PrisonEffects({enabled:()=>preferences.motion,fast:()=>preferences.fast});
 const lockIcon='<svg class="cell-lock" viewBox="0 0 24 30" aria-hidden="true"><path d="M5 12V8a7 7 0 0 1 14 0v4h2v16H3V12zm3 0h8V8a4 4 0 0 0-8 0zm4 5a2 2 0 0 0-1 4v3h2v-3a2 2 0 0 0-1-4"/></svg>';
@@ -80,7 +81,7 @@ function showStartup(){
   if(busy)return;
   startupActive=true;cancelChoice();rewardChoice=null;hideGoalGuide();
   if(state)startupSave.run={current:structuredClone(state),initial:structuredClone(initial)};
-  for(const id of ['settings-dialog','result-dialog','new-dialog'])if($(id).open)$(id).close();
+  for(const id of ['settings-dialog','result-dialog','new-dialog','event-dialog'])if($(id).open)$(id).close();
   $('game-screen').hidden=true;$('game-screen').inert=true;$('game-screen').setAttribute('aria-hidden','true');
   $('startup-screen').hidden=false;renderStartup();
   (startupSave.run?$('continue-run'):$('startup-empty')).focus({preventScroll:true});
@@ -88,7 +89,7 @@ function showStartup(){
 function enterRun(run,{save=false}={}){
   cancelChoice();rewardChoice=null;state=run.current;initial=run.initial;
   configDraft=startupConfigDraft(state);selected=0;resultShown=-1;
-  for(const id of ['settings-dialog','result-dialog','new-dialog'])if($(id).open)$(id).close();
+  for(const id of ['settings-dialog','result-dialog','new-dialog','event-dialog'])if($(id).open)$(id).close();
   startupActive=false;$('startup-screen').hidden=true;
   $('game-screen').hidden=false;$('game-screen').inert=false;$('game-screen').removeAttribute('aria-hidden');
   $('motion-status').textContent='';delete $('motion-status').dataset.lastEffect;$('error').hidden=true;
@@ -117,15 +118,24 @@ function scheduleGoalGuideHide(){
     if(!goalGuidePinned&&document.activeElement!==$('goal-details-trigger'))hideGoalGuide();
   },120);
 }
-function renderGoalGuide(){
+function renderGoalGuide(guide){
   if(isChallenge(state)){
     $('goal-tooltip').innerHTML=challengeGuide(state);
     if(!$('goal-tooltip').hidden)positionGoalGuide();
     return;
   }
-  const guide=goalGuide(state),list=(items,tag)=>`<${tag}>${items.map(item=>`<li>${esc(item)}</li>`).join('')}</${tag}>`;
-  $('goal-tooltip').innerHTML=`<header class="goal-tooltip-header"><h2>困兽称王</h2><span class="goal-status ${guide.completed?'complete':''}">${esc(guide.status)}</span></header><p class="goal-explanation">${esc(guide.condition)}</p><p class="goal-reward">${esc(guide.reward)}</p><div class="goal-current">${esc(guide.progress)}</div><h3>${esc(guide.routeTitle)}</h3>${list(guide.steps,'ol')}${guide.boosts.length?`<h3>刑具影响</h3>${list(guide.boosts,'ul')}`:''}<div class="goal-notes">${guide.notes.map(note=>`<p>${esc(note)}</p>`).join('')}</div>`;
+  const list=(items,tag)=>`<${tag}>${items.map(item=>`<li>${esc(item)}</li>`).join('')}</${tag}>`;
+  $('goal-tooltip').innerHTML=`<header class="goal-tooltip-header"><h2>培养更多绮彩</h2><span class="goal-status">${esc(guide.overall.status)}</span></header><p class="goal-explanation">${state.config.days} 个经营日内，尽可能培养更多绮彩囚犯，并完成暴乱镇压。</p><div class="goal-current">${esc(guide.overall.progress)}</div><section class="stage-goal"><h3>阶段目标 · 困兽称王 <span class="goal-status ${guide.completed?'complete':''}">${esc(guide.status)}</span></h3><p>${esc(guide.condition)}</p><p class="goal-reward">${esc(guide.reward)}</p></section><h3>${esc(guide.routeTitle)}</h3>${list(guide.steps,'ol')}${guide.boosts.length?`<h3>刑具影响</h3>${list(guide.boosts,'ul')}`:''}<div class="goal-notes">${guide.notes.map(note=>`<p>${esc(note)}</p>`).join('')}</div>`;
   if(!$('goal-tooltip').hidden)positionGoalGuide();
+}
+function renderRunOverview(guide,challenge){
+  $('practice-overview').hidden=!!challenge;
+  $('challenge-panel').hidden=!challenge;
+  $('run-mode-label').textContent=challenge?'原创挑战':'基础经营';
+  if(challenge)return;
+  const o=guide.overall,stage=guide.completed?(state.pending.some(p=>p.kind==='tool')?'待领刑具':'已完成'):guide.status;
+  $('practice-overview').innerHTML=`<h3 class="run-objective">培养更多绮彩</h3><p class="run-condition">${state.config.days} 日经营，持续养成高阶囚犯，最终镇压暴乱。</p><div class="run-counts"><div><strong>${o.currentExquisite}</strong><span>当前至臻</span></div><div><strong>${o.totalRainbow}</strong><span>累计绮彩</span></div><div><strong>${o.remainingDays}</strong><span>剩余经营日</span></div></div><p class="run-next">${esc(['riot','finished'].includes(state.phase)?o.status:o.nextTarget)}</p><div class="stage-goal"><div class="stage-heading"><span>阶段目标 · 困兽称王</span><span class="goal-status ${guide.completed?'complete':''}">${esc(stage)}</span></div><p>${esc(guide.condition)}</p><small>${esc(guide.reward)}</small></div>`;
+  $('advice-objective').innerHTML=`<div class="advice-caption">${esc(o.nextTarget)} · ${esc(o.remainingDaysText)}</div><h3>${esc(guide.routeTitle)}</h3><p>${guide.steps.slice(0,2).map(esc).join('<br>')}</p>`;
 }
 async function act(action){
   if(busy||startupActive||!state)return;
@@ -134,6 +144,7 @@ async function act(action){
   const audioAction=audio.actionStart(action);
   if($('reward-dialog').open)$('reward-dialog').close();
   if($('delivery-dialog').open)$('delivery-dialog').close();
+  if($('event-dialog').open)$('event-dialog').close();
   document.querySelector('.game-stage').setAttribute('aria-busy','true');
   $('confirm-action').disabled=true;$('confirm-reward').disabled=true;
   $('motion-status').textContent=({eat:'囚犯吞噬中…',visit:'巡监中…',reroll:'更换囚犯…',end:'本日经营结束…',choose:'获得奖励…',fight:'暴乱演算中…',scout:'侦察路线…',deliver:'押运交付…',skipDelivery:'本次合约已放弃'})[action.type]||'';
@@ -191,8 +202,11 @@ function render(deferDialogs=false){
   if(startupActive||!state)return;
   const active=onBoard(state),phase=state.phase;
   const challenge=isChallenge(state)?challengeView(state):null;
+  const guide=challenge?null:goalGuide(state);
   const route=patrolRoute(state,pendingAction?.type==='visit'?pendingAction.room:null);
-  $('challenge-panel').innerHTML=challengePanel(state,{selected,pendingAction,busy});
+  $('challenge-panel').innerHTML=challenge?challengePanel(state,{selected,pendingAction,busy}):'';
+  renderRunOverview(guide,challenge);
+  $('advice-objective').hidden=!!challenge;
   $('run-badge').hidden=!challenge;
   $('countdown-caption').textContent=challenge?'距离经营结束':'距离暴乱剩余';
   const remains=Math.max(0,state.config.days-state.day+1);
@@ -200,17 +214,16 @@ function render(deferDialogs=false){
   $('day-tag').textContent=`第 ${state.day} / ${state.config.days} 日`;
   $('day-track').innerHTML=Array.from({length:state.config.days},(_,i)=>`<span class="${i+1<state.day?'past':i+1===state.day?'current':''}"></span>`).join('');
   $('goal-state').textContent=state.goalIndex?'已完成':'进行中';
-  $('goal-name').textContent=state.goalIndex>=state.config.goalTiers.length?'目标已达成':'困兽称王';
+  $('goal-name').textContent='阶段目标 · 困兽称王';
   const target=state.config.goalTiers[state.goalIndex];
-  const displayedGoal=target??state.config.goalTiers.at(-1);
-  $('scene-goal').innerHTML=displayedGoal===undefined?'<span class="goal-heading">目标</span><span class="goal-condition">本轮未设置目标</span>':`<span class="goal-heading">目标：困兽称王</span><span class="goal-condition">至少1名囚犯的稀有度达到<br><strong>${RARITIES[displayedGoal]}</strong>${target===undefined?' 已完成':''}</span>`;
+  $('scene-goal').innerHTML=challenge?'':`<span class="goal-heading">经营目标</span><span class="goal-main">培养更多绮彩</span><span class="goal-condition">至臻 ${guide.overall.currentExquisite} · 绮彩 ${guide.overall.totalRainbow}<br>经营结束后镇压暴乱</span>`;
   if(challenge)$('scene-goal').innerHTML=`<span class="goal-heading">目标：押运合约</span><span class="goal-condition">完成至少 2 单，必须包含重囚<br><strong>${challenge.completed}/3 单</strong> · ${challenge.tickets} 张调度券</span>`;
-  renderGoalGuide();
+  renderGoalGuide(guide);
   $('goal-description').textContent=target===undefined?'已领完本轮设定目标。继续经营，培养绮彩囚犯。':`至少一名囚犯达到${RARITIES[target]}。${state.goalIndex?'后续目标采用实验配置。':''}`;
   const maximum=Math.max(0,...active.map(p=>p.tier),...state.rainbow.map(p=>p.tier));
   $('goal-progress').style.width=`${target===undefined?100:Math.min(100,maximum/Math.max(1,target)*100)}%`;
   $('tool-count').textContent=state.tools.length;
-  $('tools').innerHTML=state.tools.map(id=>{const t=TOOLS.find(x=>x.id===id);return `<div class="tool"><span class="tool-icon" aria-hidden="true">${t.icon}</span><div><strong>${t.name}</strong><p>${t.text}</p></div></div>`;}).join('');
+  $('tools').innerHTML=state.tools.map(id=>{const t=TOOLS.find(x=>x.id===id);return `<div class="tool"><span class="tool-icon" aria-hidden="true">${rewardIcon(id)}</span><div><strong>${esc(t.name)}</strong><p>${ruleText(t.text)}</p></div></div>`;}).join('');
   $('tools-empty').hidden=!!state.tools.length;
   $('rainbow-count').textContent=state.rainbow.length;
   $('rainbow').innerHTML=`<div class="rainbow-grid">${state.rainbow.map(p=>`<div class="rainbow-avatar portrait ${p.code}" role="img" aria-label="${nameOf(p)}"></div>`).join('')}${Array.from({length:Math.max(0,6-state.rainbow.length)},()=>'<div class="rainbow-slot" aria-hidden="true"></div>').join('')}</div>`;
@@ -220,7 +233,7 @@ function render(deferDialogs=false){
     const roomName=p?nameOf(p):r.status==='closed'?'未开启牢房':'空牢房';
     let node=$('board').querySelector(`[data-room="${i}"]`);
     if(!node){node=document.createElement('button');node.dataset.room=i;node.style.gridRow=positions[i][0];node.style.gridColumn=positions[i][1];$('board').append(node);}
-    node.className=`room ${p?`occupied tier-${p.tier}`:''} ${candidate?'candidate':''} ${i===selected&&armed?'selected':''} ${i===pairTarget?'pair-target':''} ${edible.includes(i)&&phase==='manage'&&armed&&!challenge?.deliveryPending?'prey':''} ${route?.rooms.includes(i)?'route-step':''}`;
+    node.className=`room ${p?`occupied tier-${p.tier}`:''} ${candidate?'candidate':''} ${pendingAction?.type==='visit'&&pendingAction.room===i?'destination-selected':''} ${i===selected&&armed?'selected':''} ${i===pairTarget?'pair-target':''} ${edible.includes(i)&&phase==='manage'&&armed&&!challenge?.deliveryPending?'prey':''} ${route?.rooms.includes(i)?'route-step':''}`;
     node.setAttribute('aria-label',`${i+1} 号 ${roomName}${candidate?'，可巡监':''}`);node.setAttribute('aria-pressed',String((i===selected&&armed)||i===pairTarget));
     const contentKey=JSON.stringify([r,state.position===i,state.day,targets(state,i).length]);
     if(node.dataset.contentKey!==contentKey){node.innerHTML=`<span class="cell-interior" aria-hidden="true"></span><span class="room-number">${i+1}</span>${p?`<span class="cell-pedestal" aria-hidden="true"></span><span class="portrait ${p.code}"></span><span class="room-name">${speciesOf(p.code).name}</span><span class="room-rarity">${RARITIES[p.tier]}</span>${targets(state,i).length?'<span class="eat-mark" aria-label="有可吃目标">◆</span>':''}`:r.status==='closed'?`<span class="cell-door door-left" aria-hidden="true"></span><span class="cell-door door-right" aria-hidden="true"></span>${lockIcon}`:'<span class="cell-empty" aria-hidden="true">◇</span>'}${r.nest?`<span class="nest-mark">鼠巢 · ${Math.max(0,r.nest.due-state.day)} 日</span>`:''}${r.event?'<span class="event-mark">!</span>':''}${state.position===i?'<span class="current-mark" aria-label="当前位置">✧</span>':''}`;node.dataset.contentKey=contentKey;}
@@ -235,8 +248,13 @@ function render(deferDialogs=false){
     $('center-actions').innerHTML='<button class="button gold" data-open-delivery>选择交付囚犯</button>'+(challenge.earlyDelivery?'<button class="button" data-cancel-early>继续经营</button>':'<button class="button" data-skip-delivery>放弃本次合约</button>');
   }else if(phase==='event'){
     const description=state.event.kind==='chain'?'下次移动开启路径上所有未开牢房，不触发其他效果。':'移除当前囚犯克制的下位囚犯，每名提升一阶；筛选按实验配置。';
-    $('phase-help').textContent=description;
-    $('center-actions').innerHTML=buttonsFor({type:'event',accept:false},'略过')+' '+(state.event.kind==='chain'||state.rooms[state.event.room].prisoner?buttonsFor({type:'event',accept:true},'接受事件','gold'):'');
+    $('phase-help').textContent='查看事件，决定接受或略过。';
+    $('center-actions').innerHTML='<button class="button gold" data-open-event>查看事件</button>';
+    $('event-heading').textContent=state.event.kind==='chain'?'连锁反应':'处刑效率';
+    $('event-description').textContent=state.event.kind==='chain'?'锁链将沿途的牢门牵连在一起。请典狱长决定是否开启这条巡监路线。':'囚犯已押送至中央广场。请典狱长决定处置方式。';
+    $('event-art').innerHTML=rewardIcon(state.event.kind==='chain'?'keys':'saw');
+    $('event-rule').innerHTML=ruleText(description);
+    $('event-options').innerHTML=buttonsFor({type:'event',accept:false},'略过')+' '+(state.event.kind==='chain'||state.rooms[state.event.room].prisoner?buttonsFor({type:'event',accept:true},'确认','gold'):'');
   }else if(phase==='riot'){
     const w=state.waves[state.combatIndex];
     $('phase-title').textContent=`${['下层','中层','上层'][w.group]}暴乱`;
@@ -252,8 +270,16 @@ function render(deferDialogs=false){
   if(pendingAction?.type==='scout'){$('phase-title').textContent=`侦察 ${pendingAction.room+1} 号牢房`;$('phase-help').textContent='确认消耗 1 张调度券。之后可走这条路线，或改去已开牢房。';}
   if(pendingAction?.type==='reroll'){$('phase-title').textContent=`更换 ${pendingAction.room+1} 号囚犯`;$('phase-help').textContent='重新随机代号与稀有度，可能降阶。确认后消耗今日一次换。';}
   if(pendingAction?.type==='skipDelivery'){$('phase-title').textContent='放弃本次合约';$('phase-help').textContent='确认后本次合约记为未完成，囚犯和调度券保留。';}
+  if(pendingAction?.type==='visit'){
+    $('phase-title').textContent=`已选择 ${pendingAction.room+1} 号牢房`;
+    if(!route)$('phase-help').textContent='点击右侧确认，前往这间牢房。';
+  }
   $('board-count').textContent=`场上 ${active.length} 名 · 已开 ${state.rooms.filter(r=>r.status==='open').length} 间`;
   $('confirm-action').disabled=!pendingAction||busy||!!state.pending.length;
+  $('confirm-action').dataset.intent=pendingAction?.type||'';
+  $('confirm-action').setAttribute('aria-label',pendingAction?.type==='visit'?`确认前往 ${pendingAction.room+1} 号牢房`:'确认当前操作');
+  $('confirm-choice-label').textContent=pendingAction?.type==='visit'?`${pendingAction.room+1} 号牢房`:'';
+  $('confirm-choice-label').hidden=pendingAction?.type!=='visit';
   $('confirm-action').hidden=uiMode==='eat'&&!pendingAction;
   $('cancel-action').hidden=!(uiMode==='eat'&&!pendingAction);
   $('undo').disabled=!state.history.length;
@@ -276,13 +302,17 @@ function render(deferDialogs=false){
   $('add-tool-select').innerHTML=TOOLS.filter(t=>!state.tools.includes(t.id)).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   if(state.pending.length){
     const reward=state.pending[0],catalog=reward.kind==='tool'?TOOLS:GIFTS;
+    $('reward-dialog').dataset.kind=reward.kind;
     $('reward-kind').textContent=reward.kind==='tool'?'OBJECTIVE COMPLETE':'RAINBOW PRISONER';
     $('reward-title').textContent=reward.kind==='tool'?'选择一件刑具':'典狱长的珍藏';
     if(!reward.options.includes(rewardChoice))rewardChoice=null;
-    $('reward-options').innerHTML=reward.options.map(id=>{const t=catalog.find(x=>x.id===id);return `<button class="reward-choice" data-reward="${id}" aria-pressed="${id===rewardChoice}"><span class="reward-icon" aria-hidden="true">${t.icon}</span><strong>${t.name}</strong><p>${t.text}</p></button>`;}).join('');
+    $('reward-options').innerHTML=reward.options.map(id=>{const t=catalog.find(x=>x.id===id);return `<button class="reward-choice" data-reward="${id}" aria-pressed="${id===rewardChoice}"><span class="reward-art" aria-hidden="true">${rewardIcon(id)}</span><strong class="reward-name">${esc(t.name)}</strong><p class="reward-description">${ruleText(t.text)}</p></button>`;}).join('');
     $('confirm-reward').disabled=!rewardChoice||busy;
     if(!deferDialogs&&!$('reward-dialog').open)$('reward-dialog').showModal();
   }else if($('reward-dialog').open)$('reward-dialog').close();
+  if(phase==='event'&&!state.pending.length){
+    if(!deferDialogs&&!$('event-dialog').open)$('event-dialog').showModal();
+  }else if($('event-dialog').open)$('event-dialog').close();
   if(!deferDialogs&&phase==='finished'&&resultShown!==state.revision){resultShown=state.revision;showResults();}
   if(phase!=='finished'&&$('result-dialog').open)$('result-dialog').close();
 }
@@ -305,7 +335,7 @@ function showResults(){
     return;
   }
   $('result-dialog').querySelector('.result-actions').previousElementSibling.textContent='战斗、分区和积分为实验设定，未代入真实掉落与价格。';
-  $('results').innerHTML=`<div class="result-summary"><div><strong>${state.rainbow.length}</strong><span>绮彩囚犯</span></div><div><strong>${state.stats.eaten}</strong><span>吞噬次数</span></div><div><strong>${state.stats.points}</strong><span>试验积分</span></div></div><p class="hint">${RARITIES.map((name,tier)=>`${name} ${population.filter(p=>p.tier===tier).length}`).join(' · ')}</p>${state.waves.map(w=>`<div class="wave ${w.status}"><span>${['下层','中层','上层'][w.group]} · ${w.members.length} 名</span><span>${({waiting:'未演算',empty:'无囚犯',cleared:'通过',failed:'未通过'})[w.status]}${w.power!==undefined?` · ${w.power} / ${w.burden}`:''}</span></div>`).join('')}`;
+  $('results').innerHTML=`<h3 class="result-objective">本轮养成成果</h3><div class="result-summary"><div><strong>${onBoard(state).filter(p=>p.tier===4).length}</strong><span>当前至臻</span></div><div><strong>${state.rainbow.length}</strong><span>累计绮彩</span></div><div><strong>${state.stats.points}</strong><span>试验积分</span></div></div><p class="hint">吞噬 ${state.stats.eaten} 次 · ${RARITIES.map((name,tier)=>`${name} ${population.filter(p=>p.tier===tier).length}`).join(' · ')}</p>${state.waves.map(w=>`<div class="wave ${w.status}"><span>${['下层','中层','上层'][w.group]} · ${w.members.length} 名</span><span>${({waiting:'未演算',empty:'无囚犯',cleared:'通过',failed:'未通过'})[w.status]}${w.power!==undefined?` · ${w.power} / ${w.burden}`:''}</span></div>`).join('')}`;
   if(!$('result-dialog').open)$('result-dialog').showModal();
 }
 let exportUrl;
@@ -378,7 +408,7 @@ document.addEventListener('click',event=>{
   const button=event.target.closest('button');if(!button)return;
   if(button.dataset.close){$(button.dataset.close).close();return;}
   if(startupActive||!state)return;
-  if(button.hasAttribute('data-start-challenge')){startDialog('challenge');return;}
+  if(button.hasAttribute('data-open-event')){$('event-dialog').showModal();return;}
   if(button.hasAttribute('data-open-delivery')){openDelivery();return;}
   if(button.hasAttribute('data-early-delivery')){act({type:'openEarlyDelivery'}).then(()=>openDelivery());return;}
   if(button.hasAttribute('data-cancel-early')){act({type:'cancelEarlyDelivery'});return;}
@@ -409,7 +439,7 @@ document.addEventListener('click',event=>{
     cancelChoice();selected=clicked;armed=!!state.rooms[clicked].prisoner;render();
   }
 });
-document.addEventListener('click',event=>{const inside=event.composedPath().some(node=>node.id==='context-actions'||node.matches?.('.room,#confirm-action,[data-action]'));if(!$('context-actions').hidden&&!inside){cancelChoice();render();}});
+document.addEventListener('click',event=>{const inside=event.composedPath().some(node=>node.id==='context-actions'||node.matches?.('.room,#confirm-action,[data-action],.run-sidebar'));if(!$('context-actions').hidden&&!inside){cancelChoice();render();}});
 $('board').addEventListener('contextmenu',event=>{const room=event.target.closest('[data-room]');if(!room||busy)return;event.preventDefault();cancelChoice();selected=Number(room.dataset.room);armed=true;render();showSingle({x:event.clientX,y:event.clientY});});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){hideGoalGuide();if(!document.querySelector('dialog[open]')){cancelChoice();render();}}});
 const goalTrigger=$('goal-details-trigger'),goalTooltip=$('goal-tooltip');
@@ -476,6 +506,8 @@ function syncPreferences(){
   $('advice-toggle').checked=preferences.advice;$('motion-toggle').checked=preferences.motion;$('quick-toggle').checked=preferences.quick;$('speed-toggle').setAttribute('aria-pressed',String(preferences.fast));
   $('advice-rail-toggle').checked=preferences.advice;
   $('advice-rail-state').textContent=preferences.advice?'开启':'关闭';
+  $('advice-summary-state').textContent=preferences.advice?'已开启':'未开启';
+  $('advice-section').open=preferences.adviceExpanded;
   document.body.classList.toggle('motion-off',!preferences.motion||matchMedia('(prefers-reduced-motion: reduce)').matches);
   if(!scene3d.active)scene3d.finishTweens();
   scene3d.request();
@@ -484,6 +516,10 @@ function syncPreferences(){
 $('lab-settings').addEventListener('click',()=>{if(!busy){cancelChoice();render();$('settings-dialog').showModal();}});
 for(const [id,key] of [['advice-toggle','advice'],['advice-rail-toggle','advice'],['motion-toggle','motion'],['quick-toggle','quick']])$(id).addEventListener('change',event=>{preferences[key]=event.target.checked;syncPreferences();render();});
 $('speed-toggle').addEventListener('click',()=>{preferences.fast=!preferences.fast;syncPreferences();});
+$('advice-section').addEventListener('toggle',()=>{
+  preferences.adviceExpanded=$('advice-section').open;
+  try{localStorage.setItem('ss14-prison-ui-v2',JSON.stringify(preferences));}catch{}
+});
 matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',syncPreferences);
 syncPreferences();
 showStartup();
