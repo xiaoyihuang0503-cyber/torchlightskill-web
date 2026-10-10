@@ -39,3 +39,7 @@
 
 .audio-sample-label{display:block;margin:12px 0 5px;color:#b9a98b;font-size:12px}
 #audio-voice-sample,#audio-beast-sample{width:100%;padding:7px 9px;border:1px solid #68553f;background:#201a13;color:#d0bc98;border-radius:2px}
+.music-choice-row{display:flex;gap:8px;align-items:center;margin:8px 0}
+#audio-music-track{flex:1;min-width:0;padding:8px;border:1px solid #756047;background:#201a13;color:#e4d2b4;border-radius:0}
+#audio-music-refresh{flex:none;min-height:35px;color:#e6d0a9}
+.current-music{font-size:12px;line-height:1.6;color:#c6b69f;margin:0 0 8px}

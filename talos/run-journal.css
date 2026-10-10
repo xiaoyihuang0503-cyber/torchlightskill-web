@@ -1,0 +1,46 @@
+/* This rail occupies its own grid column; the stage keeps a complete 16:9 viewport. */
+.run-journal{grid-column:1;grid-row:1;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:linear-gradient(90deg,#181719,#101011);border:1px solid #48413a;box-shadow:inset 2px 0 #80706129;color:#e2d6c3}
+.run-journal-heading{flex:none;padding:13px 3px 10px;text-align:center;border-bottom:1px solid #65534266;background:#181517}
+.run-journal-heading h2{font:600 12px "SimSun",serif;letter-spacing:.08em;color:#e4d4bb}
+.run-journal-heading>span{display:block;font-size:10px;color:#aca398;margin-top:5px}
+.run-journal-scroll{min-height:0;flex:1;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#796a5d #171516;padding:8px 3px 14px}
+.run-journal-scroll:focus-visible{outline:1px solid #c2a379;outline-offset:-2px}
+.journal-day{position:relative;margin:0 0 11px;padding:0 0 5px}
+.journal-day h3{position:sticky;top:-8px;background:#151315eF;margin:0;padding:7px 0 6px;text-align:center;font-size:10px;font-weight:500;color:#d0b38c;z-index:1;white-space:nowrap}
+.journal-day ol{list-style:none;margin:0;padding:0;position:relative}
+.journal-day ol:before{content:"";position:absolute;left:50%;top:6px;bottom:8px;width:1px;background:#70604b5e;pointer-events:none}
+.journal-entry{margin:0 0 4px;padding:0;position:relative}
+.journal-entry-trigger{display:flex;align-items:center;flex-direction:column;width:100%;padding:4px 1px 5px;gap:3px;min-height:42px;border:1px solid transparent;background:#181618;color:#d2c7b7;font-size:10px;line-height:1.2;transition:background .15s,border-color .15s}
+.journal-entry-trigger:hover,.journal-entry-trigger:focus-visible,.journal-entry-trigger[aria-expanded=true]{background:#332c26;border-color:#9a7955;outline:0;color:#fff0d7}
+.journal-entry-icons{display:flex;align-items:center;justify-content:center;gap:2px;min-height:25px}
+.journal-beast{display:block;position:static;width:26px;height:26px;border-radius:50%;border:1px solid #8c775f;box-shadow:inset 0 0 0 1px #000;flex:0 0 26px;filter:brightness(1.2)}
+.journal-entry-icons .journal-beast{width:23px;height:23px;flex-basis:23px}
+.journal-operation-mark{font-size:18px;color:#9f8061;text-shadow:0 1px 3px #000}
+.journal-entry-verb{text-shadow:0 1px 2px #000}
+.journal-warning{font-size:10px;line-height:1.5;color:#e2ac96;padding:5px 1px}
+.journal-detail-tooltip{position:fixed;z-index:1080;width:320px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto;padding:17px 19px;color:#ddd0bf;background:#171416f8;border:1px solid #8b7258;box-shadow:inset 0 0 0 3px #34302a66,0 12px 34px #000b;font-size:12px;line-height:1.65}
+.journal-detail-tooltip header>span{color:#b79c7d;font-size:11px}
+.journal-detail-tooltip h3{font:600 17px "SimSun",serif;margin:6px 0 12px;color:#f3e0c5}
+.journal-detail-icons{display:flex;gap:8px;margin:8px 0 12px}
+.journal-detail-icons .journal-beast{width:35px;height:35px;flex-basis:35px}
+.journal-detail-tooltip ul{margin:0;padding-left:16px}.journal-detail-tooltip li{margin:6px 0}.journal-detail-tooltip li::marker{color:#9d795c}
+.room-effects-heading{margin:15px 0 7px;font:600 clamp(10px,1.05cqw,17px) "SimSun",serif;color:#e2c9a6;letter-spacing:.06em;text-shadow:0 2px 2px #000}
+.room-effects-list{max-height:26cqw;overflow-y:auto;overflow-x:visible;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#846b52 transparent;padding:2px 3px 4px 0}
+.room-effect{position:relative;display:flex;align-items:center;gap:.65cqw;width:100%;margin:0 0 .5cqw;padding:.5cqw .55cqw;text-align:left;border:1px solid #9580637a;background:linear-gradient(100deg,#2e2923ec,#141113ec);color:#efe0ca;line-height:1.45;cursor:help;text-shadow:0 1px 2px #000}
+.room-effect.status-pending{border-color:#cba578;box-shadow:inset 2px 0 #ddb579,0 0 8px #d0a66a26;cursor:pointer}
+.room-effect.status-active{border-color:#a69876;box-shadow:inset 2px 0 #a89e7e}
+.room-effect-icon{flex:0 0 2.25cqw;width:2.25cqw;min-height:2.25cqw;display:grid;place-items:center;font-size:clamp(14px,1.55cqw,23px);color:#d8bb93;background:#0e0b0ccc;border:1px solid #6e594966}
+.room-effect-copy{min-width:0;display:block}.room-effect-copy strong{display:block;font-size:clamp(9px,.95cqw,15px);font-weight:600;color:inherit}.room-effect-copy small{display:block;font-size:clamp(8px,.72cqw,12px);color:#d1b991;white-space:nowrap}
+.room-effect.is-used{background:#121214c9;border-color:#524a4466;color:#968e87}.room-effect.is-used .room-effect-icon{filter:grayscale(1);color:#88817b;border-color:#544d4866}.room-effect.is-used small{color:#8e857a}
+.room-effect-description{display:none;font-size:12px;line-height:1.7;background:#171416fa;border:1px solid #8b7258;padding:13px;color:#e5d6c0;box-shadow:0 8px 24px #000b;text-shadow:none;cursor:default;z-index:1040}
+.room-effect-description em{display:block;font-style:normal;margin-top:8px;color:#d3ae82;border-top:1px solid #8b725844;padding-top:7px}
+.room-effect:hover,.room-effect:focus-visible{border-color:#d4b18a;outline:0}
+/* Host can copy the descriptions into a floating tooltip, avoiding clipping in the scroll list. */
+.room-effects-empty{color:#b9ac9c;font-size:clamp(9px,.85cqw,13px);line-height:1.7;text-shadow:0 1px 2px #000;margin:4px 0}
+@media(max-width:520px){.run-journal-heading{padding:9px 1px}.run-journal-heading h2{font-size:10px}.run-journal-heading>span{font-size:9px}.journal-entry-icons .journal-beast{width:18px;height:18px;flex-basis:18px}.journal-day h3,.journal-entry-trigger{font-size:9px}.run-journal-scroll{padding-left:1px;padding-right:1px}.room-effect{gap:3px;padding:4px}.room-effect-icon{width:19px;flex-basis:19px;min-height:19px}.room-effects-list{max-height:31cqw}}
+@media(prefers-reduced-motion:reduce){.journal-entry-trigger{transition:none}}
+main.game-screen{grid-template-columns:68px minmax(0,1fr) clamp(260px,19vw,340px)}
+.game-viewport{grid-column:2}.run-sidebar{grid-column:3}
+@media(max-width:1000px){main.game-screen{grid-template-columns:60px minmax(0,1fr) 240px}}
+@media(max-width:700px){main.game-screen{grid-template-columns:50px minmax(0,1fr) 200px}}
+@media(max-width:520px){main.game-screen{grid-template-columns:44px minmax(0,1fr)}.run-journal{grid-row:1/3}.game-viewport{grid-column:2;grid-row:1}.run-sidebar{grid-column:2;grid-row:2}.lab-footer{grid-row:3}}

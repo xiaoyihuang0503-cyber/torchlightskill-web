@@ -3,18 +3,20 @@ import { applyAction, targets, onBoard, nameOf, editRoom, addTool, recommend, re
 import {pairDecision} from './interaction.js';
 import {PrisonEffects} from './effects.js?v=0.6.3-1';
 import {goalGuide} from './goal-guide.js?v=0.6.2-1';
-import {PrisonScene3D} from './scene3d.js?v=0.6.4-1';
-import {PrisonAudio} from './audio.js?v=0.6.3-1';
+import {PrisonScene3D} from './scene3d.js?v=0.6.5-1';
+import {PrisonAudio,musicTracks} from './audio.js?v=0.6.5-1';
 import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.6.3-1';
 import {rewardIcon,ruleText} from './reward-icons.js?v=0.6.2-1';
 import {rainbowMarkup,animateRainbowArrivals} from './rainbow-ui.js?v=0.6.3-1';
 import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.3-1';
+import {journalMarkup,effectsMarkup,journalDetailMarkup} from './run-journal.js?v=0.6.5-1';
 
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state,initial,selected=0,configDraft=structuredClone(DEFAULT_CONFIG),resultShown=-1;
 let armed=false,pairTarget=null,pendingAction=null,uiMode=null,rewardChoice=null,busy=false,contextAnchor=null;
 let startupActive=true,runStorage=null;
+let journalInitial=null,journalRevision=-1,journalPinned=false,journalAnchor=null,journalHideTimer;
 try{runStorage=localStorage;}catch{}
 const startupSave=readStartupSave(runStorage);
 let preferences={advice:false,adviceExpanded:false,motion:true,fast:false,quick:false};
@@ -24,6 +26,7 @@ const lockIcon='<svg class="cell-lock" viewBox="0 0 24 30" aria-hidden="true"><p
 const eatIcon='<svg viewBox="0 0 40 36" aria-hidden="true"><path d="M3 8q17-10 34 0v12q-17 22-34 0Z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M6 6h6v12H6zm11-3h6v14h-6zm11 3h6v12h-6zM11 27h5v-6h-5zm13 0h5v-6h-5z" fill="currentColor"/></svg>';
 const scene3d=new PrisonScene3D({stage:document.querySelector('.game-stage'),board:$('board'),motion:()=>preferences.motion,fast:()=>preferences.fast});
 const audio=new PrisonAudio({onStatus:renderAudioState});
+$('audio-music-track').innerHTML='<option value="random">随机播放</option>'+musicTracks.map(track=>`<option value="${track.id}">${esc(track.title)}</option>`).join('');
 function renderAudioState(status){
   const prefs=status.preferences,button=$('audio-toggle');
   button.setAttribute('aria-pressed',String(prefs.enabled));
@@ -44,6 +47,11 @@ function renderAudioState(status){
   $('audio-music-volume').value=String(Math.round(prefs.musicVolume*100));
   $('audio-music-volume').disabled=!status.kinds.music||!prefs.enabled||!prefs.music;
   $('audio-music-volume-value').textContent=`${Math.round(prefs.musicVolume*100)}%`;
+  $('audio-music-track').value=status.selectedMusic||'random';
+  $('audio-music-track').disabled=!status.kinds.music;
+  $('audio-music-refresh').disabled=!status.kinds.music;
+  $('audio-current-music').textContent=status.currentMusic?`${status.musicMode==='random'?'随机 · ':''}${status.currentMusic.title}`:'等待曲库加载';
+  button.dataset.musicTrack=status.currentMusic?.id||'';
   $('audio-status').textContent=!status.ready?'声音准备中…':!status.available?'声音素材待配置':status.kinds.sfx?'声音已就绪':status.kinds.voice?'配音已就绪 · 音效待配置':'环境声已就绪';
 }
 document.addEventListener('pointerdown',event=>audio.unlock(event),{capture:true});
@@ -58,6 +66,8 @@ for(const kind of ['sfx','voice','ambience','music']){
 }
 $('audio-volume').addEventListener('input',event=>audio.setPreferences({volume:Number(event.target.value)/100}));
 $('audio-music-volume').addEventListener('input',event=>audio.setPreferences({musicVolume:Number(event.target.value)/100}));
+$('audio-music-track').addEventListener('change',event=>audio.setMusicTrack(event.target.value));
+$('audio-music-refresh').addEventListener('click',()=>audio.refreshMusic());
 renderAudioState(audio.getStatus());
 let lastSelectSound=0;
 function selectionSound(){const now=performance.now();if(now-lastSelectSound>100){lastSelectSound=now;audio.play('select');}}
@@ -80,21 +90,21 @@ function renderStartup(){
 }
 function showStartup(){
   if(busy)return;
-  startupActive=true;cancelChoice();rewardChoice=null;hideGoalGuide();hideMechanics();
+  startupActive=true;cancelChoice();rewardChoice=null;hideGoalGuide();hideMechanics();hideJournalDetail();
   if(state)startupSave.run={current:structuredClone(state),initial:structuredClone(initial)};
   for(const id of ['settings-dialog','result-dialog','new-dialog','event-dialog'])if($(id).open)$(id).close();
   $('game-screen').hidden=true;$('game-screen').inert=true;$('game-screen').setAttribute('aria-hidden','true');
   $('startup-screen').hidden=false;renderStartup();
   (startupSave.run?$('continue-run'):$('startup-empty')).focus({preventScroll:true});
 }
-function enterRun(run,{save=false}={}){
+function enterRun(run,{save=false,musicEntry=true}={}){
   cancelChoice();rewardChoice=null;state=run.current;initial=run.initial;
   configDraft=startupConfigDraft(state);selected=0;resultShown=-1;
   for(const id of ['settings-dialog','result-dialog','new-dialog','event-dialog'])if($(id).open)$(id).close();
   startupActive=false;$('startup-screen').hidden=true;
   $('game-screen').hidden=false;$('game-screen').inert=false;$('game-screen').removeAttribute('aria-hidden');
   $('motion-status').textContent='';delete $('motion-status').dataset.lastEffect;$('error').hidden=true;
-  audio.reset();if(save)persist();scene3d.resize();render();
+  hideJournalDetail();audio.reset();if(musicEntry)audio.enterMusic();if(save)persist();scene3d.resize();render();
   if(!state.pending.length&&isChallenge(state)&&challengeView(state).deliveryPending)openDelivery();
   if(!document.querySelector('dialog[open]'))document.querySelector('#destination-cards button,#center-actions button')?.focus({preventScroll:true});
 }
@@ -131,6 +141,38 @@ $('lab-settings').addEventListener('blur',()=>{mechanicsHideTimer=setTimeout(hid
 $('lab-settings').addEventListener('click',hideMechanics);
 $('mechanics-tooltip').addEventListener('mouseenter',()=>clearTimeout(mechanicsHideTimer));
 $('mechanics-tooltip').addEventListener('mouseleave',hideMechanics);
+function renderJournal(){
+  if(journalInitial===initial&&journalRevision===state.revision)return;
+  const old=$('run-journal').querySelector('.run-journal-scroll');
+  const follow=journalInitial!==initial||!old||old.scrollHeight-old.scrollTop-old.clientHeight<40,top=old?.scrollTop||0;
+  $('run-journal').innerHTML=journalMarkup(initial,state);
+  $('room-effects').innerHTML=effectsMarkup(initial,state);
+  const scroll=$('run-journal').querySelector('.run-journal-scroll');
+  if(scroll)scroll.scrollTop=follow?scroll.scrollHeight:top;
+  journalInitial=initial;journalRevision=state.revision;
+}
+function hideJournalDetail(){
+  clearTimeout(journalHideTimer);$('journal-tooltip').hidden=true;
+  journalAnchor?.setAttribute('aria-expanded','false');journalAnchor=null;journalPinned=false;
+}
+function showJournalDetail(anchor){
+  if(startupActive||busy||!state)return;
+  clearTimeout(journalHideTimer);const tip=$('journal-tooltip');
+  if(anchor.dataset.journalDetail)tip.innerHTML=journalDetailMarkup(initial,state,anchor.dataset.journalDetail);
+  else{const description=anchor.querySelector('.room-effect-description');tip.innerHTML=`<h3>${esc(anchor.querySelector('strong')?.textContent||'房间效果')}</h3>${description?.innerHTML||esc(anchor.title)}`;}
+  if(!tip.innerHTML)return;
+  journalAnchor?.setAttribute('aria-expanded','false');journalAnchor=anchor;anchor.setAttribute('aria-expanded','true');
+  tip.hidden=false;const rect=anchor.getBoundingClientRect();
+  const left=rect.right+12+tip.offsetWidth<=innerWidth-12?rect.right+12:Math.max(12,rect.left-tip.offsetWidth-12);
+  tip.style.left=`${left}px`;tip.style.top=`${Math.max(12,Math.min(rect.top,innerHeight-tip.offsetHeight-12))}px`;
+}
+document.addEventListener('pointerover',event=>{const anchor=event.target.closest('[data-journal-detail],.room-effect');if(anchor&&!journalPinned)showJournalDetail(anchor);});
+document.addEventListener('focusin',event=>{const anchor=event.target.closest('[data-journal-detail],.room-effect');if(anchor&&!journalPinned)showJournalDetail(anchor);});
+document.addEventListener('pointerout',event=>{if(journalPinned)return;const anchor=event.target.closest('[data-journal-detail],.room-effect');if(anchor&&!anchor.contains(event.relatedTarget))journalHideTimer=setTimeout(hideJournalDetail,140);});
+document.addEventListener('focusout',event=>{if(!journalPinned&&event.target.closest('[data-journal-detail],.room-effect'))journalHideTimer=setTimeout(hideJournalDetail,140);});
+$('journal-tooltip').addEventListener('pointerenter',()=>clearTimeout(journalHideTimer));
+$('journal-tooltip').addEventListener('pointerleave',()=>{if(!journalPinned)hideJournalDetail();});
+document.addEventListener('click',event=>{if(journalPinned&&!event.target.closest('[data-journal-detail],#journal-tooltip'))hideJournalDetail();});
 function scheduleGoalGuideHide(){
   clearTimeout(goalGuideHideTimer);goalGuideHideTimer=setTimeout(()=>{
     if(!goalGuidePinned&&document.activeElement!==$('goal-details-trigger'))hideGoalGuide();
@@ -158,7 +200,7 @@ function renderRunOverview(guide,challenge){
 async function act(action){
   if(busy||startupActive||!state)return;
   let next;try{next=applyAction(state,action);}catch(e){showError(e.message);return;}
-  const before=state;busy=true;cancelChoice();rewardChoice=null;
+  const before=state;busy=true;cancelChoice();rewardChoice=null;hideJournalDetail();
   const audioAction=audio.actionStart(action);
   if($('reward-dialog').open)$('reward-dialog').close();
   if($('delivery-dialog').open)$('delivery-dialog').close();
@@ -180,7 +222,9 @@ async function act(action){
   finally{busy=false;document.querySelector('.game-stage').setAttribute('aria-busy','false');render();}
   audio.actionComplete(action,before,state,audioAction);
   $('motion-status').dataset.lastEffect=action.type;
-  $('motion-status').textContent=action.type==='eat'?`吞噬完成 · ${state.rooms[action.room].prisoner?nameOf(state.rooms[action.room].prisoner):'绮彩囚犯已收容'}`:action.type==='visit'?'巡监完成':action.type==='reroll'?'更换完成':action.type==='choose'?'已获得奖励':'';
+  const oldEater=action.type==='eat'?before.rooms[action.room].prisoner:null;
+  const newEater=oldEater?state.rooms[action.room].prisoner||state.rainbow.find(p=>p.id===oldEater.id):null;
+  $('motion-status').textContent=action.type==='eat'?`吞噬完成 · ${newEater&&oldEater.code!==newEater.code?`随机换号：${speciesOf(oldEater.code).name} → ${nameOf(newEater)}`:newEater?nameOf(newEater):'绮彩囚犯已收容'}`:action.type==='visit'?'巡监完成':action.type==='reroll'?'更换完成':action.type==='choose'?'已获得奖励':'';
   if(action.type==='scout')$('motion-status').textContent='侦察完成 · 可开门或改去已开牢房';
   if(action.type==='deliver')$('motion-status').textContent='押运完成 · 合约已兑现';
 }
@@ -246,6 +290,7 @@ function render(deferDialogs=false){
   $('tool-count').textContent=state.tools.length;
   $('tools').innerHTML=state.tools.map(id=>{const t=TOOLS.find(x=>x.id===id);return `<div class="tool"><span class="tool-icon" aria-hidden="true">${rewardIcon(id)}</span><div><strong>${esc(t.name)}</strong><p>${ruleText(t.text)}</p></div></div>`;}).join('');
   $('tools-empty').hidden=!!state.tools.length;
+  renderJournal();
   $('rainbow-count').textContent=state.rainbow.length;
   $('rainbow').innerHTML=rainbowMarkup(state);
   const edible=targets(state,selected);
@@ -259,7 +304,7 @@ function render(deferDialogs=false){
     const contentKey=JSON.stringify([r,state.position===i,state.day,targets(state,i).length]);
     if(node.dataset.contentKey!==contentKey){node.innerHTML=`<span class="cell-interior" aria-hidden="true"></span><span class="room-number">${i+1}</span>${p?`<span class="cell-pedestal" aria-hidden="true"></span><span class="portrait ${p.code}"></span><span class="room-name">${speciesOf(p.code).name}</span><span class="room-rarity">${RARITIES[p.tier]}</span>${targets(state,i).length?'<span class="eat-mark" aria-label="有可吃目标">◆</span>':''}`:r.status==='closed'?`<span class="cell-door door-left" aria-hidden="true"></span><span class="cell-door door-right" aria-hidden="true"></span>${lockIcon}`:'<span class="cell-empty" aria-hidden="true">◇</span>'}${r.nest?`<span class="nest-mark">鼠巢 · ${Math.max(0,r.nest.due-state.day)} 日</span>`:''}${r.event?'<span class="event-mark">!</span>':''}${state.position===i?'<span class="current-mark" aria-label="当前位置">✧</span>':''}`;node.dataset.contentKey=contentKey;}
   });
-  scene3d.sync(state,{selected,armed,pairTarget});
+  scene3d.sync(state,{selected,armed,pairTarget,routeRooms:route?.rooms||[]});
   const labels={patrol:['PATROL','请选择目的地',startupPhaseHelp(state)],manage:['MANAGEMENT',uiMode==='eat'?'请选择要吃的囚犯':'请进行决策',uiMode==='eat'?'选主囚犯，再选同阶可吃目标，确认吞噬。':startupPhaseHelp(state)],event:['SPECIAL EVENT',state.event?.kind==='chain'?'连锁反应':'处刑效率',''],riot:['PRISON RIOT','囚犯暴乱',''],finished:['RUN COMPLETE','经营结束','']};
   const [label,title,help]=labels[phase];
   $('phase-label').textContent=label;$('phase-title').textContent=title;$('phase-help').textContent=help;
@@ -437,6 +482,7 @@ document.addEventListener('click',event=>{
   const button=event.target.closest('button');if(!button)return;
   if(button.dataset.close){$(button.dataset.close).close();return;}
   if(startupActive||!state)return;
+  if(button.dataset.journalDetail){const pinned=journalPinned&&journalAnchor===button;if(pinned)hideJournalDetail();else{showJournalDetail(button);journalPinned=true;}return;}
   if(button.id==='refresh-restock'){act({type:'refreshRestock'});return;}
   if(button.hasAttribute('data-open-event')){$('event-dialog').showModal();return;}
   if(button.hasAttribute('data-open-delivery')){openDelivery();return;}
@@ -471,7 +517,7 @@ document.addEventListener('click',event=>{
 });
 document.addEventListener('click',event=>{const inside=event.composedPath().some(node=>node.id==='context-actions'||node.matches?.('.room,#confirm-action,[data-action],.run-sidebar'));if(!$('context-actions').hidden&&!inside){cancelChoice();render();}});
 $('board').addEventListener('contextmenu',event=>{const room=event.target.closest('[data-room]');if(!room||busy)return;event.preventDefault();cancelChoice();selected=Number(room.dataset.room);armed=true;render();showSingle({x:event.clientX,y:event.clientY});});
-document.addEventListener('keydown',event=>{if(event.key==='Escape'){hideGoalGuide();hideMechanics();if(!document.querySelector('dialog[open]')){cancelChoice();render();}}});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'){hideGoalGuide();hideMechanics();hideJournalDetail();if(!document.querySelector('dialog[open]')){cancelChoice();render();}}});
 const goalTrigger=$('goal-details-trigger'),goalTooltip=$('goal-tooltip');
 goalTrigger.addEventListener('mouseenter',showGoalGuide);
 goalTrigger.addEventListener('mouseleave',scheduleGoalGuideHide);
@@ -508,7 +554,7 @@ $('export').addEventListener('click',exportCurrent);$('result-export').addEventL
 $('import').addEventListener('click',()=>$('import-file').click());
 $('import-file').addEventListener('change',async event=>{
   try{const file=event.target.files[0];if(!file)return;if(file.size>2*1024*1024)throw new Error('存档超过 2 MB');
-    const run=importRun(JSON.parse(await file.text()));if(busy)throw new Error('请等待当前操作完成');enterRun(run,{save:true});
+    const run=importRun(JSON.parse(await file.text()));if(busy)throw new Error('请等待当前操作完成');enterRun(run,{save:true,musicEntry:false});
   }catch(e){const message=`导入失败：${e.message}`;if(startupActive)showStartupError(message);else showError(message);}finally{event.target.value='';}
 });
 $('edit-room').addEventListener('click',()=>{

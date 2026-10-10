@@ -7,6 +7,47 @@ const ATLAS={elephant:[0,.5],lion:[.5,.5],rat:[0,0],wolf:[.5,0]};
 const PORTRAIT_SIZE=1.9;
 const ease=t=>1-Math.pow(1-t,3);
 
+/** Solid mesh strokes retain width in WebGL; these belong to the gameplay adapter. */
+export function createRoomAccent(room,config,keep=value=>value,shared={}){
+  const group=new THREE.Group();group.name='Gameplay_selection';group.position.y=config.wallHeight+.405;room.root.add(group);
+  const geometry=shared.box||keep(new THREE.BoxGeometry(1,1,1)),plane=shared.plane||keep(new THREE.PlaneGeometry(1,1));
+  const basic=opacity=>keep(new THREE.MeshBasicMaterial({color:0xffd69a,transparent:true,opacity,depthWrite:false,toneMapped:false,side:THREE.DoubleSide}));
+  const edgeMaterial=basic(.94),cornerMaterial=basic(1),haloMaterial=basic(.13),fillMaterial=basic(.075);
+  const edges=keep(new THREE.InstancedMesh(geometry,edgeMaterial,4)),corners=keep(new THREE.InstancedMesh(geometry,cornerMaterial,8)),halo=keep(new THREE.InstancedMesh(geometry,haloMaterial,4));
+  edges.name='Solid_selection_edges';corners.name='Weighted_selection_corners';halo.name='Selection_edge_wash';
+  const fill=new THREE.Mesh(plane,fillMaterial);fill.name='Selection_tint';fill.rotation.x=-Math.PI/2;fill.position.y=-.021;
+  const width=config.cellPitchX-.08,depth=config.cellPitchZ-.08;fill.scale.set(width-.12,depth-.12,1);
+  group.add(halo,fill,edges,corners);group.visible=false;
+  const accent={group,edges,corners,halo,fill,edgeMaterial,cornerMaterial,haloMaterial,fillMaterial,width,depth,mode:'none'};
+  setRoomAccent(accent,{});return accent;
+}
+
+function accentBorder(mesh,width,depth,thickness){
+  const object=new THREE.Object3D();let index=0;
+  for(const sign of [-1,1]){object.position.set(0,0,sign*depth/2);object.scale.set(width, .035, thickness);object.updateMatrix();mesh.setMatrixAt(index++,object.matrix);}
+  for(const sign of [-1,1]){object.position.set(sign*width/2,0,0);object.scale.set(thickness,.035,depth);object.updateMatrix();mesh.setMatrixAt(index++,object.matrix);}
+  mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingSphere();
+}
+
+/** Target > selected > hover > candidate > route; no state or hit geometry is changed. */
+export function setRoomAccent(accent,{selected=false,target=false,hover=false,candidate=false,route=false}={}){
+  const mode=target?'target':selected?'selected':hover?'hover':candidate?'candidate':route?'route':'none';
+  accent.group.visible=mode!=='none';if(mode===accent.mode&&accent.initialized)return;accent.mode=mode;accent.initialized=true;
+  const strong=mode==='target'||mode==='selected',color=mode==='target'?0xa9e2d5:strong?0xffd69a:mode==='hover'?0xe8dcc5:mode==='candidate'?0xc8b187:0xad9272;
+  for(const material of [accent.edgeMaterial,accent.cornerMaterial,accent.haloMaterial,accent.fillMaterial])material.color.setHex(color);
+  accent.edgeMaterial.opacity=strong?1:mode==='hover'?.82:mode==='candidate'?.52:.36;
+  accent.haloMaterial.opacity=strong?.14:.05;accent.fillMaterial.opacity=strong?.075:0;
+  accent.corners.visible=strong||mode==='hover';accent.halo.visible=strong;accent.fill.visible=strong;
+  const thickness=strong?.115:mode==='hover'?.075:.045;
+  accentBorder(accent.edges,accent.width,accent.depth,thickness);accentBorder(accent.halo,accent.width,accent.depth,.23);
+  const object=new THREE.Object3D(),length=strong?.62:.44,weight=strong?.15:.10;let index=0;
+  for(const sx of [-1,1])for(const sz of [-1,1]){
+    object.position.set(sx*(accent.width/2-length/2+weight/2),.006,sz*accent.depth/2);object.scale.set(length,.04,weight);object.updateMatrix();accent.corners.setMatrixAt(index++,object.matrix);
+    object.position.set(sx*accent.width/2,.006,sz*(accent.depth/2-length/2+weight/2));object.scale.set(weight,.04,length);object.updateMatrix();accent.corners.setMatrixAt(index++,object.matrix);
+  }
+  accent.corners.instanceMatrix.needsUpdate=true;accent.corners.computeBoundingSphere();
+}
+
 /** Presentation adapter. Game state remains owned by the host, including during animations. */
 export class PrisonScene3D {
   constructor({stage,board,motion=()=>true,fast=()=>false}){
@@ -35,7 +76,10 @@ export class PrisonScene3D {
       this.observer=new ResizeObserver(()=>this.resize());this.observer.observe(stage);this.resize();this.loadTextures();
       this.onHover=event=>{if(this.stage.getAttribute('aria-busy')==='true')return;const id=event.target.closest('[data-room]')?.dataset.room;this.hovered=id===undefined?null:Number(id);if(this.state)this.sync(this.state,this.selection);};
       this.onLeave=()=>{this.hovered=null;if(this.stage.getAttribute('aria-busy')!=='true'&&this.state)this.sync(this.state,this.selection);};
+      this.onFocus=event=>{const id=event.target.closest('[data-room]')?.dataset.room;this.focused=id===undefined?null:Number(id);if(this.stage.getAttribute('aria-busy')!=='true'&&this.state)this.sync(this.state,this.selection);};
+      this.onBlur=()=>{this.focused=null;if(this.stage.getAttribute('aria-busy')!=='true'&&this.state)this.sync(this.state,this.selection);};
       board.addEventListener('pointerover',this.onHover);board.addEventListener('pointerleave',this.onLeave);
+      board.addEventListener('focusin',this.onFocus);board.addEventListener('focusout',this.onBlur);
     }catch(error){this.fallback('webgl-unavailable');this.releaseResources();this.renderer?.dispose();}
   }
   get active(){return this.ready&&this.motion()&&!this.reduced.matches&&!document.hidden;}
@@ -45,12 +89,14 @@ export class PrisonScene3D {
     const mask=this.canvasTexture((context,size)=>{const g=context.createRadialGradient(size/2,size/2,size*.28,size/2,size/2,size*.49);g.addColorStop(0,'white');g.addColorStop(.75,'white');g.addColorStop(1,'black');context.fillStyle=g;context.fillRect(0,0,size,size);});
     const glow=this.canvasTexture((context,size)=>{const g=context.createRadialGradient(size/2,size/2,0,size/2,size/2,size/2);g.addColorStop(0,'#ffffffff');g.addColorStop(.2,'#ffffffa0');g.addColorStop(1,'#ffffff00');context.fillStyle=g;context.fillRect(0,0,size,size);});
     const tierGeometry=this.keep(new THREE.RingGeometry(.65,.73,40));
+    const accentGeometry={box:this.keep(new THREE.BoxGeometry(1,1,1)),plane:this.keep(new THREE.PlaneGeometry(1,1))};
     this.cells=this.asset.rooms.map(room=>{
       const portraitMaterial=this.keep(new THREE.SpriteMaterial({alphaMap:mask,color:0xffffff,transparent:true,opacity:0,depthWrite:false}));
       const portrait=new THREE.Sprite(portraitMaterial);portrait.name='Gameplay_prisoner';portrait.scale.set(PORTRAIT_SIZE,PORTRAIT_SIZE,1);room.portraitAnchor.add(portrait);
       const tierMaterial=this.keep(new THREE.MeshBasicMaterial({color:TIER_COLORS[0],transparent:true,opacity:.4,depthWrite:false,side:THREE.DoubleSide}));
       const tierRing=new THREE.Mesh(tierGeometry,tierMaterial);tierRing.name='Gameplay_rarity';tierRing.rotation.x=-Math.PI/2;tierRing.position.y=.014;room.floorAnchor.add(tierRing);
-      return {...room,group:room.root,portrait,tierRing,tierMaterial,open:false,key:null};
+      const accent=createRoomAccent(room,this.asset.config,value=>this.keep(value),accentGeometry);
+      return {...room,group:room.root,portrait,tierRing,tierMaterial,accent,open:false,key:null};
     });
     const material=this.keep(new THREE.SpriteMaterial({map:glow,color:0xe9ca83,transparent:true,opacity:.9,depthWrite:false,blending:THREE.AdditiveBlending}));
     this.warden=new THREE.Sprite(material);this.warden.name='Gameplay_position';this.warden.scale.set(.64,.64,1);this.scene.add(this.warden);
@@ -62,10 +108,9 @@ export class PrisonScene3D {
       this.stage.dataset.portraitTexture='ready';if(this.state)this.sync(this.state,this.selection);
     },undefined,()=>{this.stage.dataset.portraitTexture='unavailable';});
   }
-  sync(state,{selected=0,armed=false,pairTarget=null}={}){
-    if(!this.ready)return;this.state=state;this.selection={selected,armed,pairTarget};
+  sync(state,{selected=0,armed=false,pairTarget=null,routeRooms=[]}={}){
+    if(!this.ready)return;this.state=state;this.selection={selected,armed,pairTarget,routeRooms};
     const candidates=state.phase==='patrol'&&!state.pending.length?state.destinations:[];
-    this.asset.setSelection({selected:armed?selected:null,target:pairTarget,candidates});
     for(const [id,cell]of this.cells.entries()){
       const room=state.rooms[id],prisoner=room?.prisoner;if(!room)continue;const open=room.status!=='closed';
       // Initial/read-save sync and committed transitions only. Hover never restarts a moving gate.
@@ -75,13 +120,12 @@ export class PrisonScene3D {
         cell.key=key;cell.portrait.material.map=prisoner?this.atlas?.[key]||null:null;cell.portrait.material.needsUpdate=true;
       }
       cell.tierRing.visible=!!prisoner;cell.tierMaterial.color.setHex(TIER_COLORS[prisoner?.tier]||TIER_COLORS[0]);
-      const source=armed&&selected===id,target=pairTarget===id,candidate=candidates.includes(id),hover=this.hovered===id;
-      cell.highlight.visible=source||target||candidate||hover;
-      cell.selectionMat.color.setHex(target?0x87cac3:source?0xe4ba6a:candidate?0xd0b984:0xc3c0b1);
-      cell.selectionMat.opacity=(source||target)? .96 : candidate ? .75 : .55;
-      cell.highlight.scale.setScalar(source||target?1.025:1);
+      const source=selected===id,target=pairTarget===id,candidate=candidates.includes(id),hover=this.hovered===id||this.focused===id,route=routeRooms.includes(id);
+      cell.highlight.visible=false;
+      if(cell.accent)setRoomAccent(cell.accent,{selected:source,target,candidate,hover,route});
     }
     this.hasSynced=true;
+    this.stage.dataset.sceneSelection=this.cells.filter(cell=>cell.accent?.group.visible).map(cell=>`${cell.id}:${cell.accent.mode}`).join(',');
     const position=Number.isInteger(state.position)?this.asset.getRoomAnchor(state.position,'floor'):null;
     if(position){const forward=new THREE.Vector3(0,.15,this.asset.config.cellPitchZ*.45);forward.applyQuaternion(this.cells[state.position].group.getWorldQuaternion(new THREE.Quaternion()));this.warden.position.copy(position).add(forward);}
     this.warden.visible=!!position;this.renderer.shadowMap.needsUpdate=true;this.layout();this.request();
@@ -108,7 +152,7 @@ export class PrisonScene3D {
     this.raf=null;if(!this.ready||this.disposed||document.hidden)return;
     const delta=this.previousFrame?Math.min(.05,(time-this.previousFrame)/1000):0;this.previousFrame=time;
     for(const tween of [...this.tweens]){const progress=Math.min(1,(time-tween.start)/tween.duration);tween.update(ease(progress),progress);this.renderer.shadowMap.needsUpdate=true;if(progress===1){this.tweens.splice(this.tweens.indexOf(tween),1);tween.finish();tween.resolve();}}
-    if(this.active)this.asset.update(delta,time/1000);
+    if(this.active){this.asset.update(delta,time/1000);for(const cell of this.cells)if(cell.accent&&['selected','target'].includes(cell.accent.mode))cell.accent.haloMaterial.opacity=.14+Math.sin(time*.0026)*.025;}
     if(this.dirty||!this.lastDraw||time-this.lastDraw>=32||this.tweens.length){this.renderer.render(this.scene,this.camera);this.lastDraw=time;this.dirty=false;Object.assign(this.stage.dataset,{sceneCalls:String(this.renderer.info.render.calls),sceneTriangles:String(this.renderer.info.render.triangles),sceneBatched:String(this.batchCount)});}
     if(this.active||this.tweens.length)this.request(false);
   }
@@ -146,12 +190,12 @@ export class PrisonScene3D {
   }
   releaseResources(){
     // Remove host-owned objects before disposing the asset's architecture and materials.
-    for(const cell of this.cells){cell.portrait.removeFromParent();cell.tierRing.removeFromParent();}
+    for(const cell of this.cells){cell.portrait.removeFromParent();cell.tierRing.removeFromParent();cell.accent?.group.removeFromParent();}
     this.warden?.removeFromParent();for(const ghost of this.ghosts||[]){ghost.removeFromParent();ghost.material.dispose();}this.ghosts?.clear();
     for(const resource of this.resources)resource.dispose();this.resources.clear();this.asset?.dispose();
   }
   dispose(){
-    if(this.disposed)return;this.disposed=true;this.observer?.disconnect();document.removeEventListener('visibilitychange',this.onVisibility);this.board.removeEventListener('pointerover',this.onHover);this.board.removeEventListener('pointerleave',this.onLeave);this.canvas?.removeEventListener('webglcontextlost',this.onLost);
+    if(this.disposed)return;this.disposed=true;this.observer?.disconnect();document.removeEventListener('visibilitychange',this.onVisibility);this.board.removeEventListener('pointerover',this.onHover);this.board.removeEventListener('pointerleave',this.onLeave);this.board.removeEventListener('focusin',this.onFocus);this.board.removeEventListener('focusout',this.onBlur);this.canvas?.removeEventListener('webglcontextlost',this.onLost);
     this.fallback('disposed');this.releaseResources();this.renderer?.dispose();
   }
 }

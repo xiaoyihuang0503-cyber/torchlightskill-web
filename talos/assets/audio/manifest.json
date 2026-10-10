@@ -56,11 +56,6 @@
       "kind": "ambience",
       "gain": 0.13
     },
-    "music_mystery": {
-      "path": "assets/audio/music_mystery.mp3",
-      "kind": "music",
-      "gain": 0.28
-    },
     "beast_elephant": {
       "path": "assets/audio/beast_elephant.mp3",
       "kind": "sfx",
@@ -120,6 +115,26 @@
       "path": "assets/audio/voice_end.mp3",
       "kind": "voice",
       "gain": 0.85
+    },
+    "music_abyss": {
+      "path": "assets/audio/music_abyss.mp3",
+      "kind": "music",
+      "gain": 0.35
+    },
+    "music_twenty_days": {
+      "path": "assets/audio/music_twenty_days.mp3",
+      "kind": "music",
+      "gain": 0.35
+    },
+    "music_warden_silence": {
+      "path": "assets/audio/music_warden_silence.mp3",
+      "kind": "music",
+      "gain": 0.35
+    },
+    "music_keys_cage": {
+      "path": "assets/audio/music_keys_cage.mp3",
+      "kind": "music",
+      "gain": 0.35
     }
   }
 }

@@ -1,8 +1,15 @@
 const STORAGE_KEY='ss14-prison-audio-v1';
 const DEFAULTS=Object.freeze({enabled:true,sfx:true,voice:true,ambience:true,music:true,volume:.65,musicVolume:.8});
-// The existing music is quiet (-22.7 LUFS); its .28 manifest gain attenuated it
-// again. Rebalance this bus only, keeping foreground levels and saved sliders.
+// New music is loudness-normalized, with .35 clip gain: the existing 2.8 bus
+// reaches at most .98 even when both saved volume sliders are at 100%.
 const MUSIC_MIX=Object.freeze({gain:2.8,voiceDuck:.22,devourDuck:.34});
+export const musicTracks=Object.freeze([
+  Object.freeze({id:'music_abyss',title:'掌控深渊'}),
+  Object.freeze({id:'music_twenty_days',title:'二十日囚徒'}),
+  Object.freeze({id:'music_warden_silence',title:'The Warden’s Silence'}),
+  Object.freeze({id:'music_keys_cage',title:'Keys to the Cage'})
+]);
+const MUSIC_IDS=new Set(musicTracks.map(track=>track.id));
 const KINDS=new Set(['sfx','voice','ambience','music']);
 const BEASTS=Object.freeze({elephant:'beast_elephant',lion:'beast_lion',wolf:'beast_wolf',rat:'beast_rat'});
 const clamp=(value,min=0,max=1)=>Math.max(min,Math.min(max,value));
@@ -19,14 +26,20 @@ function preferences(value={}){
 export class PrisonAudio {
   constructor({manifestUrl='assets/audio/manifest.json',baseUrl=new URL('./',import.meta.url).href,
     fetcher=globalThis.fetch?.bind(globalThis),audioFactory=()=>new Audio(),
-    storage=browserStorage(),page=globalThis.document,onStatus=()=>{},maxEffects=6}={}){
+    storage=browserStorage(),page=globalThis.document,onStatus=()=>{},maxEffects=6,random=Math.random}={}){
     this.baseUrl=new URL(baseUrl);this.manifestUrl=new URL(manifestUrl,this.baseUrl);
     this.fetcher=fetcher;this.audioFactory=audioFactory;this.storage=storage;this.page=page;this.onStatus=onStatus;
     this.maxEffects=Number.isFinite(maxEffects)?Math.max(1,Math.floor(maxEffects)):6;
+    this.musicRandom=typeof random==='function'?random:Math.random;
+    this.musicSelection='random';this.currentMusicId=null;
     this.clips=new Map();this.failed=new Set();this.effects=[];this.currentVoice=null;this.ambient=null;this.music=null;this.transientGeneration=0;
     this.unlocked=false;this.loaded=false;this.hidden=Boolean(page?.hidden);this.destroyed=false;
     this.preferences={...DEFAULTS};
-    try{this.preferences=preferences(JSON.parse(storage?.getItem(STORAGE_KEY)||'{}'));}catch{}
+    try{
+      const saved=JSON.parse(storage?.getItem(STORAGE_KEY)||'{}');
+      this.preferences=preferences(saved);
+      if(MUSIC_IDS.has(saved.musicTrack))this.musicSelection=saved.musicTrack;
+    }catch{}
     this.visibilityHandler=()=>this._visibility();
     this.pageHideHandler=()=>{this.hidden=true;this._suspend();};
     this.pageShowHandler=()=>this._visibility();
@@ -44,6 +57,9 @@ export class PrisonAudio {
       const directory=new URL('./',this.manifestUrl);
       for(const [id,clip] of Object.entries(manifest.clips)){
         if(!clip||!KINDS.has(clip.kind)||typeof clip.path!=='string')continue;
+        // Only the four user-provided replacements may enter the music player.
+        // Old manifests cannot silently restore the retired generated loop.
+        if(clip.kind==='music'&&!MUSIC_IDS.has(id))continue;
         let url;
         try{url=new URL(clip.path,/^(?:\.\/)?assets\//.test(clip.path)?this.baseUrl:directory);}catch{continue;}
         if(url.origin!==this.baseUrl.origin||!url.pathname.startsWith(directory.pathname)||!url.pathname.toLowerCase().endsWith('.mp3')||url.search||url.hash)continue;
@@ -113,7 +129,7 @@ export class PrisonAudio {
     const clip=this.clips.get(id);
     if(clip?.kind==='voice')return this.voice(id);
     if(clip?.kind==='ambience'){this._syncAmbient(id);return Boolean(this.ambient?.playing);}
-    if(clip?.kind==='music'){this._syncMusic(id);return Boolean(this.music?.playing);}
+    if(clip?.kind==='music'){this.setMusicTrack(id);return Boolean(this.music?.playing);}
     if(!this._allowed('sfx')||!this._clip(id,'sfx'))return false;
     while(this.effects.length>=this.maxEffects)this._pause(this.effects.shift(),true);
     const record=this._record(clip);if(!record)return fallback&&fallback!==id?this.play(fallback):false;
@@ -147,7 +163,47 @@ export class PrisonAudio {
     this._syncVolumes();return started;
   }
   _syncAmbient(id='ambience'){this._syncLoop('ambient','ambience',id);}
-  _syncMusic(id='music_mystery'){this._syncLoop('music','music',id);}
+  _musicChoices(exclude=null){return musicTracks.filter(track=>track.id!==exclude&&this._clip(track.id,'music'));}
+  _randomMusic(exclude=null){
+    const choices=this._musicChoices(exclude);if(!choices.length)return null;
+    let value;try{value=Number(this.musicRandom());}catch{value=0;}
+    const index=Math.floor(clamp(Number.isFinite(value)?value:0,0,1-Number.EPSILON)*choices.length);
+    return choices[index].id;
+  }
+  _chooseMusic({exclude=null}={}){
+    if(this.musicSelection!=='random'){this.currentMusicId=this.musicSelection;return;}
+    this.currentMusicId=this._randomMusic(exclude);
+  }
+  _syncMusic(){
+    if(!this.loaded)return;
+    if(!this.currentMusicId||(this.musicSelection==='random'&&!this._clip(this.currentMusicId,'music')))this._chooseMusic();
+    this._syncLoop('music','music',this.currentMusicId);
+    if(this.musicSelection==='random'&&this.currentMusicId&&this.failed.has(this.currentMusicId)&&this._allowed('music'))this._syncMusic();
+  }
+  _savePreferences(){
+    try{this.storage?.setItem(STORAGE_KEY,JSON.stringify({...this.preferences,musicTrack:this.musicSelection}));}catch{}
+  }
+  setMusicTrack(selection='random'){
+    if(this.destroyed||selection!=='random'&&!MUSIC_IDS.has(selection))return false;
+    if(selection==='random')return this.refreshMusic();
+    if(this.loaded&&!this._clip(selection,'music'))return false;
+    this.musicSelection=selection;this.currentMusicId=selection;
+    this._savePreferences();this._syncMusic();this._notify();return true;
+  }
+  refreshMusic(){
+    if(this.destroyed)return false;
+    const previous=this.currentMusicId;
+    const next=this.loaded?this._randomMusic(previous):null;
+    if(this.loaded&&!next)return false;
+    this.musicSelection='random';this.currentMusicId=next;
+    this._savePreferences();this._syncMusic();this._notify();return true;
+  }
+  enterMusic(){
+    if(this.destroyed)return false;
+    // Only explicit entry into a run rerolls random music. Reset, import,
+    // undo and ordinary preference changes keep the same track selection.
+    this._chooseMusic();this._syncMusic();this._notify();return Boolean(this.currentMusicId);
+  }
   _syncLoops(){this._syncAmbient();this._syncMusic();}
   _syncLoop(slot,kind,id){
     if(!this._allowed(kind)){this._pause(this[slot]);return;}
@@ -156,7 +212,11 @@ export class PrisonAudio {
     const record=this[slot];
     if(!record||record.playing)return;
     this._volume(record);
-    this._start(record,()=>{if(this[slot]===record)this[slot]=null;});
+    this._start(record,failed=>{
+      if(this[slot]!==record)return;
+      this[slot]=null;
+      if(failed&&kind==='music'&&this.musicSelection==='random'&&this._allowed('music'))this._syncMusic();
+    });
   }
   _syncVolumes(){for(const record of [...this.effects,this.currentVoice,this.ambient,this.music].filter(Boolean))this._volume(record);}
   _suspend(){
@@ -173,7 +233,7 @@ export class PrisonAudio {
   setPreferences(value={}){
     const previous=this.preferences;
     this.preferences=preferences({...this.preferences,...value});
-    try{this.storage?.setItem(STORAGE_KEY,JSON.stringify(this.preferences));}catch{}
+    this._savePreferences();
     if(['enabled','sfx','voice'].some(kind=>previous[kind]&&!this.preferences[kind]))this.transientGeneration++;
     if(!this.preferences.enabled||!this.preferences.sfx)this.stop('sfx');
     if(!this.preferences.enabled||!this.preferences.voice)this.stop('voice');
@@ -252,6 +312,8 @@ export class PrisonAudio {
       kinds:Object.fromEntries([...KINDS].map(kind=>[kind,[...this.clips.values()].some(clip=>clip.kind===kind&&!this.failed.has(clip.id))])),
       effects:this.effects.length,voice:this.currentVoice?.id??null,voiceQueued:0,
       ambiencePlaying:Boolean(this.ambient?.playing),musicPlaying:Boolean(this.music?.playing),failedClips:this.failed.size,preferences:{...this.preferences},
+      musicTracks:musicTracks.map(track=>({...track})),currentMusic:musicTracks.find(track=>track.id===this.currentMusicId)??null,
+      musicMode:this.musicSelection==='random'?'random':'selected',selectedMusic:this.musicSelection,
       label:!this.preferences.enabled?'声音已关闭':!this.unlocked?'声音已开启，点击后播放':!this.clips.size?'声音暂不可用':'声音已开启'};
   }
   _notify(){try{this.onStatus(this.getStatus());}catch{}}

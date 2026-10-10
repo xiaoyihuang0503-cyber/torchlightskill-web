@@ -201,3 +201,35 @@
 .reward-choice:focus-visible{outline:1px solid #b89968;outline-offset:3px}
 #reward-dialog h2,.reward-choice strong{color:#ccbaa0}.reward-choice p{color:#b9ad98}
 #confirm-reward{border:2px solid #786348;background:linear-gradient(#463a2a,#201b14);color:#d1c1a4}
+
+/* The 3D environment stays visible; soft local scrims protect the side HUD text. */
+.three-ready .scene-goal,.three-ready .game-tools,.three-ready .game-rainbow{isolation:isolate}
+.three-ready .scene-goal::before,.three-ready .game-tools::before,.three-ready .game-rainbow::before{content:"";position:absolute;inset:-.55cqw -.7cqw;z-index:-1;pointer-events:none;filter:blur(.45cqw);background:linear-gradient(90deg,#100c0987,#100c0948 72%,transparent)}
+.three-ready .game-rainbow::before{background:linear-gradient(270deg,#100c0999,#100c0952 72%,transparent)}
+.three-ready .game-name h1,.three-ready .game-side-title{color:#e5d8c0;font-weight:600;text-shadow:0 2px 2px #000,0 0 7px #000,1px 0 1px #000,-1px 0 1px #000}
+.three-ready .game-side-title{font-size:1.48cqw;letter-spacing:.04em}
+.three-ready .game-side-title small{color:#ded1b7;opacity:1;font-size:.96cqw;font-weight:600}
+.three-ready .remaining-days{color:#e2d9c8;font-weight:500;text-shadow:0 2px 3px #000,0 0 8px #000}
+.three-ready .remaining-days strong{color:#f3dfb9;font-weight:600}
+.three-ready .game-speed{color:#ead3ad;font-size:1.26cqw;font-weight:600;border-color:#857258;background:linear-gradient(#382d23ee,#17110ce8);text-shadow:0 1px 2px #000}
+.three-ready .game-speed[aria-pressed=true]{color:#ffe3a8;border-color:#b49a68;background:linear-gradient(#594025ee,#291b10ee)}
+.three-ready .scene-goal .goal-heading{color:#d8cfbd;font-size:1.15cqw;font-weight:600;text-shadow:0 2px 2px #000,0 0 6px #000}
+.three-ready .scene-goal .goal-main{color:#f1e2c6;font-size:1.48cqw;font-weight:600;text-shadow:0 2px 2px #000,0 0 7px #000}
+.three-ready .scene-goal .goal-condition{color:#ddd2bc;font-size:1.06cqw;font-weight:500;line-height:1.55;text-shadow:0 2px 2px #000,0 0 6px #000}
+.three-ready .scene-goal .goal-condition strong{color:#f0b59f;font-weight:600}
+.three-ready .goal-info{color:#d7bc8e;opacity:1;text-shadow:0 1px 3px #000}
+.three-ready .game-tools .tool strong{color:#e5d7bf;font-size:1.06cqw;font-weight:600;line-height:1.5;text-shadow:0 2px 2px #000,0 0 6px #000}
+.three-ready .game-tools .hint{color:#cfc2aa;font-size:1.02cqw;font-weight:500;opacity:1;text-shadow:0 2px 2px #000,0 0 6px #000}
+.three-ready .rainbow-title{color:#ead0ab}
+.three-ready .rainbow-name{color:#fae8f4;font-size:.86cqw;font-weight:600;text-shadow:0 2px 2px #000,0 0 6px #000}
+.three-ready .game-rainbow .rainbow-slot{opacity:.82;background:linear-gradient(145deg,#65584d8c,#1c1714ed 65%)}
+.three-ready .rainbow-slot-mark{color:#c1b3a2;opacity:.85;font-size:1.45cqw;text-shadow:0 2px 3px #000}
+.three-ready .game-confirm,.three-ready .game-cancel{color:#f1dfc2;font-weight:600;font-size:2.1cqw;text-shadow:0 2px 2px #000,0 0 6px #000}
+.three-ready .game-confirm:disabled{opacity:.8;filter:saturate(.4) brightness(.9)}
+.three-ready .confirm-choice-label{color:#f0d2af;font-size:1.12cqw;font-weight:600;text-shadow:0 2px 2px #000,0 0 7px #000}
+.three-ready .quick-decision{color:#ded0b8;font-size:1.14cqw;font-weight:500;text-shadow:0 2px 2px #000,0 0 7px #000}
+
+/* Decision copy gets its own narrow scrim; the courtyard and cards keep their layout. */
+.game-decision #phase-title{color:#f1e7d2;font-size:clamp(12px,1.68cqw,29px);font-weight:600;text-shadow:0 2px 1px #000,1px 0 1px #000,-1px 0 1px #000,0 0 8px #000}
+.game-decision #phase-help{color:#e8ddc7;font-size:clamp(10px,.94cqw,18px);font-weight:500;line-height:1.5;text-shadow:0 2px 1px #000,0 0 5px #000;background:linear-gradient(90deg,transparent,#0a0806b3 12%,#0a0806d1 50%,#0a0806b3 88%,transparent)}
+@media(min-width:1000px){.game-decision #phase-title{font-size:clamp(16px,1.68cqw,29px)}.game-decision #phase-help{font-size:clamp(12px,.94cqw,18px)}}

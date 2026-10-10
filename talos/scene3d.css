@@ -1,7 +1,7 @@
 /* Canvas geometry and accessible HTML rooms use the same camera projection. */
 .scene-3d-canvas{position:absolute;inset:0;display:block;width:100%;height:100%;z-index:0;pointer-events:none}
 .three-ready{background:#171a18}
-.three-ready::before{z-index:1;background:linear-gradient(90deg,#050504a8,transparent 23%,transparent 79%,#050504a0),linear-gradient(#0009,transparent 15%,transparent 65%,#0008)}
+.three-ready::before{z-index:1;background:linear-gradient(90deg,#050403ed 0%,#080706db 17%,transparent 24%,transparent 76%,#080706db 83%,#050403ed 100%),linear-gradient(#000a,transparent 16%,transparent 65%,#0009)}
 .three-ready .scene-shell{left:0;top:0;width:100%;height:100%;perspective:none;z-index:2}
 .three-ready .arena#prison-scene{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;box-shadow:none;transform:none;background:transparent;pointer-events:none}
 .three-ready .arena#prison-scene::before{display:none}
@@ -15,9 +15,13 @@
 .three-ready .room .room-name{top:calc(var(--scene-label-y) - 1.55cqw);font-size:.86cqw;color:#d3d0be}
 .three-ready .room .room-rarity{top:calc(var(--scene-label-y) - .54cqw);font-size:.78cqw;color:var(--tier-color)}
 .three-ready .room .eat-mark{display:none}
-.three-ready .room:focus-visible{outline:1px solid #c4ac71;outline-offset:2px}
+.three-ready .room:focus-visible{outline:0;outline-offset:0}
 .three-ready .room .nest-mark{bottom:auto;top:calc(var(--scene-label-y) + .46cqw);left:0;right:0;font-size:.66cqw;pointer-events:none}
 .three-ready .room .event-mark{right:4%;top:4%;color:#d5ad69;pointer-events:none}
 /* A clipped, invisible floor face receives pointers. The button remains keyboard focusable. */
 .three-ready #board .room::after{content:"";display:block;position:absolute;inset:0;z-index:1;border:0;background:transparent;box-shadow:none;opacity:1;transform:none;clip-path:var(--scene-hit-polygon);pointer-events:auto}
 .three-ready[aria-busy=true] #board .room::after{pointer-events:none}
+/* Route indication belongs to the projected 3D rim, never the high-wall HTML rectangle. */
+.three-ready #board .room.route-step,.three-ready #board .room.route{outline:0!important;outline-offset:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+.three-ready #board .room.route-step::before,.three-ready #board .room.route::before{display:none!important;content:none!important;border:0!important;outline:0!important;background:none!important;box-shadow:none!important}
+.three-ready #board .room.route-step::after,.three-ready #board .room.route::after{border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important}
