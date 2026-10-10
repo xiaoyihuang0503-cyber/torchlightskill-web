@@ -31,7 +31,6 @@ export class PrisonEffects {
     if(!this.active)return;
     const animations=[];
     for(const room of after.rooms){const old=before.rooms[room.id];if(room.prisoner&&(old.status==='closed'||room.prisoner.tier!==old.prisoner?.tier||room.prisoner.code!==old.prisoner?.code))animations.push(this.animate(this.room(room.id),[{filter:'brightness(2)',transform:'translateY(-5px)'},{filter:'brightness(1)',transform:'translateY(0)'}],270));}
-    if(after.rainbow.length>before.rainbow.length)animations.push(this.fly(this.room(action.room),document.querySelector('#rainbow .rainbow-avatar:last-child'),null,'warden'));
     if(action.type==='choose')animations.push(this.animate(document.querySelector('.game-tools'),[{filter:'brightness(2.2)'},{filter:'brightness(1)'}],220));
     await Promise.all(animations);
   }

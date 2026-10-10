@@ -47,6 +47,9 @@ export class PrisonAudio {
         let url;
         try{url=new URL(clip.path,/^(?:\.\/)?assets\//.test(clip.path)?this.baseUrl:directory);}catch{continue;}
         if(url.origin!==this.baseUrl.origin||!url.pathname.startsWith(directory.pathname)||!url.pathname.toLowerCase().endsWith('.mp3')||url.search||url.hash)continue;
+        // Changed voice recordings retain their filenames; the manifest revision
+        // gives browsers a fresh media URL without changing any local save data.
+        if(clip.kind==='voice'&&Number.isSafeInteger(manifest.version)&&manifest.version>=3)url.searchParams.set('v',String(manifest.version));
         this.clips.set(id,{id,kind:clip.kind,url:url.href,gain:Number.isFinite(clip.gain)?clamp(clip.gain):1});
       }
     }catch{}
@@ -200,16 +203,31 @@ export class PrisonAudio {
   actionStart(action){
     if(!action)return null;
     this._syncLoops();this.play('confirm');
-    return {generation:this.transientGeneration,devourHandled:false,completed:false};
+    return {generation:this.transientGeneration,devourHandled:false,gatesHandled:false,completed:false};
   }
   _currentAction(token){return !token||token.generation===this.transientGeneration&&!token.completed;}
+  gateReveal(action,before,after,token){
+    if(!this._currentAction(token)||!before||!after||after.stats.opened<=before.stats.opened||token?.gatesHandled)return false;
+    if(token)token.gatesHandled=true;
+    this.play('gate');
+    const oldIds=new Set([...before.rooms.map(room=>room.prisoner).filter(Boolean),...before.rainbow].map(p=>p.id));
+    const newRooms=after.rooms.filter(room=>room.prisoner&&!oldIds.has(room.prisoner.id));
+    // Main door first; extra simultaneous doors call each distinct beast once.
+    // Read the resolved prisoners, never the unopened room's predicted contents.
+    newRooms.sort((a,b)=>Number(b.id===action?.room)-Number(a.id===action?.room));
+    const codes=new Set([...newRooms.map(room=>room.prisoner.code),...after.rainbow.filter(p=>!oldIds.has(p.id)).map(p=>p.code)]);
+    for(const code of codes){const beast=BEASTS[code];if(beast&&this._clip(beast,'sfx'))this.play(beast);}
+    return true;
+  }
   actionImpact(action,before,after,token){
+    if(action?.type==='visit')return this.gateReveal(action,before,after,token);
     if(!this._currentAction(token)||action?.type!=='eat'||!before||!after||after.stats.eaten<=before.stats.eaten||token?.devourHandled)return false;
     if(token)token.devourHandled=true;
     return this.devour(before.rooms[action.room]?.prisoner?.code);
   }
   actionComplete(action,before,after,token){
     if(!action||!before||!after||!this._currentAction(token))return;
+    this.gateReveal(action,before,after,token);
     if(token)token.completed=true;
     const population=s=>[...s.rooms.map(room=>room.prisoner).filter(Boolean),...s.rainbow];
     const oldById=new Map(population(before).map(p=>[p.id,p.tier]));
@@ -218,7 +236,6 @@ export class PrisonAudio {
     const upgraded=population(after).some(p=>oldById.has(p.id)&&p.tier>oldById.get(p.id));
     const goal=after.goalIndex>before.goalIndex;
     const day=after.day>before.day,riot=after.phase==='riot'&&before.phase!=='riot',finished=after.phase==='finished'&&before.phase!=='finished';
-    if(after.stats.opened>before.stats.opened)this.play('gate');
     if(after.stats.eaten>before.stats.eaten&&!token?.devourHandled){
       if(action.type==='eat')this.devour(before.rooms[action.room]?.prisoner?.code);else this.play('devour');
     }

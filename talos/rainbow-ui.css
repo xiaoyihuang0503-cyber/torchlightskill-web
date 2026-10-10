@@ -1,0 +1,15 @@
+/* Occupied and vacant cells share one frame; portrait art is always inside it. */
+.mechanics-tooltip{position:fixed;z-index:1050;width:340px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto;padding:20px;color:#c6bfb2;background:#171719fa;border:1px solid #75675b;box-shadow:inset 0 0 0 3px #252326,0 12px 44px #000b;font-size:13px;line-height:1.8}
+.mechanics-tooltip h2{font:600 21px "SimSun",serif;color:#e1d4bf;margin:0 0 12px}
+.mechanics-tooltip h3{font-size:13px;color:#d1b89b;margin:14px 0 4px}
+.mechanics-tooltip .rules-note{color:#948b81;font-size:11px;border-top:1px solid #5a4f413d;margin-top:14px;padding-top:10px}
+.game-rainbow .rainbow-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:.75cqw .65cqw;max-height:27cqw;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#776270 transparent;padding:.25cqw}
+.game-rainbow .rainbow-avatar,.game-rainbow .rainbow-slot{position:relative;aspect-ratio:.85;min-width:0;border-radius:0;clip-path:polygon(50% 0,97% 23%,97% 77%,50% 100%,3% 77%,3% 23%);background:linear-gradient(145deg,#9b939a,#51414d 42%,#181318 80%);box-shadow:none;isolation:isolate}
+.game-rainbow .rainbow-avatar{animation:none;filter:none}
+.rainbow-face{position:absolute;inset:5% 8% 8%;clip-path:polygon(50% 0,97% 23%,97% 77%,50% 100%,3% 77%,3% 23%);z-index:1;filter:brightness(1.13);background-color:#181318}
+.rainbow-frame{position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(transparent 58%,#080509e0 94%);box-shadow:inset 0 0 .55cqw #000;clip-path:inherit}
+.rainbow-name{position:absolute;z-index:3;left:0;right:0;bottom:12%;color:#eedbed;text-align:center;font-size:.78cqw;text-shadow:0 1px 2px #000,0 0 4px #000;font-family:"Noto Serif SC","SimSun",serif;letter-spacing:.05em}
+.game-rainbow .rainbow-slot{opacity:.65;background:linear-gradient(145deg,#55535266,#1c1c1cdc 60%);border:0;box-shadow:inset 0 0 .9cqw #0008}
+.rainbow-slot-mark{position:absolute;inset:0;display:grid;place-items:center;color:#6f6669;font-size:1.35cqw;opacity:.5}
+.rainbow-arrival-ghost{position:fixed;z-index:1000;pointer-events:none;clip-path:polygon(50% 0,97% 23%,97% 77%,50% 100%,3% 77%,3% 23%);border:1px solid #dab3d4;filter:drop-shadow(0 0 8px #d593c2)}
+@media(prefers-reduced-motion:reduce){.rainbow-arrival-ghost{display:none}}

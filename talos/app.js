@@ -1,13 +1,14 @@
 import { DEFAULT_CONFIG, SPECIES, RARITIES, TOOLS, GIFTS, ASSUMPTIONS, validateConfig } from './rules.js';
-import { applyAction, targets, onBoard, nameOf, editRoom, addTool, recommend, replay, exportRun, importRun, isChallenge, challengeView } from './session-engine.js?v=0.5.0-4';
+import { applyAction, targets, onBoard, nameOf, editRoom, addTool, recommend, replay, exportRun, importRun, isChallenge, challengeView } from './session-engine.js?v=0.6.3-1';
 import {pairDecision} from './interaction.js';
-import {PrisonEffects} from './effects.js';
+import {PrisonEffects} from './effects.js?v=0.6.3-1';
 import {goalGuide} from './goal-guide.js?v=0.6.2-1';
 import {PrisonScene3D} from './scene3d.js?v=0.6.2-1';
-import {PrisonAudio} from './audio.js?v=0.6.2-1';
-import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.6.2-1';
+import {PrisonAudio} from './audio.js?v=0.6.3-1';
+import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.6.3-1';
 import {rewardIcon,ruleText} from './reward-icons.js?v=0.6.2-1';
-import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.1-1';
+import {rainbowMarkup,animateRainbowArrivals} from './rainbow-ui.js?v=0.6.3-1';
+import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.3-1';
 
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -79,7 +80,7 @@ function renderStartup(){
 }
 function showStartup(){
   if(busy)return;
-  startupActive=true;cancelChoice();rewardChoice=null;hideGoalGuide();
+  startupActive=true;cancelChoice();rewardChoice=null;hideGoalGuide();hideMechanics();
   if(state)startupSave.run={current:structuredClone(state),initial:structuredClone(initial)};
   for(const id of ['settings-dialog','result-dialog','new-dialog','event-dialog'])if($(id).open)$(id).close();
   $('game-screen').hidden=true;$('game-screen').inert=true;$('game-screen').setAttribute('aria-hidden','true');
@@ -113,6 +114,22 @@ function hideGoalGuide(){
   clearTimeout(goalGuideHideTimer);goalGuidePinned=false;$('goal-tooltip').hidden=true;
   $('goal-details-trigger').setAttribute('aria-expanded','false');
 }
+let mechanicsHideTimer;
+function showMechanics(){
+  clearTimeout(mechanicsHideTimer);
+  const tip=$('mechanics-tooltip'),anchor=$('lab-settings').getBoundingClientRect();
+  tip.hidden=false;$('lab-settings').setAttribute('aria-expanded','true');
+  tip.style.left=`${Math.max(12,Math.min(anchor.left,innerWidth-tip.offsetWidth-12))}px`;
+  tip.style.top=`${Math.max(12,Math.min(anchor.bottom+12,innerHeight-tip.offsetHeight-12))}px`;
+}
+function hideMechanics(){ $('mechanics-tooltip').hidden=true; $('lab-settings').setAttribute('aria-expanded','false'); }
+$('lab-settings').addEventListener('mouseenter',showMechanics);
+$('lab-settings').addEventListener('focus',showMechanics);
+$('lab-settings').addEventListener('mouseleave',()=>{mechanicsHideTimer=setTimeout(hideMechanics,140);});
+$('lab-settings').addEventListener('blur',()=>{mechanicsHideTimer=setTimeout(hideMechanics,140);});
+$('lab-settings').addEventListener('click',hideMechanics);
+$('mechanics-tooltip').addEventListener('mouseenter',()=>clearTimeout(mechanicsHideTimer));
+$('mechanics-tooltip').addEventListener('mouseleave',hideMechanics);
 function scheduleGoalGuideHide(){
   clearTimeout(goalGuideHideTimer);goalGuideHideTimer=setTimeout(()=>{
     if(!goalGuidePinned&&document.activeElement!==$('goal-details-trigger'))hideGoalGuide();
@@ -153,7 +170,10 @@ async function act(action){
     if(scene3d.ready)await scene3d.effectBefore(action,before);else await effects.before(action,before);
     audio.actionImpact(action,before,state,audioAction);
     render(true);
-    if(scene3d.ready)await scene3d.effectAfter(before,state,action);else await effects.after(before,state,action);
+    await Promise.all([
+      scene3d.ready?scene3d.effectAfter(before,state,action):effects.after(before,state,action),
+      animateRainbowArrivals(before,state,action,{enabled:preferences.motion,fast:preferences.fast}),
+    ]);
   }
   catch{ /* Visual effects cannot roll back or duplicate a committed action. */ }
   finally{busy=false;document.querySelector('.game-stage').setAttribute('aria-busy','false');render();}
@@ -226,7 +246,7 @@ function render(deferDialogs=false){
   $('tools').innerHTML=state.tools.map(id=>{const t=TOOLS.find(x=>x.id===id);return `<div class="tool"><span class="tool-icon" aria-hidden="true">${rewardIcon(id)}</span><div><strong>${esc(t.name)}</strong><p>${ruleText(t.text)}</p></div></div>`;}).join('');
   $('tools-empty').hidden=!!state.tools.length;
   $('rainbow-count').textContent=state.rainbow.length;
-  $('rainbow').innerHTML=`<div class="rainbow-grid">${state.rainbow.map(p=>`<div class="rainbow-avatar portrait ${p.code}" role="img" aria-label="${nameOf(p)}"></div>`).join('')}${Array.from({length:Math.max(0,6-state.rainbow.length)},()=>'<div class="rainbow-slot" aria-hidden="true"></div>').join('')}</div>`;
+  $('rainbow').innerHTML=rainbowMarkup(state);
   const edible=targets(state,selected);
   state.rooms.forEach((r,i)=>{
     const p=r.prisoner,candidate=phase==='patrol'&&state.destinations.includes(r.id)&&!state.pending.length&&(!challenge?.intel||challenge.intel.room===r.id||r.status==='open');
@@ -289,7 +309,7 @@ function render(deferDialogs=false){
   $('advice-panel').hidden=!preferences.advice;
   $('advice-placeholder').hidden=preferences.advice;
   const recommendations=preferences.advice?recommend(state):[];
-  $('advice').innerHTML=recommendations.map((rec,i)=>`<div class="advice-item"><div class="advice-title">${i===0?'优先参考':'备选'} · ${esc(rec.label)}</div><p>${esc(rec.reason)}</p>${buttonsFor(rec.action,'采用这个选择')}</div>`).join('')||'<p class="hint">本轮已结束，可导出记录或再开一局。</p>';
+  $('advice').innerHTML=recommendations.map((rec,i)=>`<div class="advice-item"><div class="advice-title">${i===0?'优先参考':'备选'} · ${esc(rec.label)}</div><p>${esc(rec.reason)}</p>${buttonsFor(rec.action,'采用这个选择')}</div>`).join('')||`<p class="hint">${challenge?.restock?'先在刑具整备中选择一件，再继续经营。':'本轮已结束，可导出记录或再开一局。'}</p>`;
   $('log').innerHTML=state.log.slice(-9).reverse().map(item=>`<li><time>第 ${item.day} 日</time><span>${esc(item.text)}</span></li>`).join('');
   $('action-count').textContent=`${state.history.length} 次操作`;
   $('seed-display').textContent=`种子 ${state.seed} · ${startupSave.protectedSave||startupSave.error?'本局请导出保存':'自动保存本机'}`;
@@ -302,14 +322,22 @@ function render(deferDialogs=false){
   $('add-tool-select').innerHTML=TOOLS.filter(t=>!state.tools.includes(t.id)).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
   if(state.pending.length){
     const reward=state.pending[0],catalog=reward.kind==='tool'?TOOLS:GIFTS;
+    const restock=reward.source==='challengeRestock'?challenge?.restock:null;
     $('reward-dialog').dataset.kind=reward.kind;
-    $('reward-kind').textContent=reward.kind==='tool'?'OBJECTIVE COMPLETE':'RAINBOW PRISONER';
-    $('reward-title').textContent=reward.kind==='tool'?'选择一件刑具':'典狱长的珍藏';
+    $('reward-kind').textContent=restock?'合约奖励 · 原创挑战':reward.kind==='tool'?'OBJECTIVE COMPLETE':'RAINBOW PRISONER';
+    $('reward-kind').hidden=!restock;
+    $('reward-title').textContent=restock?'刑具整备':reward.kind==='tool'?'选择一件刑具':'典狱长的珍藏';
+    $('restock-controls').hidden=!restock;
+    if(restock){
+      $('refresh-restock').disabled=busy||!restock.canRefresh;
+      $('refresh-restock').textContent=restock.refreshUsed?'本次已刷新':'刷新刑具 · 1 调度券';
+      $('restock-note').textContent=`调度券 ${challenge.tickets} · ${restock.reason} 选择一件后继续经营；选择不额外耗日。`;
+    }
     if(!reward.options.includes(rewardChoice))rewardChoice=null;
     $('reward-options').innerHTML=reward.options.map(id=>{const t=catalog.find(x=>x.id===id);return `<button class="reward-choice" data-reward="${id}" aria-pressed="${id===rewardChoice}"><span class="reward-art" aria-hidden="true">${rewardIcon(id)}</span><strong class="reward-name">${esc(t.name)}</strong><p class="reward-description">${ruleText(t.text)}</p></button>`;}).join('');
     $('confirm-reward').disabled=!rewardChoice||busy;
     if(!deferDialogs&&!$('reward-dialog').open)$('reward-dialog').showModal();
-  }else if($('reward-dialog').open)$('reward-dialog').close();
+  }else{ $('restock-controls').hidden=true; if($('reward-dialog').open)$('reward-dialog').close(); }
   if(phase==='event'&&!state.pending.length){
     if(!deferDialogs&&!$('event-dialog').open)$('event-dialog').showModal();
   }else if($('event-dialog').open)$('event-dialog').close();
@@ -408,6 +436,7 @@ document.addEventListener('click',event=>{
   const button=event.target.closest('button');if(!button)return;
   if(button.dataset.close){$(button.dataset.close).close();return;}
   if(startupActive||!state)return;
+  if(button.id==='refresh-restock'){act({type:'refreshRestock'});return;}
   if(button.hasAttribute('data-open-event')){$('event-dialog').showModal();return;}
   if(button.hasAttribute('data-open-delivery')){openDelivery();return;}
   if(button.hasAttribute('data-early-delivery')){act({type:'openEarlyDelivery'}).then(()=>openDelivery());return;}
@@ -441,7 +470,7 @@ document.addEventListener('click',event=>{
 });
 document.addEventListener('click',event=>{const inside=event.composedPath().some(node=>node.id==='context-actions'||node.matches?.('.room,#confirm-action,[data-action],.run-sidebar'));if(!$('context-actions').hidden&&!inside){cancelChoice();render();}});
 $('board').addEventListener('contextmenu',event=>{const room=event.target.closest('[data-room]');if(!room||busy)return;event.preventDefault();cancelChoice();selected=Number(room.dataset.room);armed=true;render();showSingle({x:event.clientX,y:event.clientY});});
-document.addEventListener('keydown',event=>{if(event.key==='Escape'){hideGoalGuide();if(!document.querySelector('dialog[open]')){cancelChoice();render();}}});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'){hideGoalGuide();hideMechanics();if(!document.querySelector('dialog[open]')){cancelChoice();render();}}});
 const goalTrigger=$('goal-details-trigger'),goalTooltip=$('goal-tooltip');
 goalTrigger.addEventListener('mouseenter',showGoalGuide);
 goalTrigger.addEventListener('mouseleave',scheduleGoalGuideHide);

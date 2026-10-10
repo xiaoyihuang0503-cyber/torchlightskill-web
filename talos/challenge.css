@@ -35,3 +35,8 @@
 [hidden]{display:none!important}
 @media(max-width:800px){.challenge-panel{padding:12px}.challenge-metrics strong{font-size:18px}.delivery-cargo{grid-template-columns:repeat(2,minmax(0,1fr))}.challenge-panel h2{font-size:15px}}
 @media(max-width:520px){.challenge-panel{padding:10px}.challenge-metrics{margin:8px 0}.challenge-metrics>div{padding:6px 2px}.delivery-cargo{grid-template-columns:1fr 1fr}.cargo-choice .portrait{width:26px;height:32px}.escort-options{gap:8px;padding:10px}.game-header .run-badge{display:none}}
+.contract-plan{margin:12px 0;border-block:1px solid #554b423d;padding:10px 0;color:#c5bbac;font-size:12px}
+.contract-plan summary{cursor:pointer;min-height:24px;color:#d0c2a8}
+.contract-plan ol{margin:12px 0 0;padding-left:18px}
+.contract-plan li{margin:0 0 13px;line-height:1.7}
+.contract-plan li p{margin:4px 0;color:#a9a29a}

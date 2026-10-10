@@ -1,4 +1,9 @@
 /* Late-loaded, scoped reward/event presentation. All mechanics remain in app/engine. */
+.restock-controls { display:flex; align-items:center; gap:20px; border-top:1px solid #5d60563d; margin:20px 3px 8px; padding-top:14px; }
+.restock-controls[hidden] { display:none; }
+.restock-controls p { flex:1; color:#b3ad9f; font-size:13px; line-height:1.8; margin:0; }
+.restock-controls button { flex-shrink:0; color:#d9c6a6; border-color:#6c5742; background:#27221e; }
+@media(max-width:760px) { .restock-controls { flex-direction:column; align-items:stretch; gap:9px; } }
 #reward-dialog {
   --reward-paper: #d6d0c0;
   --reward-copy: #a8a9a2;
