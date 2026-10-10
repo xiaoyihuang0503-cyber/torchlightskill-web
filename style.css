@@ -1,6 +1,6 @@
 
 :root {
-  --background:#020207;
+  --background:#080808;
   --foreground:#f7f5fa;
   --panel:rgba(12,10,22,.94);
   --panel-soft:rgba(24,19,38,.72);
@@ -22,40 +22,28 @@ button:focus-visible,a:focus-visible,textarea:focus-visible { outline:2px solid 
   overflow:hidden;
   isolation:isolate;
   background:
-    radial-gradient(ellipse at 50% 28%,rgba(78,38,132,.24),transparent 39%),
-    linear-gradient(180deg,#020207 0%,#06040e 62%,#030309 100%);
+    radial-gradient(ellipse at 50% 28%,#19191970,transparent 65%),
+    linear-gradient(180deg,#080808 0%,#0d0d0d 62%,#080808 100%);
 }
 .site::before {
-  position:absolute; inset:0; z-index:-5; content:""; opacity:.13;
-  background-image:radial-gradient(rgba(255,255,255,.7) .45px,transparent .6px);
-  background-size:23px 23px;
-  mask-image:linear-gradient(to bottom,transparent 2%,#000 28%,transparent 96%);
+  position:absolute; inset:0; z-index:-5; content:"";
 }
 .ambient-field { position:fixed; inset:0; z-index:-4; overflow:hidden; pointer-events:none; }
+.ambient-field::after { content:""; position:absolute; inset:0; background:url('./assets/grain.svg') repeat; background-size:180px 180px; opacity:.1; mix-blend-mode:screen; pointer-events:none; }
 #fluid-background,.ambient-fallback,.ambient-vignette { position:absolute; inset:0; width:100%; height:100%; }
 #fluid-background { display:block; opacity:0; transition:opacity 1.4s ease; }
 .ambient-field.is-webgl #fluid-background { opacity:1; }
 .ambient-fallback { opacity:1; transition:opacity 1.4s ease; }
 .ambient-field.is-webgl .ambient-fallback { opacity:0; }
-.ambient-fallback i { position:absolute; width:65vmax; height:45vmax; border-radius:46% 54% 66% 34%; filter:blur(65px); background:radial-gradient(ellipse,#7430bd66,transparent 68%); animation:ambient-drift 24s ease-in-out infinite alternate; }
+.ambient-fallback i { position:absolute; width:65vmax; height:45vmax; border-radius:46% 54% 66% 34%; filter:blur(65px); background:radial-gradient(ellipse,#44444428,transparent 68%); animation:ambient-drift 40s ease-in-out infinite alternate; }
 .ambient-fallback i:nth-child(1) { left:-25%; top:-20%; transform:rotate(-28deg); }
-.ambient-fallback i:nth-child(2) { right:-26%; top:8%; background:radial-gradient(ellipse,#8b35b95c,transparent 65%); animation-duration:31s; animation-delay:-13s; }
-.ambient-fallback i:nth-child(3) { left:5%; bottom:-35%; background:radial-gradient(ellipse,#4425a859,transparent 64%); animation-duration:28s; animation-delay:-8s; }
+.ambient-fallback i:nth-child(2) { right:-26%; top:8%; background:radial-gradient(ellipse,#38383824,transparent 65%); animation-duration:48s; animation-delay:-13s; }
+.ambient-fallback i:nth-child(3) { left:5%; bottom:-35%; background:radial-gradient(ellipse,#3c3c3c24,transparent 64%); animation-duration:44s; animation-delay:-8s; }
 .ambient-field.is-webgl .ambient-fallback i,.ambient-field.is-paused .ambient-fallback i { animation-play-state:paused; }
-.ambient-vignette { background:radial-gradient(ellipse at 50% 31%,#03020a55,transparent 64%),linear-gradient(180deg,#02020730,transparent 40%,#02020780); }
+.ambient-vignette { background:radial-gradient(ellipse at 50% 31%,transparent 30%,#0004 100%); }
 @keyframes ambient-drift { to { transform:translate(10%,18%) rotate(22deg) scale(1.18); border-radius:64% 36% 42% 58%; } }
 
-/* Decorative pointer layers never capture a click or replace the system cursor. */
-.pointer-aura,.pointer-ring,.pointer-ripple { position:fixed; top:0; left:0; z-index:40; pointer-events:none; border-radius:50%; }
-.pointer-aura,.pointer-ring { opacity:0; will-change:transform; transition:opacity .3s ease; }
-.pointer-aura { width:280px; height:280px; margin:-140px 0 0 -140px; background:radial-gradient(circle,#aa6bff17,transparent 66%); }
-.pointer-ring { width:34px; height:34px; margin:-17px 0 0 -17px; border:1px solid #d1a5ff66; box-shadow:0 0 20px #a756ff25; }
-.pointer-aura.is-visible,.pointer-ring.is-visible { opacity:1; }
-.pointer-ring.is-pressed { border-color:#efdaff; }
-.pointer-ripple { width:60px; height:60px; margin:-30px 0 0 -30px; border:1px solid #c89bff; background:radial-gradient(circle,transparent 50%,#a756ff16 70%,transparent 73%); animation:ripple-out .9s ease-out forwards; }
-@keyframes ripple-out { from { transform:scale(.25); opacity:.8; } to { transform:scale(3); opacity:0; } }
-@media (hover:none),(pointer:coarse) { .pointer-aura,.pointer-ring,.pointer-ripple { display:none; } }
-@media (prefers-reduced-motion:reduce) { .ambient-fallback i { animation:none; } #fluid-background,.ambient-fallback { transition:none; } .pointer-aura,.pointer-ring,.pointer-ripple { display:none; } }
+@media (prefers-reduced-motion:reduce) { .ambient-fallback i { animation:none; } #fluid-background,.ambient-fallback { transition:none; } }
 .background-title {
   position:absolute; z-index:-4; left:50%; color:#131222; font-size:clamp(104px,13vw,190px);
   font-weight:950; line-height:.8; white-space:nowrap; letter-spacing:-.055em; transform:translateX(-50%); user-select:none;
@@ -101,3 +89,25 @@ dialog .douyin-hint { margin:12px 0 0; font-size:12px; color:#a99ab9; }
 .mentor-dismiss { display:block; min-height:44px; margin:12px auto -10px; padding:8px 24px; border:0; border-radius:8px; background:transparent; color:#a99ab9; font-size:13px; cursor:pointer; }
 .mentor-dismiss:hover { background:#ffffff08; color:#eee0ff; }
 @media(max-width:420px) { #mentor-detail { padding:30px 22px; } .douyin-code { width:min(204px,100%); } dialog .douyin-link { font-size:12px; gap:8px; padding:12px 9px; } }
+
+/* Neutral accents keep the matte background and product artwork in one palette. */
+.brand-accent,.brand-mark,.hero h1 span { color:#dedbd5; }
+.brand-mark { background:#ffffff08; border-color:#ffffff26; }
+.eyebrow { color:#a4a39f; }
+.top-nav a:hover { color:#fff; }
+.primary-button { background:linear-gradient(135deg,#dedbd5,#b8b5ae); border-color:#ede9df80; color:#171717; }
+.hero p,.product-copy p,dialog p { color:#a6a6a3; }
+.product-card { border-color:#ffffff1c; background:linear-gradient(145deg,#151515,#0b0b0b); }
+.product-visual { background:radial-gradient(ellipse at 50% 80%,#44444455,transparent 70%),#0c0c0c; }
+.product-visual:after { background:linear-gradient(0deg,#111,transparent 40%); }
+.mentor-scan-rings { border-color:#ffffff24; box-shadow:0 0 0 35px #ffffff04,0 0 0 70px #ffffff03; }
+.badge { color:#c9c7c1; border-color:#ffffff24; background:#ffffff05; }
+.tags span { color:#9b9b98; }
+.product-button { color:#dedbd5; background:#ffffff05; border-color:#ffffff22; }
+.product-button:hover { background:#ffffff0d; }
+dialog { background:#111; border-color:#ffffff2c; }
+.mentor-douyin { border-color:#ffffff16; }
+dialog .douyin-hint,.mentor-dismiss { color:#a5a39e; }
+.mentor-dismiss:hover { color:#f1eee7; }
+.close-dialog { color:#c7c4be; }
+.prison-visual:after { background:none; }

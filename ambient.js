@@ -5,12 +5,12 @@
   const canvas = document.getElementById('fluid-background');
   if (!field || !canvas) return;
 
-  const aura = document.querySelector('.pointer-aura');
-  const ring = document.querySelector('.pointer-ring');
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
-  const pointer = { x: innerWidth / 2, y: innerHeight / 2, sx: innerWidth / 2, sy: innerHeight / 2, active: false, strength: 0 };
-  const ripples = new Set();
+  const traces = [];
+  const traceUniforms = new Float32Array(24);
+  const ageUniforms = new Float32Array(6);
+  let lastPointer = null;
   let gl = null;
   let program = null;
   let locations = null;
@@ -30,9 +30,9 @@
       precision mediump float;
     #endif
     uniform vec2 uResolution;
-    uniform vec2 uPointer;
+    uniform vec4 uTraces[6];
+    uniform float uAges[6];
     uniform float uTime;
-    uniform float uStrength;
 
     float hash(vec2 p) {
       p = fract(p * vec2(123.34, 345.45));
@@ -48,7 +48,7 @@
     float fbm(vec2 p) {
       float v = 0.0, amplitude = 0.5;
       mat2 turn = mat2(0.8, -0.6, 0.6, 0.8);
-      for (int i = 0; i < 4; i++) {
+      for (int i = 0; i < 3; i++) {
         v += amplitude * noise(p);
         p = turn * p * 2.02 + 3.7;
         amplitude *= 0.5;
@@ -59,37 +59,35 @@
       vec2 uv = gl_FragCoord.xy / uResolution;
       float aspect = uResolution.x / uResolution.y;
       vec2 p = (uv - 0.5) * vec2(aspect, 1.0);
-      vec2 mouse = (uPointer - 0.5) * vec2(aspect, 1.0);
-      vec2 delta = p - mouse;
-      float influence = exp(-dot(delta, delta) * 6.5) * uStrength;
-      p += vec2(-delta.y, delta.x) * influence * 0.38;
-      float t = uTime * 0.055;
-      vec2 q = vec2(fbm(p * 1.15 + vec2(t, -t * 0.6)),
-                    fbm(p * 1.15 + vec2(4.1 - t * 0.4, 1.7 + t)));
-      vec2 r = vec2(fbm(p * 1.25 + q * 2.1 + vec2(1.7, 9.2) + t * 0.35),
-                    fbm(p * 1.25 + q * 2.1 + vec2(8.3, 2.8) - t * 0.28));
-      float flow = fbm(p * 1.35 + r * 2.6);
-      float fold = sin((p.x * 1.15 + p.y * 0.62 + flow * 2.2 + q.y * 0.8) * 4.6 + t);
-      float ribbon = pow(1.0 - abs(fold), 2.0);
-      float silk = smoothstep(0.25, 0.8, flow);
-      float edge = pow(1.0 - abs(fold), 12.0);
-      vec3 color = vec3(0.012, 0.006, 0.029);
-      color += mix(vec3(0.065, 0.023, 0.14), vec3(0.22, 0.054, 0.35), r.x) * silk;
-      color += vec3(0.23, 0.062, 0.38) * ribbon * (0.25 + silk);
-      color += vec3(0.24, 0.09, 0.34) * edge * 0.18;
-      color += vec3(0.055, 0.022, 0.09) * influence;
-      float vignette = 1.0 - smoothstep(0.25, 1.35, length(p * vec2(0.65, 0.8)));
-      color *= 0.65 + vignette * 0.35;
-      gl_FragColor = vec4(color, 1.0);
+      float t = uTime * 0.018;
+      // Quiet charcoal material, with broad light variation rather than bright contours.
+      float material = fbm(p * 0.8 + vec2(t, -t * 0.3));
+      float shade = 0.012 + material * 0.019;
+      shade += exp(-dot(p * vec2(0.6, 1.0), p * vec2(0.6, 1.0))) * 0.012;
+      float ink = 0.0;
+      for (int i = 0; i < 6; i++) {
+        float age = uAges[i];
+        if (age < 1.8) {
+          vec2 origin = (uTraces[i].xy - 0.5) * vec2(aspect, 1.0);
+          vec2 direction = uTraces[i].zw;
+          vec2 delta = p - origin - direction * age * 0.026;
+          vec2 local = vec2(dot(delta, direction), dot(delta, vec2(-direction.y, direction.x)));
+          float radius = 0.044 + age * 0.028;
+          float eddy = noise(local * 19.0 + vec2(float(i) * 4.1, age * 0.6));
+          local.y += (eddy - 0.5) * (0.025 + age * 0.015);
+          float body = exp(-pow(local.x / (radius * 1.9), 2.0) - pow(local.y / radius, 2.0) * 2.0);
+          float fade = (1.0 - smoothstep(0.05, 1.8, age)) * smoothstep(0.0, 0.07, age);
+          ink += body * fade * (0.45 + eddy * 0.55) * 0.032;
+        }
+      }
+      shade += min(ink, 0.065);
+      gl_FragColor = vec4(vec3(shade), 1.0);
     }
   `;
 
   function resetPointer() {
-    pointer.active = false;
-    if (aura) aura.classList.remove('is-visible');
-    if (ring) ring.classList.remove('is-visible', 'is-pressed');
-    ripples.forEach(ripple => ripple.remove());
-    ripples.clear();
+    lastPointer = null;
+    traces.length = 0;
   }
 
   function compile(type, source) {
@@ -125,9 +123,9 @@
       gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
       locations = {
         resolution: gl.getUniformLocation(program, 'uResolution'),
-        pointer: gl.getUniformLocation(program, 'uPointer'),
+        traces: gl.getUniformLocation(program, 'uTraces[0]'),
+        ages: gl.getUniformLocation(program, 'uAges[0]'),
         time: gl.getUniformLocation(program, 'uTime'),
-        strength: gl.getUniformLocation(program, 'uStrength')
       };
       resizeNeeded = true;
       draw();
@@ -150,27 +148,26 @@
       gl.uniform2f(locations.resolution, canvas.width, canvas.height);
       resizeNeeded = false;
     }
-    gl.uniform2f(locations.pointer, pointer.sx / innerWidth, 1 - pointer.sy / innerHeight);
+    const now = performance.now();
+    ageUniforms.fill(2);
+    traceUniforms.fill(0);
+    traces.forEach((trace, index) => {
+      traceUniforms.set([trace.x / innerWidth, 1 - trace.y / innerHeight, trace.dx, -trace.dy], index * 4);
+      ageUniforms[index] = (now - trace.born) / 1000;
+    });
+    gl.uniform4fv(locations.traces, traceUniforms);
+    gl.uniform1fv(locations.ages, ageUniforms);
     gl.uniform1f(locations.time, elapsed);
-    gl.uniform1f(locations.strength, pointer.strength);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
 
   function animate(timestamp) {
     frame = 0;
     if (document.hidden || reduceMotion.matches) return;
-    if (!previous || timestamp - previous >= 1000 / 30) {
+    if (!previous || timestamp - previous >= 1000 / 45) {
       const delta = previous ? Math.min((timestamp - previous) / 1000, 0.1) : 1 / 30;
       previous = timestamp;
       elapsed += delta;
-      const follow = 1 - Math.exp(-delta * 10);
-      pointer.sx += (pointer.x - pointer.sx) * follow;
-      pointer.sy += (pointer.y - pointer.sy) * follow;
-      pointer.strength += ((pointer.active ? 1 : 0) - pointer.strength) * follow;
-      if (pointer.active && finePointer.matches) {
-        if (aura) aura.style.transform = `translate3d(${pointer.sx}px,${pointer.sy}px,0)`;
-        if (ring) ring.style.transform = `translate3d(${pointer.sx}px,${pointer.sy}px,0)`;
-      }
       draw();
     }
     frame = requestAnimationFrame(animate);
@@ -183,7 +180,6 @@
     field.classList.toggle('is-paused', document.hidden || reduceMotion.matches);
     resetPointer();
     if (reduceMotion.matches) {
-      pointer.strength = 0;
       draw();
     } else if (!document.hidden) {
       frame = requestAnimationFrame(animate);
@@ -192,40 +188,25 @@
 
   window.addEventListener('pointermove', event => {
     if (event.pointerType !== 'mouse' || !finePointer.matches || reduceMotion.matches) return;
-    pointer.x = event.clientX;
-    pointer.y = event.clientY;
-    if (!pointer.active) {
-      pointer.sx = pointer.x;
-      pointer.sy = pointer.y;
-      const transform = `translate3d(${pointer.x}px,${pointer.y}px,0)`;
-      if (aura) { aura.style.transform = transform; aura.classList.add('is-visible'); }
-      if (ring) { ring.style.transform = transform; ring.classList.add('is-visible'); }
+    const now = performance.now();
+    const point = { x: event.clientX, y: event.clientY, time: now };
+    if (!lastPointer || now - lastPointer.time > 350) {
+      lastPointer = point;
+      return;
     }
-    pointer.active = true;
+    const dx = point.x - lastPointer.x;
+    const dy = point.y - lastPointer.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance < 8) return;
+    // Short-lived marks follow the actual movement; no separate cursor or click animation.
+    const steps = Math.min(3, Math.ceil(distance / 32));
+    for (let index = 1; index <= steps; index++) {
+      traces.push({ x: lastPointer.x + dx * index / steps, y: lastPointer.y + dy * index / steps, dx: dx / distance, dy: dy / distance, born: now });
+    }
+    if (traces.length > 6) traces.splice(0, traces.length - 6);
+    lastPointer = point;
   }, { passive: true });
 
-  window.addEventListener('pointerdown', event => {
-    if (event.pointerType !== 'mouse' || event.button !== 0 || !finePointer.matches || reduceMotion.matches) return;
-    if (ring) ring.classList.add('is-pressed');
-    const ripple = document.createElement('span');
-    ripple.className = 'pointer-ripple';
-    ripple.setAttribute('aria-hidden', 'true');
-    ripple.style.left = `${event.clientX}px`;
-    ripple.style.top = `${event.clientY}px`;
-    if (ripples.size >= 5) {
-      const oldest = ripples.values().next().value;
-      oldest.remove();
-      ripples.delete(oldest);
-    }
-    ripples.add(ripple);
-    document.body.appendChild(ripple);
-    const remove = () => { ripple.remove(); ripples.delete(ripple); };
-    ripple.addEventListener('animationend', remove, { once: true });
-    // Keep cleanup bounded if CSS changes or animations are cancelled.
-    setTimeout(remove, 1100);
-  }, { passive: true });
-
-  window.addEventListener('pointerup', () => { if (ring) ring.classList.remove('is-pressed'); }, { passive: true });
   document.documentElement.addEventListener('pointerleave', resetPointer);
   window.addEventListener('blur', resetPointer);
   document.addEventListener('visibilitychange', updateActivity);
