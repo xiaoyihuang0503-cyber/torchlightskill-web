@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#020207">
+  <title>TorchlightSkill · 火炬工具箱</title>
+  <meta name="description" content="专注火炬之光：无限的玩家工具箱。火炬 AI 导师、塔罗斯监狱玩法工具，持续更新。">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+<main class="site" id="home">
+  <div class="space-light blue-light"></div><div class="space-light orange-light"></div>
+  <div class="orbit-line orbit-one"></div><div class="orbit-line orbit-two"></div>
+  <header class="site-header">
+    <a class="brand" href="#home" aria-label="TorchlightSkill 首页"><span class="brand-mark" aria-hidden="true">✦</span><span>Torchlight<span class="brand-accent">Skill</span><small>火炬工具箱</small></span></a>
+    <nav class="top-nav" aria-label="主导航"><a href="#products"><b>工具</b></a><a href="#about"><b>关于</b></a></nav>
+  </header>
+  <section class="hero" aria-labelledby="headline">
+    <span class="eyebrow">TORCHLIGHT INFINITE · PLAYER TOOLS</span>
+    <h1 id="headline">火炬玩家的<span>工具箱</span></h1>
+    <p>从构筑问题到赛季玩法，<br class="mobile-break">让每一次选择更有把握。</p>
+    <a class="primary-button" href="#products">看看有哪些工具 <span aria-hidden="true">↓</span></a>
+  </section>
+  <section class="products" id="products" aria-labelledby="products-title">
+    <div class="section-heading"><div><span class="eyebrow">OUR TOOLS</span><h2 id="products-title">选一个工具，开始。</h2></div><p>围绕火炬，持续更新</p></div>
+    <div class="product-grid">
+      <article class="product-card mentor-card">
+        <div class="product-visual mentor-visual"><div class="mentor-scan-rings" aria-hidden="true"></div><img src="./assets/mentor-mia.png" alt="火炬 AI 导师米娅" width="1024" height="1536"><span class="visual-word" aria-hidden="true">MENTOR</span></div>
+        <div class="product-copy"><div class="product-topline"><span class="eyebrow">AI MENTOR</span><span class="badge">内测中</span></div><h3>火炬 AI 导师</h3><p>抄了作业，还是不知道问题在哪？<br>围绕你的构筑，了解伤害、生存与提升顺序。</p><div class="tags"><span>构筑诊断</span><span>阶段建议</span><span>AI 问答</span></div><button class="product-button" data-dialog="mentor-detail">了解导师 <span aria-hidden="true">↗</span></button></div>
+      </article>
+      <article class="product-card prison-card">
+        <div class="product-visual prison-visual"><img src="./assets/prison-world.png" alt="塔罗斯监狱经营模拟场景" width="1536" height="1024"><span class="visual-word" aria-hidden="true">TALOS</span></div>
+        <div class="product-copy"><div class="product-topline"><span class="eyebrow">SEASON TOOL</span><span class="badge amber">测试中</span></div><h3>塔罗斯监狱</h3><p>先练一轮，再做选择。<br>探索囚犯配对、吞噬与经营操作，查看条件收益建议。</p><div class="tags"><span>经营模拟</span><span>玩法练习</span><span>收益辅助</span></div><button class="product-button" data-dialog="prison-detail">查看进度 <span aria-hidden="true">↗</span></button></div>
+      </article>
+    </div>
+  </section>
+  <footer id="about"><div><strong>TorchlightSkill</strong><p>专注《火炬之光：无限》的玩家工具，更多工具持续加入。</p></div><p class="footer-note">玩家制作的独立工具网站，与游戏官方无隶属关系。<br>© 2026 TorchlightSkill</p></footer>
+</main>
+<dialog id="mentor-detail" aria-labelledby="mentor-dialog-title"><button class="close-dialog" aria-label="关闭">×</button><span class="eyebrow">AI MENTOR · 内测中</span><h2 id="mentor-dialog-title">火炬 AI 导师</h2><p>导师正在内测，围绕角色资料、构筑问题和阶段目标提供建议。新官网作为工具总入口，导师是其中一个独立产品。</p><p>正式体验入口与客户端将在准备完成后更新到这里。</p><button class="primary-button close-action">知道了</button></dialog>
+<dialog id="prison-detail" aria-labelledby="prison-dialog-title"><button class="close-dialog" aria-label="关闭">×</button><span class="eyebrow">SEASON TOOL · 测试中</span><h2 id="prison-dialog-title">塔罗斯监狱</h2><p>已有经营模拟测试版，包含囚犯配对、吞噬、条件收益辅助与声音设置。目前仍在测试，公开体验入口将更新到这里。</p><p class="dialog-note">模拟规则与收益为实验设定，实际玩法以游戏内规则为准。</p><button class="primary-button close-action">知道了</button></dialog>
+</body>
+</html>
+
