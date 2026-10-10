@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "clips": {
     "select": {
       "path": "assets/audio/select.mp3",
@@ -55,6 +55,31 @@
       "path": "assets/audio/ambience.mp3",
       "kind": "ambience",
       "gain": 0.13
+    },
+    "music_mystery": {
+      "path": "assets/audio/music_mystery.mp3",
+      "kind": "music",
+      "gain": 0.28
+    },
+    "beast_elephant": {
+      "path": "assets/audio/beast_elephant.mp3",
+      "kind": "sfx",
+      "gain": 0.7
+    },
+    "beast_lion": {
+      "path": "assets/audio/beast_lion.mp3",
+      "kind": "sfx",
+      "gain": 0.7
+    },
+    "beast_wolf": {
+      "path": "assets/audio/beast_wolf.mp3",
+      "kind": "sfx",
+      "gain": 0.68
+    },
+    "beast_rat": {
+      "path": "assets/audio/beast_rat.mp3",
+      "kind": "sfx",
+      "gain": 0.62
     },
     "voice_patrol": {
       "path": "assets/audio/voice_patrol.mp3",

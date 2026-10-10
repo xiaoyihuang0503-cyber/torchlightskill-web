@@ -4,7 +4,7 @@ import {pairDecision} from './interaction.js';
 import {PrisonEffects} from './effects.js';
 import {goalGuide} from './goal-guide.js';
 import {PrisonScene3D} from './scene3d.js';
-import {PrisonAudio} from './audio.js';
+import {PrisonAudio} from './audio.js?v=0.6.0-1';
 import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.5.0-4';
 
 const $=id=>document.getElementById(id);
@@ -30,15 +30,18 @@ function renderAudioState(status){
   button.setAttribute('aria-label',prefs.enabled?'关闭声音':'开启声音');
   $('audio-toggle-label').textContent=prefs.enabled?'声音':'静音';
   button.dataset.unlocked=String(status.unlocked);button.dataset.voice=status.voice||'';
-  button.dataset.effects=String(status.effects);button.dataset.ambience=String(status.ambiencePlaying);
+  button.dataset.effects=String(status.effects);button.dataset.ambience=String(status.ambiencePlaying);button.dataset.music=String(status.musicPlaying);
   $('audio-master').checked=prefs.enabled;
-  for(const kind of ['sfx','voice','ambience']){
+  for(const kind of ['sfx','voice','ambience','music']){
     $(`audio-${kind}`).checked=prefs[kind];
     $(`audio-${kind}`).disabled=!status.kinds[kind];
     $(`audio-preview-${kind}`).disabled=!status.kinds[kind]||!prefs.enabled||!prefs[kind];
   }
   $('audio-volume').value=String(Math.round(prefs.volume*100));
   $('audio-volume-value').textContent=`${Math.round(prefs.volume*100)}%`;
+  $('audio-music-volume').value=String(Math.round(prefs.musicVolume*100));
+  $('audio-music-volume').disabled=!status.kinds.music||!prefs.enabled||!prefs.music;
+  $('audio-music-volume-value').textContent=`${Math.round(prefs.musicVolume*100)}%`;
   $('audio-status').textContent=!status.ready?'声音准备中…':!status.available?'声音素材待配置':status.kinds.sfx?'声音已就绪':status.kinds.voice?'配音已就绪 · 音效待配置':'环境声已就绪';
 }
 document.addEventListener('pointerdown',event=>audio.unlock(event),{capture:true});
@@ -46,11 +49,12 @@ document.addEventListener('keydown',event=>{if(!event.repeat)audio.unlock(event)
 $('audio-toggle').addEventListener('click',()=>audio.setPreferences({enabled:!audio.getStatus().preferences.enabled}));
 $('audio-settings-open').addEventListener('click',()=>$('audio-dialog').showModal());
 $('audio-master').addEventListener('change',event=>audio.setPreferences({enabled:event.target.checked}));
-for(const kind of ['sfx','voice','ambience']){
+for(const kind of ['sfx','voice','ambience','music']){
   $(`audio-${kind}`).addEventListener('change',event=>audio.setPreferences({[kind]:event.target.checked}));
-  $(`audio-preview-${kind}`).addEventListener('click',()=>kind==='voice'?audio.voice($('audio-voice-sample').value,{priority:10,replace:true}):audio.preview(kind));
+  $(`audio-preview-${kind}`).addEventListener('click',()=>kind==='voice'?audio.voice($('audio-voice-sample').value,{priority:10,replace:true}):kind==='sfx'?audio.devour($('audio-beast-sample').value):audio.preview(kind));
 }
 $('audio-volume').addEventListener('input',event=>audio.setPreferences({volume:Number(event.target.value)/100}));
+$('audio-music-volume').addEventListener('input',event=>audio.setPreferences({musicVolume:Number(event.target.value)/100}));
 renderAudioState(audio.getStatus());
 let lastSelectSound=0;
 function selectionSound(){const now=performance.now();if(now-lastSelectSound>100){lastSelectSound=now;audio.play('select');}}
@@ -93,7 +97,7 @@ async function act(action){
   if(busy)return;
   let next;try{next=applyAction(state,action);}catch(e){showError(e.message);return;}
   const before=state;busy=true;cancelChoice();rewardChoice=null;
-  audio.actionStart(action);
+  const audioAction=audio.actionStart(action);
   if($('reward-dialog').open)$('reward-dialog').close();
   if($('delivery-dialog').open)$('delivery-dialog').close();
   document.querySelector('.game-stage').setAttribute('aria-busy','true');
@@ -102,13 +106,13 @@ async function act(action){
   state=next;persist();$('error').hidden=true;
   try{
     if(scene3d.ready)await scene3d.effectBefore(action,before);else await effects.before(action,before);
+    audio.actionImpact(action,before,state,audioAction);
     render(true);
     if(scene3d.ready)await scene3d.effectAfter(before,state,action);else await effects.after(before,state,action);
   }
   catch{ /* Visual effects cannot roll back or duplicate a committed action. */ }
   finally{busy=false;document.querySelector('.game-stage').setAttribute('aria-busy','false');render();}
-  audio.actionComplete(action,before,state);
-  if(action.type==='deliver')audio.play('reward');
+  audio.actionComplete(action,before,state,audioAction);
   $('motion-status').dataset.lastEffect=action.type;
   $('motion-status').textContent=action.type==='eat'?`吞噬完成 · ${state.rooms[action.room].prisoner?nameOf(state.rooms[action.room].prisoner):'绮彩囚犯已收容'}`:action.type==='visit'?'巡监完成':action.type==='reroll'?'更换完成':action.type==='choose'?'已获得奖励':'';
   if(action.type==='scout')$('motion-status').textContent='侦察完成 · 可开门或改去已开牢房';
@@ -386,19 +390,19 @@ $('new-game').addEventListener('click',startDialog);$('result-new').addEventList
 $('new-form').addEventListener('submit',event=>{
   event.preventDefault();
   if(busy)return;
-  try{cancelChoice();rewardChoice=null;const seed=$('seed-input').value||'talos';state=$('run-mode').value==='challenge'?createChallenge(seed,{build:document.querySelector('input[name="challenge-build"]:checked').value}):createGame(seed,configDraft,$('preset').value);audio.stop();initial=structuredClone(state);selected=0;resultShown=-1;$('new-dialog').close();$('motion-status').textContent='';$('error').hidden=true;persist();render();}
+  try{cancelChoice();rewardChoice=null;const seed=$('seed-input').value||'talos';state=$('run-mode').value==='challenge'?createChallenge(seed,{build:document.querySelector('input[name="challenge-build"]:checked').value}):createGame(seed,configDraft,$('preset').value);audio.reset();initial=structuredClone(state);selected=0;resultShown=-1;$('new-dialog').close();$('motion-status').textContent='';$('error').hidden=true;persist();render();}
   catch(e){showError(e.message);}
 });
 $('undo').addEventListener('click',()=>{
   if(busy)return;
-  try{cancelChoice();rewardChoice=null;state=replay({initial,actions:state.history.slice(0,-1)});audio.stop();resultShown=-1;$('settings-dialog').close();persist();render();}
+  try{cancelChoice();rewardChoice=null;state=replay({initial,actions:state.history.slice(0,-1)});audio.reset();resultShown=-1;$('settings-dialog').close();persist();render();}
   catch(e){showError(e.message);}
 });
 $('export').addEventListener('click',exportCurrent);$('result-export').addEventListener('click',exportCurrent);
 $('import').addEventListener('click',()=>$('import-file').click());
 $('import-file').addEventListener('change',async event=>{
   try{const file=event.target.files[0];if(!file)return;if(file.size>2*1024*1024)throw new Error('存档超过 2 MB');
-    const run=importRun(JSON.parse(await file.text()));if(busy)throw new Error('请等待当前操作完成');cancelChoice();rewardChoice=null;audio.stop();state=run.current;initial=run.initial;configDraft=structuredClone(state.config);selected=0;resultShown=-1;$('settings-dialog').close();$('motion-status').textContent='';delete $('motion-status').dataset.lastEffect;persist();render();$('error').hidden=true;
+    const run=importRun(JSON.parse(await file.text()));if(busy)throw new Error('请等待当前操作完成');cancelChoice();rewardChoice=null;audio.reset();state=run.current;initial=run.initial;configDraft=structuredClone(state.config);selected=0;resultShown=-1;$('settings-dialog').close();$('motion-status').textContent='';delete $('motion-status').dataset.lastEffect;persist();render();$('error').hidden=true;
   }catch(e){showError(`导入失败：${e.message}`);}finally{event.target.value='';}
 });
 $('edit-room').addEventListener('click',()=>{

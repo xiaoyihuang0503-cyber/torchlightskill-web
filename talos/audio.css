@@ -8,7 +8,7 @@
 .audio-toggle:hover {border-color:#b09160;background:#392c1d}
 .audio-toggle[aria-pressed=false] {color:#a79e8d;border-color:#51483c;background:#201c17}
 .audio-toggle svg {width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7}
-.audio-toggle:focus-visible,.audio-settings button:focus-visible {outline:2px solid #c4a36a;outline-offset:3px}
+.audio-toggle:focus-visible,.audio-settings button:focus-visible,.audio-settings select:focus-visible,.audio-settings input:focus-visible {outline:2px solid #c4a36a;outline-offset:3px}
 .audio-settings {
   padding:18px 20px;border:1px solid #786149;border-radius:3px;color:#c9bca7;
   background:radial-gradient(ellipse at 15% 0,#73543821,transparent 65%),#17120ff5;
@@ -26,6 +26,8 @@
 .audio-volume {display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:20px;padding-top:14px;border-top:1px solid #4c3d2e}
 .audio-volume label {color:#c6b590;margin:0}
 .audio-volume input[type=range] {grid-column:1/-1;width:100%;accent-color:#bd985e;margin:0;cursor:pointer}
+.audio-volume input[type=range]:disabled {opacity:.4;cursor:not-allowed}
+.audio-music-volume {margin-top:10px;padding-top:0;border-top:0}
 .audio-volume output {font-size:12px;color:#b9a98b;font-variant-numeric:tabular-nums}
 .audio-hint,.audio-status {font-size:11px;color:#a59378;line-height:1.6;margin:13px 0 0}
 .audio-settings-close {font-size:22px!important;line-height:1!important;border:0!important;background:transparent!important;padding:0 3px!important}
@@ -36,4 +38,4 @@
 .audio-option input:disabled{opacity:.4;cursor:not-allowed}
 
 .audio-sample-label{display:block;margin:12px 0 5px;color:#b9a98b;font-size:12px}
-#audio-voice-sample{width:100%;padding:7px 9px;border:1px solid #68553f;background:#201a13;color:#d0bc98;border-radius:2px}
+#audio-voice-sample,#audio-beast-sample{width:100%;padding:7px 9px;border:1px solid #68553f;background:#201a13;color:#d0bc98;border-radius:2px}
