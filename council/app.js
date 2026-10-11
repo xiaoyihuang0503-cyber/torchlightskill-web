@@ -66,8 +66,9 @@ function validPortraitAsset(a,type){
     const u=new URL(a.site_url);
     if(u.protocol!=="https:"||u.hostname!=="torchlightskill.com")return false;
     if(u.pathname!=="/"+a.repository_path)return false;
+    if(!a.repository_path.startsWith("assets/torchlight-mentor-avatars/"+(type==="hero"?"heroes/":"mentors/")))return false;
   }catch(error){return false;}
-  if(type==="hero")return a.trait===a.id && typeof a.trait_name==="string" && !!a.trait_name.trim() && !!a.source_url && !!a.source_snapshot_date && !!a.source_freshness;
+  if(type==="hero")return a.trait===a.id && typeof a.name==="string" && !!a.name.trim() && typeof a.trait_name==="string" && !!a.trait_name.trim() && !!a.source_url && !!a.source_snapshot_date && !!a.source_freshness;
   return ["mia","shiyu","reina"].includes(a.id);
 }
 function addPortraitSources(manifest,entries){
@@ -91,7 +92,7 @@ function addPortraitSources(manifest,entries){
     fragment.append(li);
   });
   ul.replaceChildren(fragment);
-  $("avatar-source-status").textContent="清单 v"+manifest.schema_version+" · 发布 "+manifest.published_date+" · 28 个特性头像与 3 位导师的来源详见下方；SS14 最新立绘未作权威核验。";
+  $("avatar-source-status").textContent="清单 v"+manifest.schema_version+" · 发布 "+manifest.published_date+" · "+entries.filter(a=>a.type==="hero").length+" 个特性头像与 "+entries.filter(a=>a.type==="mentor").length+" 位导师 · SS14 最新立绘未作权威核验。图片权利说明："+(manifest.rights||"未提供额外使用授权说明");
 }
 function hydrateMentors(entries){
   ["mia","shiyu","reina"].forEach(id=>{
@@ -100,10 +101,10 @@ function hydrateMentors(entries){
     const holder=img?.closest(".mentor-art");
     if(!a||!img||!holder) return;
     const placeholder=holder.querySelector(".portrait-placeholder");
-    img.src=a.site_url;
-    img.hidden=false;
     img.addEventListener("load",()=>{if(placeholder)placeholder.hidden=true;});
     img.addEventListener("error",()=>{img.hidden=true;if(placeholder)placeholder.hidden=false;});
+    img.src=a.site_url;
+    img.hidden=false;
   });
 }
 async function loadAvatarManifest(){
