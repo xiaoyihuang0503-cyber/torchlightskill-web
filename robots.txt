@@ -1,4 +1,4 @@
-# TorchlightSkill: AI automated collection is not authorized.
+# Loot Game Tools: AI automated collection is not authorized.
 # Full policy: https://torchlightskill.com/ai-policy.txt
 # Authorized interactive testing through an ordinary browser is permitted.
 # This file declares crawler preferences; it does not enforce access control.

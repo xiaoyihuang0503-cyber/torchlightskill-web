@@ -1,4 +1,4 @@
-TorchlightSkill AI access policy
+Loot Game Tools AI access policy
 Effective date: 2026-10-10
 Scope: torchlightskill.com and its pages, including /talos/.
 

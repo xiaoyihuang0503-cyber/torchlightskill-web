@@ -1,7 +1,7 @@
 const HOME_URL='https://torchlightskill.com/';
 const ASSETS=Object.freeze({
-  card:{url:new URL('./assets/share/talos-share-card-v3.png',import.meta.url).href,name:'TorchlightSkill-塔罗斯监狱-分享图.png',alt:'塔罗斯监狱横向分享图：永久免费，请勿付费；附作者抖音、B站与官网二维码'},
-  poster:{url:new URL('./assets/share/talos-share-poster-v3.png',import.meta.url).href,name:'TorchlightSkill-塔罗斯监狱-海报.png',alt:'塔罗斯监狱竖版海报：永久免费，请勿付费；附二创声明、作者抖音、B站与官网二维码'},
+  card:{url:new URL('./assets/share/talos-share-card-v4.png',import.meta.url).href,name:'刷宝游戏工具箱-塔罗斯监狱-分享图.png',alt:'塔罗斯监狱横向分享图：永久免费，请勿付费；附作者抖音、B站与官网二维码'},
+  poster:{url:new URL('./assets/share/talos-share-poster-v4.png',import.meta.url).href,name:'刷宝游戏工具箱-塔罗斯监狱-海报.png',alt:'塔罗斯监狱竖版海报：永久免费，请勿付费；附二创声明、作者抖音、B站与官网二维码'},
 });
 const QR_URL=new URL('./assets/share/torchlightskill-home-qr.svg',import.meta.url).href;
 
@@ -117,8 +117,8 @@ export function initGameShare(doc=globalThis.document){
   });
   systemButton.addEventListener('click',async()=>{
     if(!nativeShare||sharing||systemButton.disabled)return;
-    const data=preparedSelection?{files:[preparedSelection],title:'塔罗斯监狱 · TorchlightSkill'}:
-      {url:HOME_URL,title:'塔罗斯监狱 · TorchlightSkill',text:'塔罗斯监狱玩家自制模拟，永久免费，请勿付费。非官方个人二创，体验以正式游戏为准。作者：抖音「爱玩游戏的吉吉罗」 / B站「二零后游戏荒」。'};
+    const data=preparedSelection?{files:[preparedSelection],title:'塔罗斯监狱 · 刷宝游戏工具箱'}:
+      {url:HOME_URL,title:'塔罗斯监狱 · 刷宝游戏工具箱',text:'塔罗斯监狱玩家自制模拟，永久免费，请勿付费。非官方个人二创，体验以正式游戏为准。作者：抖音「爱玩游戏的吉吉罗」 / B站「二零后游戏荒」。'};
     sharing=true;updateSystemButton();
     try{await nav.share(data);say('已交给系统分享面板。');}
     catch(error){say(error?.name==='AbortError'?'已取消分享。':'系统分享未完成，请下载图片或复制链接。');}

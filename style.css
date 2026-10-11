@@ -114,10 +114,10 @@ dialog .douyin-hint,.mentor-dismiss { color:#a5a39e; }
 
 /* Compact tool overview leaves room for the two author profiles. */
 .site-header { height:74px; }
-.hero { display:flex; align-items:center; justify-content:space-between; gap:28px; width:min(calc(100% - 72px),1160px); max-width:1160px; margin:18px auto 26px; padding:0; text-align:left; }
+.hero { display:block; width:min(calc(100% - 72px),1160px); max-width:1160px; margin:18px auto 26px; padding:0; text-align:center; }
 .hero h1 { margin:12px 0; font-size:clamp(38px,4.2vw,56px); letter-spacing:-1.5px; }
 .hero p { margin:0; font-size:14px; }
-.hero > .primary-button { flex-shrink:0; min-height:44px; }
+.hero h1 span { display:inline-block; white-space:nowrap; }
 .section-heading { margin-bottom:14px; }
 .section-heading h2 { margin-top:6px; font-size:22px; }
 .product-grid { gap:20px; }
@@ -162,7 +162,6 @@ dialog .douyin-hint,.mentor-dismiss { color:#a5a39e; }
   .hero { display:block; width:calc(100% - 36px); margin:24px auto 28px; text-align:center; }
   .hero h1 { margin:12px 0; font-size:clamp(30px,8.7vw,38px); }
   .hero p { font-size:13px; }
-  .hero > .primary-button { margin-top:16px; }
   .product-grid { gap:18px; }
   .product-visual,.prison-visual { height:164px; }
   .product-copy { padding:16px 20px 12px; }
