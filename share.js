@@ -1,7 +1,7 @@
 const HOME_URL = 'https://torchlightskill.com/';
 const assets = {
-  card: {url: './assets/talos-share-card-v1.png', name: 'TorchlightSkill-塔罗斯监狱-分享图.png', alt: '塔罗斯监狱横向分享图'},
-  poster: {url: './assets/talos-share-poster-v1.png', name: 'TorchlightSkill-塔罗斯监狱-海报.png', alt: '塔罗斯监狱竖版分享海报，包含官网二维码'},
+  card: {url: './assets/talos-share-card-v2.png', name: 'TorchlightSkill-塔罗斯监狱-分享图.png', alt: '塔罗斯监狱横向分享图'},
+  poster: {url: './assets/talos-share-poster-v2.png', name: 'TorchlightSkill-塔罗斯监狱-海报.png', alt: '塔罗斯监狱竖版分享海报，包含官网二维码'},
 };
 const dialog = document.getElementById('site-share');
 const preview = document.getElementById('share-preview-image');

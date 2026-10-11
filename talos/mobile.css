@@ -1,0 +1,183 @@
+/* Load after run-journal.css. Mobile-only overrides leave room floor polygons intact. */
+.mobile-panel-scrim,.mobile-hud-actions,.mobile-orientation-note,.mobile-room-picker{display:none}
+#mobile-tool-dialog{width:min(430px,calc(100vw - 24px));color:#dfd2bd;background:#191719;border:1px solid #9a7c59}
+.mobile-tool-copy{font-size:14px;line-height:1.8}.mobile-tool-copy p{margin:0}
+
+@media (orientation:landscape) and (max-height:500px) and (max-width:1100px), (orientation:portrait) and (max-width:600px){
+  :root{--mobile-safe-top:env(safe-area-inset-top,0px);--mobile-safe-right:env(safe-area-inset-right,0px);--mobile-safe-bottom:env(safe-area-inset-bottom,0px);--mobile-safe-left:env(safe-area-inset-left,0px)}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait){position:relative;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);height:100vh;height:100dvh;gap:0;padding:max(4px,var(--mobile-safe-top)) max(4px,var(--mobile-safe-right)) max(4px,var(--mobile-safe-bottom)) max(4px,var(--mobile-safe-left))}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-viewport{grid-column:1;grid-row:1;min-height:0;position:relative}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .lab-footer{display:none}
+  /* Rails stop before the edge buttons, outside the viewport's stacking context. */
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .run-sidebar{position:absolute;grid-column:auto;grid-row:auto;top:max(4px,var(--mobile-safe-top));bottom:max(4px,var(--mobile-safe-bottom));right:calc(max(4px,var(--mobile-safe-right)) + 44px);width:min(310px,calc(100% - 96px));max-height:none;margin:0;padding:8px;background:#111012fa;z-index:62;box-shadow:-12px 0 32px #0009;overflow-y:auto;overflow-x:hidden}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .run-journal{position:absolute;grid-column:auto;grid-row:auto;top:max(4px,var(--mobile-safe-top));bottom:max(4px,var(--mobile-safe-bottom));left:calc(max(4px,var(--mobile-safe-left)) + 44px);width:112px;max-height:none;padding-right:0;z-index:62;box-shadow:12px 0 32px #0009}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .run-journal-heading{padding:12px 2px 8px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .run-journal-heading h2{font-size:13px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .run-journal-heading>span,main.game-screen:is(.mobile-landscape,.mobile-portrait) .journal-day h3{font-size:11px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .journal-entry-trigger{min-height:48px;font-size:12px;padding:5px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .journal-symbol{width:24px;height:24px;flex-basis:24px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .run-section{max-height:none;overflow:visible}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .run-sidebar .button,main.game-screen:is(.mobile-landscape,.mobile-portrait) .audio-toggle,main.game-screen:is(.mobile-landscape,.mobile-portrait) .advice-control label{min-height:44px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .advice-section>summary{min-height:48px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .layout-toggle{z-index:65;width:44px;min-width:44px;min-height:54px;padding:5px 2px;gap:2px;font-size:11px;opacity:.94}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .layout-toggle>span:last-child{writing-mode:horizontal-tb;letter-spacing:0}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .mobile-panel-scrim:not([hidden]){display:block;position:absolute;inset:0;z-index:50;width:100%;height:100%;border:0;background:#05040565;cursor:pointer}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .mobile-hud-actions{position:absolute;left:5px;bottom:6px;z-index:65;display:flex;flex-direction:column;gap:4px;width:100px}
+  .mobile-hud-actions button{display:flex;align-items:center;justify-content:space-between;gap:4px;min-height:44px;width:100%;padding:6px 8px;border:1px solid #8d735a;background:#171311eb;color:#ead7ba;font-size:11px;line-height:1.35}
+  .mobile-hud-actions small{font-size:13px;color:#f3ddbc}
+  .mobile-hud-actions button[aria-expanded=true]{border-color:#d0ab76;background:#493426}
+  .mobile-hud-actions button:focus-visible{outline:2px solid #e0bb86;outline-offset:-3px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-tools,main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-rainbow{display:none}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait).mobile-tools-open .game-tools,main.game-screen:is(.mobile-landscape,.mobile-portrait).mobile-rainbow-open .game-rainbow{display:block;position:absolute;left:7px;right:auto;top:49px;bottom:106px;width:min(238px,calc(100% - 60px));padding:12px;z-index:60;overflow-y:auto;overflow-x:hidden;background:#171412f7;border:1px solid #a18562;box-shadow:0 12px 35px #000a}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait).mobile-rainbow-open .game-rainbow{left:auto;right:7px;bottom:7px;width:min(220px,calc(100% - 60px))}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-side-title{font-size:14px;line-height:1.5;gap:7px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-side-title small{font-size:12px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-tools .tool{min-height:48px;gap:10px;margin:8px 0;padding:4px;cursor:pointer;border:1px solid #68533e55}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-tools .tool:focus-visible{outline:2px solid #cfa575;outline-offset:-2px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-tools .tool-icon{width:32px;height:32px;flex-basis:32px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-tools .tool strong{font-size:13px;line-height:1.4}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .mobile-room-picker{display:block;margin:0 0 12px;border-bottom:1px solid #796044;padding-bottom:8px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .mobile-room-picker>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;color:#e8cfad;font-size:14px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .mobile-room-picker>summary::before{content:'▸';margin-right:7px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .mobile-room-picker[open]>summary::before{content:'▾'}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .mobile-room-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:3px 0}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .mobile-room-choice{min-height:54px;min-width:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:5px 2px;border:1px solid #806748;background:#231b14;color:#ead6b8;font-size:13px;line-height:1.3}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .mobile-room-choice small{font-size:11px;overflow-wrap:anywhere}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .mobile-room-choice[aria-pressed=true]{background:#5a3725;border-color:#e1b779;box-shadow:inset 0 0 0 1px #b99060}
+  /* The native description dialog supplies touch access; original hover remains. */
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-tools .hint,main.game-screen:is(.mobile-landscape,.mobile-portrait) .room-effects-empty{font-size:12px;line-height:1.6}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .room-effects-heading{font-size:13px;margin:14px 0 8px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .room-effects-list{max-height:none;overflow:visible}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .room-effect{min-height:44px;gap:8px;margin-bottom:6px;padding:6px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .room-effect-icon{width:27px;flex-basis:27px;min-height:27px;font-size:20px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .room-effect-copy strong{font-size:12px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .room-effect-copy small{font-size:11px;white-space:normal}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .rainbow-grid{max-height:none;overflow:visible;gap:8px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .rainbow-name{font-size:12px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .rainbow-slot-mark{font-size:18px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-header{height:48px;padding:3px 6px;align-items:center;gap:8px;background:linear-gradient(#080706ed,#080706ae)}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-name{width:auto;min-width:0;gap:6px;align-items:center}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-name h1{font-size:14px;letter-spacing:0}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .prison-gate{display:none}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-help{width:44px;height:44px;min-width:44px;min-height:44px;font-size:21px;transform:none;margin:0;flex:none}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-help span{transform:none}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .remaining-days{position:static;flex:1;min-width:0;white-space:normal;text-align:center;font-size:12px;line-height:1.25;letter-spacing:0}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .remaining-days strong{white-space:nowrap;font-size:14px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-header-actions{flex:none;gap:5px;margin-left:0}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-speed,main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-back{min-height:44px;min-width:44px;padding:5px 6px;font-size:12px;line-height:1}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-speed span{margin-left:3px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-back svg{width:28px;height:20px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .run-badge{font-size:10px;padding:2px 4px;white-space:normal;max-width:45px;line-height:1.2}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .scene-goal{top:52px;left:8px;width:114px;max-width:23%;font-size:12px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .goal-details-trigger{min-height:44px;padding:3px 16px 3px 4px;background:#0c0a09bd;border:1px solid #7b684459}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .goal-heading{font-size:11px;line-height:1.25}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .goal-main{font-size:13px;line-height:1.4}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .scene-goal .goal-condition{font-size:11px;line-height:1.35;margin-top:3px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .goal-info{right:3px;top:4px;font-size:13px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-decision{left:116px;right:82px;top:auto;bottom:7px;width:auto;height:auto;max-height:132px;overflow-y:auto;overflow-x:hidden;padding:5px 4px 6px;background:linear-gradient(#0a0907b8,#090806ea);scrollbar-width:thin}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-decision #phase-title{font-size:14px;line-height:1.3;letter-spacing:0}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-decision #phase-help{font-size:11px;line-height:1.4;margin:3px 0 4px;background:none}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) #destination-cards,main.game-screen:is(.mobile-landscape,.mobile-portrait) #center-actions{gap:6px;margin-top:5px;align-items:stretch;flex-wrap:wrap}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .decision-card{flex:1 1 0;min-width:0;width:auto;min-height:48px;height:auto;padding:7px 4px;gap:4px;font-size:13px;line-height:1.3;flex-direction:row;border-width:2px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .decision-card .portrait,main.game-screen:is(.mobile-landscape,.mobile-portrait) .decision-icon{width:24px;height:24px;flex:0 0 24px;margin:0;font-size:18px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .decision-card[data-destination]{display:grid;grid-template-columns:24px minmax(0,1fr);grid-template-rows:auto auto;min-height:54px;column-gap:4px;row-gap:2px;padding:5px 4px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .decision-card[data-destination]>.portrait,main.game-screen:is(.mobile-landscape,.mobile-portrait) .decision-card[data-destination]>.decision-icon{grid-column:1;grid-row:1/3}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .decision-card[data-destination]>span:not(.portrait):not(.decision-icon):not(.decision-event){grid-column:2;grid-row:1}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .decision-card[data-destination]>.decision-detail{grid-column:2;grid-row:2;overflow-wrap:anywhere}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .decision-event{position:absolute;right:3px;top:2px;font-size:12px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .decision-card small{font-size:11px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .decision-card[data-destination][aria-pressed=true]::after{font-size:10px;top:1px;right:2px;padding:1px 3px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) #center-actions .button{min-height:44px;padding:7px 9px;font-size:12px;flex:1 1 0}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-confirm-area{left:auto;right:9px;top:auto;bottom:14px;width:64px;height:76px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-confirm,main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-cancel{width:56px;height:56px;min-width:56px;min-height:56px;bottom:0;font-size:17px;border-width:4px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .confirm-choice-label{position:absolute;bottom:62px;width:76px;font-size:11px;line-height:1.3;margin:0}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .quick-decision{left:auto;right:5px;top:auto;bottom:105px;width:74px;min-height:44px;gap:5px;padding:6px 0;font-size:11px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .quick-switch{width:30px;height:11px;border-width:1px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .quick-switch::after{width:16px;height:16px;top:-4px;left:-1px;border-width:1px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .quick-decision input:checked+.quick-switch::after{transform:translateX(15px)}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-footer{left:116px;right:82px;bottom:143px;gap:5px;font-size:10px;flex-wrap:wrap;background:#0b0907b0}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .motion-status{left:116px;right:82px;top:auto;bottom:164px;min-height:14px;font-size:11px;background:#0b0907b0}
+  /* Label spacing grows with the font. No room box or floor-hit polygon is resized. */
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .three-ready .room-number{font-size:11px}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .three-ready .room .room-name{top:calc(var(--scene-label-y) - 26px);font-size:12px;line-height:1.1;white-space:nowrap}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .three-ready .room .room-rarity{top:calc(var(--scene-label-y) - 12px);font-size:11px;line-height:1.1;white-space:nowrap}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .three-ready .room .nest-mark{top:calc(var(--scene-label-y) + 2px);font-size:10px;line-height:1.1;white-space:nowrap}
+  main.game-screen:is(.mobile-landscape,.mobile-portrait) .three-ready .room.destination-selected .room-number{font-size:12px;padding:2px 4px;min-width:18px}
+  html.mobile-ui-active :is(#settings-dialog,#new-dialog,#rules-dialog,#audio-dialog,#export-dialog,#result-dialog,#delivery-dialog,#mobile-tool-dialog){position:fixed;top:calc(var(--mobile-visible-top,0px) + max(8px,var(--mobile-safe-top)));bottom:auto;max-width:calc(100vw - max(8px,var(--mobile-safe-left)) - max(8px,var(--mobile-safe-right)));max-height:calc(var(--mobile-visible-height,100dvh) - max(8px,var(--mobile-safe-top)) - max(8px,var(--mobile-safe-bottom)));margin:0 auto;padding:12px 16px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
+  html.mobile-ui-active dialog .dialog-heading{gap:8px;margin-bottom:10px;align-items:center}
+  html.mobile-ui-active dialog :is(.close,.audio-settings-close){min-width:44px;min-height:44px;flex:none}
+  html.mobile-ui-active dialog :is(.button,button),html.mobile-ui-active .floating-actions .button{min-height:44px}
+  html.mobile-ui-active dialog :is(input:not([type=checkbox]):not([type=radio]),select,textarea){font-size:16px;max-width:100%;min-width:0}
+  html.mobile-ui-active dialog select,html.mobile-ui-active dialog input:not([type=checkbox]):not([type=radio]):not([type=range]){min-height:44px}
+  html.mobile-ui-active dialog .check,html.mobile-ui-active .audio-option label{min-height:44px;align-items:center}
+  html.mobile-ui-active dialog :is(.build-choice,.escort-options label,summary),html.mobile-ui-active dialog input[type=range]{min-height:44px}
+  html.mobile-ui-active .audio-settings .audio-option{margin:7px 0;gap:8px}
+  html.mobile-ui-active #audio-music-refresh{min-height:44px}
+  html.mobile-ui-active #new-dialog .new-dialog-actions{position:sticky;bottom:-12px;z-index:2;padding:8px 0 4px;background:#171412f5;gap:8px}
+  html.mobile-ui-active #new-dialog .new-dialog-actions .button{font-size:12px;padding:8px 10px;min-width:0}
+  html.mobile-ui-active #delivery-dialog #confirm-delivery{position:sticky;bottom:-12px;z-index:2;min-height:44px}
+  html.mobile-ui-active #reward-dialog{position:fixed;top:calc(var(--mobile-visible-top,0px) + max(8px,var(--mobile-safe-top)));bottom:auto;width:min(1000px,calc(100vw - max(8px,var(--mobile-safe-left)) - max(8px,var(--mobile-safe-right))));max-width:calc(100vw - 16px);height:calc(var(--mobile-visible-height,100dvh) - max(8px,var(--mobile-safe-top)) - max(8px,var(--mobile-safe-bottom)));max-height:calc(var(--mobile-visible-height,100dvh) - max(8px,var(--mobile-safe-top)) - max(8px,var(--mobile-safe-bottom)));margin:0 auto;padding:10px 12px;overflow:hidden}
+  html.mobile-ui-active #reward-dialog .dialog-heading{flex:0 0 auto;margin:0 0 8px;padding:0 0 6px}
+  html.mobile-ui-active #reward-dialog .dialog-heading h2{font-size:20px;line-height:1.3;letter-spacing:.04em}
+  html.mobile-ui-active #reward-kind:not([hidden]){margin-bottom:3px;letter-spacing:.08em}
+  html.mobile-ui-active #reward-dialog .reward-options{flex:1 1 0;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;gap:8px;align-items:stretch}
+  html.mobile-ui-active #reward-dialog .reward-choice{min-height:200px;padding:10px 10px 17px}
+  html.mobile-ui-active #reward-dialog .reward-choice .reward-art,html.mobile-ui-active #reward-dialog .reward-choice .reward-icon{height:64px;margin-bottom:6px}
+  html.mobile-ui-active #reward-dialog .reward-choice .reward-item-art{height:64px;max-height:64px;width:100%}
+  html.mobile-ui-active #reward-dialog .reward-choice .reward-name,html.mobile-ui-active #reward-dialog .reward-choice>strong{font-size:16px;line-height:1.4;min-height:0;margin-bottom:6px;padding-bottom:6px;letter-spacing:0}
+  html.mobile-ui-active #reward-dialog .reward-choice .reward-description,html.mobile-ui-active #reward-dialog .reward-choice>p{font-size:12px;line-height:1.65;padding:0}
+  html.mobile-ui-active #confirm-reward{flex:0 0 auto;margin:8px auto 0;min-height:44px;padding:7px 16px;font-size:16px}
+  html.mobile-ui-active #reward-dialog .restock-controls{flex:0 0 auto;flex-direction:row;align-items:center;gap:10px;margin:8px 0 0;padding-top:8px}
+  html.mobile-ui-active #reward-dialog .restock-controls p{font-size:12px;line-height:1.4}
+  html.mobile-ui-active #reward-dialog .restock-controls button{min-height:44px;padding:7px 9px;font-size:12px}
+  html.mobile-ui-active #event-dialog.event-dialog{position:fixed;top:calc(var(--mobile-visible-top,0px) + max(8px,var(--mobile-safe-top)));bottom:auto;width:min(900px,calc(100vw - 16px));max-width:calc(100vw - 16px);max-height:calc(var(--mobile-visible-height,100dvh) - max(8px,var(--mobile-safe-top)) - max(8px,var(--mobile-safe-bottom)));margin:0 auto;overflow-y:auto;overflow-x:hidden}
+  html.mobile-ui-active #event-dialog #event-sheet{min-height:0;grid-template-columns:minmax(0,1fr);grid-template-rows:auto;gap:0;padding:12px 16px;overflow:visible}
+  html.mobile-ui-active #event-dialog #event-art{display:none}
+  html.mobile-ui-active #event-dialog .event-content{grid-column:1;grid-row:1;justify-content:flex-start}
+  html.mobile-ui-active #event-dialog .event-kicker{margin-bottom:6px}
+  html.mobile-ui-active #event-dialog .event-heading{font-size:20px;line-height:1.3;margin-bottom:8px;padding-bottom:8px}
+  html.mobile-ui-active #event-dialog .event-description{font-size:12px;line-height:1.6;margin-bottom:10px}
+  html.mobile-ui-active #event-dialog .event-rule{grid-column:1;font-size:13px;line-height:1.65;padding:10px 12px;margin-bottom:10px}
+  html.mobile-ui-active #event-dialog .event-options .button{min-height:44px}
+  html.mobile-ui-active :is(.floating-actions,.goal-tooltip,.journal-detail-tooltip,.mechanics-tooltip){max-width:calc(100vw - 16px);max-height:calc(var(--mobile-visible-height,100dvh) - 16px);padding:12px 14px;overscroll-behavior:contain}
+  html.mobile-ui-active [data-mobile-clamped=true]{left:var(--mobile-tip-left)!important;top:var(--mobile-tip-top)!important;max-height:var(--mobile-tip-height)!important}
+  html.mobile-ui-active .startup-screen{padding:max(8px,var(--mobile-safe-top)) max(8px,var(--mobile-safe-right)) max(8px,var(--mobile-safe-bottom)) max(8px,var(--mobile-safe-left))}
+  html.mobile-ui-active .startup-content{min-width:0;min-height:0;max-height:100%;padding:14px 18px;overflow-y:auto;overflow-x:hidden}
+  html.mobile-ui-active .startup-content h1{font-size:26px;line-height:1.25;margin:6px 0;letter-spacing:.07em}
+  html.mobile-ui-active .startup-lead{font-size:12px;line-height:1.65}
+  html.mobile-ui-active .startup-continue{margin-top:12px;padding:10px}
+  html.mobile-ui-active .startup-choices{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+  html.mobile-ui-active .startup-choice{min-height:120px;min-width:0;padding:12px 14px;gap:6px}
+  html.mobile-ui-active .startup-choice strong{font-size:16px}
+  html.mobile-ui-active .startup-choice span{font-size:12px;line-height:1.6}
+  html.mobile-ui-active .startup-support,html.mobile-ui-active .startup-note{margin-top:10px}
+  html.mobile-ui-active .startup-support .button{min-height:44px}
+  html.mobile-ui-active .startup-content .mobile-orientation-note{margin:0 0 12px;padding:8px 10px;border:1px solid #8c7354;background:#241d15;color:#dac7a6;font-size:12px;line-height:1.5}
+}
+
+@media (orientation:landscape) and (max-height:500px) and (max-width:1100px){
+  html.mobile-ui-active #reward-dialog .reward-options,html.mobile-ui-active #reward-dialog .reward-options:has(.reward-choice:nth-child(3):last-child){grid-template-columns:repeat(3,minmax(0,1fr))}
+  html.mobile-ui-active #reward-dialog .reward-options:has(.reward-choice:nth-child(2):last-child){grid-template-columns:repeat(2,minmax(0,1fr))}
+  html.mobile-ui-active #reward-dialog .reward-options:has(.reward-choice:first-child:last-child){grid-template-columns:minmax(0,1fr)}
+}
+
+@media (orientation:portrait) and (max-width:600px){
+  .mobile-orientation-note{display:block}
+  main.game-screen.mobile-portrait .game-viewport>.mobile-orientation-note{position:absolute;top:52px;left:7px;right:7px;z-index:6;padding:8px;background:#201a14e8;border:1px solid #80694b;color:#d9c6a7;font-size:12px;line-height:1.5;pointer-events:none}
+  main.game-screen.mobile-portrait .game-stage{width:100%;height:100%;aspect-ratio:auto}
+  main.game-screen.mobile-portrait .game-name h1{font-size:12px}
+  main.game-screen.mobile-portrait .run-badge{display:none}
+  main.game-screen.mobile-portrait .remaining-days{font-size:11px}
+  main.game-screen.mobile-portrait #countdown-caption{display:none}
+  main.game-screen.mobile-portrait .scene-goal{top:106px;width:150px;max-width:45%}
+  main.game-screen.mobile-portrait .game-decision{left:8px;right:82px;bottom:111px;max-height:150px}
+  main.game-screen.mobile-portrait .game-footer{left:8px;right:82px;bottom:270px;font-size:11px}
+  main.game-screen.mobile-portrait .motion-status{left:8px;right:82px;bottom:298px}
+  main.game-screen.mobile-portrait .quick-decision{bottom:176px}
+  main.game-screen.mobile-portrait .game-tools,main.game-screen.mobile-portrait .game-rainbow{top:105px}
+  html.mobile-ui-active .startup-content{padding:20px 16px}
+  html.mobile-ui-active #reward-dialog .reward-options,html.mobile-ui-active #reward-dialog .reward-options:has(.reward-choice:nth-child(3):last-child){grid-template-columns:repeat(2,minmax(0,1fr))}
+  html.mobile-ui-active #reward-dialog .reward-options:has(.reward-choice:first-child:last-child){grid-template-columns:minmax(0,1fr)}
+  html.mobile-ui-active #reward-dialog .restock-controls{flex-direction:column;align-items:stretch;gap:6px}
+}
+@media (orientation:portrait) and (max-width:420px){html.mobile-ui-active .startup-choices{grid-template-columns:minmax(0,1fr)}}

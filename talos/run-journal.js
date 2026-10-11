@@ -133,10 +133,10 @@ export function journalView(initial,state){
 function iconMarkup(icon){return `<span class="journal-beast portrait ${escape(icon.code)} tier-${icon.tier}" role="img" aria-label="${escape(icon.name)}"></span>`;}
 // Rail symbols are one-color silhouettes; detailed portraits remain in the floating panel.
 const beastSilhouettes={
-  elephant:'M10 8C6 3 1 7 1 15s4 12 9 9l2-3 1 5c0 6 10 6 13 0l-4-3c-1 5-4 5-4 1l1-6 3 5c6 4 9-1 9-8s-5-12-9-7c-3-5-9-5-12 0Z',
-  lion:'M16 2 21 4 26 4 28 9 31 13 29 19 29 24 24 27 20 31 15 29 10 31 6 27 2 24 3 18 1 13 5 9 6 4 11 4ZM8 13l6 2-5 2Zm16 0-6 2 5 2Zm-12 7h8l-4 5Z',
-  wolf:'M3 2l10 5h6l10-5-2 16-4 6-7 6-7-6-4-6ZM8 12l6 3-5 1Zm16 0-6 3 5 1ZM13 22h6l-3 3Z',
-  rat:'M9 12C1 12 1 2 7 2c4 0 7 4 5 8h8c-2-4 1-8 5-8 6 0 6 10-2 10l1 8-8 10-8-10ZM9 16a2 2 0 1 0 4 0 2 2 0 1 0-4 0Zm10 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0Zm-6 8h6l-3 3Z',
+  elephant:'M14 3C5-1 1 6 1 14C1 22 6 27 13 24L17 22L18 12L21 14L23 24C23.5 30 30 31 31 25L28 23C28 27 26 27 26 23L25 11C24.5 6 20 4 17 5C16 4 15 3 14 3ZM12 6C5 4 3 10 4 17C5 22 8 23 12 20L13 18C8 22 6 18 6 14C6 10 8 8 12 9ZM19 8.5a1.2 1.2 0 1 0 2.4 0 1.2 1.2 0 1 0-2.4 0Z',
+  lion:'M16 1.5C18.4 1.5 19 3.7 20.9 3.6C23.8 2.8 25.5 4.8 25.7 7.2C28.7 7.5 30 9.8 29.3 12.2C32 14.3 31.5 17.4 29.1 18.9C30.1 21.9 28.5 24.6 25.4 24.9C24.7 28.2 22.2 29.4 19.5 28.2C17.5 31.2 14.5 31.2 12.5 28.2C9.8 29.4 7.3 28.2 6.6 24.9C3.5 24.6 1.9 21.9 2.9 18.9C.5 17.4 0 14.3 2.7 12.2C2 9.8 3.3 7.5 6.3 7.2C6.5 4.8 8.2 2.8 11.1 3.6C13 3.7 13.6 1.5 16 1.5ZM10.4 7.9C7.8 9.4 7 12.7 8.1 16.9L10.1 16.2C9.2 13.2 9.7 10.5 11.5 9.1ZM21.6 7.9C24.2 9.4 25 12.7 23.9 16.9L21.9 16.2C22.8 13.2 22.3 10.5 20.5 9.1ZM10 12.7L14 13.2L12.2 15L10 14.2ZM22 12.7L18 13.2L19.8 15L22 14.2ZM13.3 17.7H18.7L16 20.2ZM11.4 21.3C13.2 24.4 18.8 24.4 20.6 21.3L18.6 20.9C17.1 22.6 14.9 22.6 13.4 20.9Z',
+  wolf:'M3 29L6 21L5 14L2 3L11 7L17 2L19 11L24 13L29.8 13.8L31 17L26 19L23.5 22L19 23L16 29ZM6 7L8 13L10 9ZM19.4 13.4L23 14.5L20 16ZM21 17.5L28.5 16.5L26 18.4L21.5 20.5Z',
+  rat:'M9 23C5 23 3 25 3 27C3 29 6 30 9 28L11 26L11 29C7 31 1 30 1 26C1 22 4 20 7 20C5 16 6 12 10 10C8 6 10 2 14 2C18 2 20 6 18 10C23 10 25 13 26 15L30 18Q31 19 30 21L24 24L22 27H12L10 25ZM12 6a2 2 0 1 0 4 0 2 2 0 1 0-4 0ZM22 15a1.2 1.2 0 1 0 2.4 0 1.2 1.2 0 1 0-2.4 0Z',
 };
 function railIconMarkup(icon){return `<span class="journal-symbol journal-symbol-${escape(icon.code)}" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false" aria-hidden="true"><path fill-rule="evenodd" d="${beastSilhouettes[icon.code]??''}"/></svg></span>`;}
 function entryMarkup(entry){

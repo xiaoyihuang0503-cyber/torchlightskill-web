@@ -1,0 +1,21 @@
+/* Only fullscreen controls and their non-modal fallback note. */
+[data-fullscreen-toggle]{min-height:44px;min-width:44px;touch-action:manipulation}
+.fullscreen-header-button{display:inline-flex;flex:0 0 44px;align-items:center;justify-content:center;width:44px;height:44px;padding:10px;box-sizing:border-box;border:1px solid #786149;border-radius:2px;background:linear-gradient(#332a21ee,#14110eee);color:#e0c49b;cursor:pointer;box-shadow:inset 0 1px #9b79522b,0 2px 4px #0007}
+.fullscreen-header-button:hover{border-color:#b1976d;color:#ffe3b5}
+.fullscreen-header-button svg{display:block;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:square;stroke-linejoin:miter}
+.fullscreen-header-button .fullscreen-exit-icon{display:none}
+.fullscreen-header-button[aria-pressed=true] .fullscreen-enter-icon{display:none}
+.fullscreen-header-button[aria-pressed=true] .fullscreen-exit-icon{display:initial}
+.fullscreen-header-button [data-fullscreen-label]{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+[data-fullscreen-toggle]:disabled{opacity:.6;cursor:wait}
+[data-fullscreen-toggle]:focus-visible,.fullscreen-ui-hint button:focus-visible{outline:2px solid #dec18c;outline-offset:2px}
+.game-header-actions:has(>.fullscreen-header-button){gap:clamp(5px,1cqw,14px)}
+#fullscreen-ui-hint{position:fixed;inset:auto;z-index:10000;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + max(0px,100dvh - var(--mobile-visible-height,100dvh) - var(--mobile-visible-top,0px)));box-sizing:border-box;width:min(370px,calc(100vw - 24px));max-height:calc(var(--mobile-visible-height,100dvh) - 24px);margin:0;padding:18px 18px 16px;border:1px solid #907455;border-radius:3px;background:linear-gradient(145deg,#282019fa,#111211fa);color:#d8c6ae;font-family:"Microsoft YaHei","Segoe UI",sans-serif;box-shadow:0 14px 50px #000a;overflow:auto;overscroll-behavior:contain}
+#fullscreen-ui-hint[hidden]{display:none!important}
+#fullscreen-ui-hint h2{margin:0 40px 12px 0;color:#ecd7b8;font-size:16px;font-weight:500;line-height:1.5}
+#fullscreen-ui-hint p{margin:8px 0;color:#d3c4ae;font-size:13px;line-height:1.7}
+#fullscreen-ui-hint small{display:block;margin:12px 0;color:#a99a85;font-size:12px;line-height:1.7}
+#fullscreen-ui-hint .fullscreen-ui-hint-close{position:absolute;right:4px;top:4px;width:44px;min-height:44px;padding:0;border:0;background:transparent;color:#bfb099;font-size:26px;cursor:pointer;touch-action:manipulation}
+#fullscreen-ui-hint .fullscreen-ui-hint-dismiss{display:block;min-height:44px;width:100%;margin:13px 0 0;padding:8px 14px;border:1px solid #9b805b;border-radius:2px;background:linear-gradient(#443627,#2c241c);color:#e7d3b5;font-size:13px;cursor:pointer;touch-action:manipulation}
+@media(orientation:landscape) and (max-height:500px) and (max-width:1100px),(orientation:portrait) and (max-width:600px){main.game-screen:is(.mobile-landscape,.mobile-portrait) .game-header-actions:has(>.fullscreen-header-button){gap:5px}}
+@media(max-height:360px){#fullscreen-ui-hint{padding:13px 16px}#fullscreen-ui-hint p{font-size:12px;margin:6px 0}#fullscreen-ui-hint small{font-size:11px;margin:8px 0}}

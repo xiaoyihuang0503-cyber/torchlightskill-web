@@ -1,0 +1,30 @@
+#game-share-dialog{width:min(760px,calc(100vw - 28px));max-width:calc(100vw - 28px);max-height:calc(100dvh - 28px);margin:auto;padding:26px;overflow:auto;overscroll-behavior:contain;border:1px solid #827365;border-radius:3px;background:radial-gradient(ellipse at 15% 0,#55423535,transparent 65%),linear-gradient(145deg,#22201efc,#111313fc);color:#d4ccbe;box-shadow:inset 0 0 0 3px #51443d55,0 26px 100px #000c;scrollbar-width:thin;scrollbar-color:#736454 #191817;font-family:"Segoe UI","Microsoft YaHei",sans-serif}
+#game-share-dialog::backdrop{background:#070808d9;backdrop-filter:blur(4px)}
+#game-share-dialog,#game-share-dialog *{box-sizing:border-box}
+#game-share-dialog [hidden]{display:none!important}
+#game-share-dialog .game-share-kicker{display:block;color:#a99474;font-size:10px;letter-spacing:.14em}
+#game-share-dialog h2{margin:9px 40px 10px 0;font-family:Georgia,"SimSun",serif;font-size:25px;font-weight:400;line-height:1.5;letter-spacing:.06em}
+#game-share-dialog .game-share-intro{margin:0 25px 18px 0;color:#a99f90;font-size:13px;line-height:1.8}
+#game-share-dialog .game-share-close{position:absolute;top:12px;right:12px;min-width:44px;min-height:44px;padding:0;border:1px solid transparent;background:transparent;color:#b9ae9b;font-size:27px;line-height:1;cursor:pointer}
+#game-share-dialog .game-share-close:hover{border-color:#736254;color:#f1e6d1;background:#392f282f}
+#game-share-dialog .game-share-formats{display:flex;gap:9px;margin:0 0 13px}
+#game-share-dialog .game-share-formats button{flex:1;min-width:0;min-height:44px;padding:9px 12px;border:1px solid #63564b;border-radius:2px;background:linear-gradient(#2b2723,#171918);color:#b3a693;font-size:13px;line-height:1.5;cursor:pointer}
+#game-share-dialog .game-share-formats button[aria-pressed=true]{border-color:#af9471;background:linear-gradient(#523e31,#30261f);color:#efe1c5;box-shadow:inset 0 0 0 2px #87714d2a}
+#game-share-dialog .game-share-preview{display:flex;justify-content:center;align-items:center;width:100%;height:min(43dvh,440px);min-height:0;margin:0;overflow:hidden;border:1px solid #635446;background:#090b0b}
+#game-share-dialog .game-share-preview img{display:block;flex:none;width:100%;height:100%;max-width:100%;object-fit:contain}
+#game-share-dialog .game-share-preview-note{padding:20px;color:#bbae9a;font-size:13px;line-height:1.7}
+#game-share-dialog .game-share-downloads{display:flex;flex-wrap:wrap;gap:9px;margin:15px 0 22px}
+#game-share-dialog .game-share-downloads a{display:flex;flex:1;align-items:center;justify-content:center;min-width:0;min-height:44px;padding:10px 12px;border:1px solid #7b6850;border-radius:2px;background:linear-gradient(#392f25,#24231d);color:#ded0b5;font-size:12px;line-height:1.5;text-align:center;text-decoration:none}
+#game-share-dialog .game-share-downloads a:hover{border-color:#b1976c;background:#443729;color:#fff1d1}
+#game-share-dialog .game-share-qr{display:flex;flex-direction:column;align-items:center;gap:9px;margin:0 0 21px;color:#b3a38d;font-size:12px}
+#game-share-dialog .game-share-qr img{display:block;width:148px;max-width:100%;height:auto;aspect-ratio:1;background:#fff}
+#game-share-dialog .game-share-link-label{display:block;margin:0 0 8px;color:#b3a38d;font-size:12px;line-height:1.6}
+#game-share-dialog .game-share-link-row{display:flex;gap:9px;min-width:0}
+#game-share-dialog .game-share-link-row input{flex:1;min-width:0;width:100%;margin:0;padding:10px;border:1px solid #64594d;border-radius:2px;background:#0d1010;color:#e2d5bd;font-size:16px;line-height:1.5}
+#game-share-dialog .game-share-action{min-height:44px;padding:10px 15px;border:1px solid #aa9270;border-radius:2px;background:linear-gradient(#c2a877,#aa8d60);color:#231e16;font-size:13px;line-height:1.5;cursor:pointer}
+#game-share-dialog .game-share-action:disabled,#game-share-dialog .game-share-formats button:disabled{opacity:.5;cursor:wait}
+#game-share-dialog .game-share-system{display:block;width:100%;margin-top:12px;border-color:#7e6b50;background:linear-gradient(#3e3227,#2b261f);color:#ddceb2}
+#game-share-dialog .game-share-status{min-height:24px;margin:11px 0 0;color:#bcac94;font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+#game-share-dialog :is(button,a,input):focus-visible{outline:2px solid #d8bd85;outline-offset:3px}
+@media(max-width:420px){#game-share-dialog{padding:23px 16px 18px}#game-share-dialog h2{font-size:21px}#game-share-dialog .game-share-formats button{padding:8px;font-size:12px}#game-share-dialog .game-share-downloads a{padding:9px 6px;font-size:11px}#game-share-dialog .game-share-link-row{gap:6px}#game-share-dialog .game-share-action{padding:10px;font-size:12px}}
+@media(max-height:500px){#game-share-dialog{max-height:calc(100dvh - 16px);padding:20px}#game-share-dialog .game-share-preview{height:44dvh}#game-share-dialog .game-share-intro{margin-bottom:12px}#game-share-dialog .game-share-downloads{margin-bottom:16px}}

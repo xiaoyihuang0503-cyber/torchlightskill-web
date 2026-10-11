@@ -9,7 +9,8 @@ import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,de
 import {rewardIcon,ruleText} from './reward-icons.js?v=0.6.2-1';
 import {rainbowMarkup,animateRainbowArrivals} from './rainbow-ui.js?v=0.6.3-1';
 import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.3-1';
-import {journalMarkup,effectsMarkup,journalDetailMarkup} from './run-journal.js?v=0.6.6-1';
+import {journalMarkup,effectsMarkup,journalDetailMarkup} from './run-journal.js?v=0.6.7-1';
+import {MobilePrisonUI} from './mobile-ui.js?v=0.6.7-1';
 
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -21,6 +22,7 @@ try{runStorage=localStorage;}catch{}
 const startupSave=readStartupSave(runStorage);
 let preferences={advice:false,adviceExpanded:false,motion:true,fast:false,quick:false,journalHidden:false,sidebarHidden:false};
 try{const saved=JSON.parse(localStorage.getItem('ss14-prison-ui-v2')||'{}');for(const key of Object.keys(preferences))if(typeof saved[key]==='boolean')preferences[key]=saved[key];}catch{}
+const mobileUI=new MobilePrisonUI({onLayout:()=>syncLayout()});
 const effects=new PrisonEffects({enabled:()=>preferences.motion,fast:()=>preferences.fast});
 const lockIcon='<svg class="cell-lock" viewBox="0 0 24 30" aria-hidden="true"><path d="M5 12V8a7 7 0 0 1 14 0v4h2v16H3V12zm3 0h8V8a4 4 0 0 0-8 0zm4 5a2 2 0 0 0-1 4v3h2v-3a2 2 0 0 0-1-4"/></svg>';
 const eatIcon='<svg viewBox="0 0 40 36" aria-hidden="true"><path d="M3 8q17-10 34 0v12q-17 22-34 0Z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M6 6h6v12H6zm11-3h6v14h-6zm11 3h6v12h-6zM11 27h5v-6h-5zm13 0h5v-6h-5z" fill="currentColor"/></svg>';
@@ -117,6 +119,7 @@ function positionGoalGuide(){
   tip.style.top=`${Math.max(margin,Math.min(top,innerHeight-tip.offsetHeight-margin))}px`;
 }
 function showGoalGuide(){
+  if(mobileUI.active&&!$('context-actions').hidden)return;
   clearTimeout(goalGuideHideTimer);$('goal-tooltip').hidden=false;
   $('goal-details-trigger').setAttribute('aria-expanded','true');positionGoalGuide();
 }
@@ -242,6 +245,7 @@ function positionContext(point){
   menu.style.top=`${Math.max(10,Math.min(point.y+12,height-menu.offsetHeight-10))}px`;
 }
 function showContext(html,point){
+  if(mobileUI.active){hideGoalGuide();hideMechanics();hideJournalDetail();}
   const menu=$('context-actions');contextAnchor=pairTarget??selected;menu.innerHTML=html;menu.hidden=false;positionContext(point);
   menu.querySelector('button:not(:disabled)')?.focus({preventScroll:true});
 }
@@ -515,7 +519,7 @@ document.addEventListener('click',event=>{
     cancelChoice();selected=clicked;armed=!!state.rooms[clicked].prisoner;render();
   }
 });
-document.addEventListener('click',event=>{const inside=event.composedPath().some(node=>node.id==='context-actions'||node.matches?.('.room,#confirm-action,[data-action],.run-sidebar'));if(!$('context-actions').hidden&&!inside){cancelChoice();render();}});
+document.addEventListener('click',event=>{const inside=event.composedPath().some(node=>node.id==='context-actions'||node.matches?.('.room,#confirm-action,[data-action],.run-sidebar,.layout-toggle'));if(!$('context-actions').hidden&&!inside){cancelChoice();render();}});
 $('board').addEventListener('contextmenu',event=>{const room=event.target.closest('[data-room]');if(!room||busy)return;event.preventDefault();cancelChoice();selected=Number(room.dataset.room);armed=true;render();showSingle({x:event.clientX,y:event.clientY});});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){hideGoalGuide();hideMechanics();hideJournalDetail();if(!document.querySelector('dialog[open]')){cancelChoice();render();}}});
 const goalTrigger=$('goal-details-trigger'),goalTooltip=$('goal-tooltip');
@@ -525,7 +529,7 @@ goalTooltip.addEventListener('mouseenter',showGoalGuide);
 goalTooltip.addEventListener('mouseleave',scheduleGoalGuideHide);
 goalTrigger.addEventListener('focus',showGoalGuide);
 goalTrigger.addEventListener('blur',()=>{if(!goalGuidePinned)hideGoalGuide();});
-goalTrigger.addEventListener('click',()=>{goalGuidePinned=!goalGuidePinned;if(goalGuidePinned)showGoalGuide();else hideGoalGuide();});
+goalTrigger.addEventListener('click',()=>{if(mobileUI.active&&!$('context-actions').hidden){cancelChoice();render();}goalGuidePinned=!goalGuidePinned;if(goalGuidePinned)showGoalGuide();else hideGoalGuide();});
 document.addEventListener('click',event=>{if(!event.composedPath().includes(goalTrigger)&&!event.composedPath().includes(goalTooltip))hideGoalGuide();});
 window.addEventListener('resize',()=>{if(!goalTooltip.hidden)requestAnimationFrame(positionGoalGuide);});
 window.addEventListener('resize',()=>{if($('context-actions').hidden)return;requestAnimationFrame(()=>{if($('context-actions').hidden)return;const r=document.querySelector(`[data-room="${contextAnchor}"]`)?.getBoundingClientRect();if(r)positionContext({x:r.x+r.width/2,y:r.y+r.height/2});});});
@@ -591,23 +595,27 @@ function syncPreferences(){
   try{localStorage.setItem('ss14-prison-ui-v2',JSON.stringify(preferences));}catch{}
 }
 function syncLayout(){
+  const layout=mobileUI.layout(preferences);
   const screen=$('game-screen'),journal=$('run-journal'),sidebar=$('run-sidebar');
-  screen.classList.toggle('journal-hidden',preferences.journalHidden);
-  screen.classList.toggle('sidebar-hidden',preferences.sidebarHidden);
-  screen.classList.toggle('immersive',preferences.journalHidden&&preferences.sidebarHidden);
-  journal.hidden=preferences.journalHidden;sidebar.hidden=preferences.sidebarHidden;
-  for(const [id,hidden,label] of [['journal-toggle',preferences.journalHidden,'经营记录'],['sidebar-toggle',preferences.sidebarHidden,'右侧栏']]){
+  screen.classList.toggle('journal-hidden',layout.journalHidden);
+  screen.classList.toggle('sidebar-hidden',layout.sidebarHidden);
+  screen.classList.toggle('immersive',layout.journalHidden&&layout.sidebarHidden);
+  journal.hidden=layout.journalHidden;sidebar.hidden=layout.sidebarHidden;
+  for(const [id,hidden,label] of [['journal-toggle',layout.journalHidden,'经营记录'],['sidebar-toggle',layout.sidebarHidden,'右侧栏']]){
     const button=$(id);button.setAttribute('aria-expanded',String(!hidden));
     button.setAttribute('aria-label',`${hidden?'展开':'收起'}${label}`);
     button.querySelector('.layout-chevron').textContent=id==='journal-toggle'?(hidden?'›':'‹'):(hidden?'‹':'›');
   }
-  $('immersive-toggle').checked=preferences.journalHidden&&preferences.sidebarHidden;
+  $('immersive-toggle').checked=layout.journalHidden&&layout.sidebarHidden;
 }
 for(const [id,key] of [['journal-toggle','journalHidden'],['sidebar-toggle','sidebarHidden']])$(id).addEventListener('click',()=>{
-  hideJournalDetail();hideGoalGuide();hideMechanics();preferences[key]=!preferences[key];syncPreferences();
+  hideJournalDetail();hideGoalGuide();hideMechanics();
+  if(mobileUI.togglePanel(key))return;
+  preferences[key]=!preferences[key];syncPreferences();
 });
 $('immersive-toggle').addEventListener('change',event=>{
   hideJournalDetail();hideGoalGuide();hideMechanics();
+  if(mobileUI.setImmersive(event.target.checked))return;
   preferences.journalHidden=event.target.checked;preferences.sidebarHidden=event.target.checked;syncPreferences();
 });
 $('lab-settings').addEventListener('click',()=>{if(!busy){cancelChoice();render();$('settings-dialog').showModal();}});
