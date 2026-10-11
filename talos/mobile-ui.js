@@ -2,6 +2,27 @@
 export const MOBILE_LANDSCAPE_QUERY='(orientation: landscape) and (max-height: 500px) and (max-width: 1100px)';
 export const MOBILE_PORTRAIT_QUERY='(orientation: portrait) and (max-width: 600px)';
 
+// Older MediaQueryList objects expose addListener instead of EventTarget methods.
+// Own the abort cleanup so both forms have the same lifetime.
+export function listenMediaChange(query,callback,{signal}={}) {
+  if(!query||signal?.aborted)return ()=>{};
+  let remove;
+  if(typeof query.addEventListener==='function'){
+    query.addEventListener('change',callback);
+    remove=()=>query.removeEventListener?.('change',callback);
+  }else if(typeof query.addListener==='function'){
+    query.addListener(callback);
+    remove=()=>query.removeListener?.(callback);
+  }else return ()=>{};
+  let listening=true;
+  const stop=()=>{
+    if(!listening)return;
+    listening=false;remove();signal?.removeEventListener?.('abort',stop);
+  };
+  signal?.addEventListener?.('abort',stop,{once:true});
+  return stop;
+}
+
 export class MobilePrisonUI {
   constructor({onLayout=()=>{}}={}) {
     this.onLayout=onLayout;
@@ -19,8 +40,8 @@ export class MobilePrisonUI {
     if(!this.screen||!this.viewport||!this.stage)return;
     this.mount();
     const options={signal:this.abort.signal};
-    this.landscape.addEventListener('change',()=>this.modeChanged(),options);
-    this.portrait.addEventListener('change',()=>this.modeChanged(),options);
+    listenMediaChange(this.landscape,()=>this.modeChanged(),options);
+    listenMediaChange(this.portrait,()=>this.modeChanged(),options);
     window.addEventListener('resize',()=>this.scheduleViewport(),options);
     window.visualViewport?.addEventListener('resize',()=>this.scheduleViewport(),options);
     window.visualViewport?.addEventListener('scroll',()=>this.scheduleViewport(),options);

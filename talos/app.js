@@ -4,7 +4,7 @@ import {preyCodes} from './engine.js?v=0.6.8-1';
 import {pairDecision} from './interaction.js?v=0.6.8-1';
 import {PrisonEffects} from './effects.js?v=0.6.3-1';
 import {goalGuide} from './goal-guide.js?v=0.6.8-1';
-import {PrisonScene3D} from './scene3d.js?v=0.6.9-1';
+import {LazyPrisonScene} from './scene-loader.js?v=0.6.10-1';
 import {PrisonAudio,musicTracks} from './audio.js?v=0.6.5-1';
 import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.6.8-1';
 import {rewardIcon,ruleText} from './reward-icons.js?v=0.6.2-1';
@@ -12,7 +12,7 @@ import {rainbowMarkup,animateRainbowArrivals} from './rainbow-ui.js?v=0.6.8-1';
 import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.8-1';
 import {journalMarkup,effectsMarkup,journalDetailMarkup} from './run-journal.js?v=0.6.8-1';
 import {ModalNavigation,initManualTabs} from './modal-ui.js?v=0.6.9-1';
-import {MobilePrisonUI} from './mobile-ui.js?v=0.6.9-1';
+import {MobilePrisonUI,listenMediaChange} from './mobile-ui.js?v=0.6.10-1';
 
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -28,7 +28,7 @@ const mobileUI=new MobilePrisonUI({onLayout:()=>syncLayout()});
 const effects=new PrisonEffects({enabled:()=>preferences.motion,fast:()=>preferences.fast});
 const lockIcon='<svg class="cell-lock" viewBox="0 0 24 30" aria-hidden="true"><path d="M5 12V8a7 7 0 0 1 14 0v4h2v16H3V12zm3 0h8V8a4 4 0 0 0-8 0zm4 5a2 2 0 0 0-1 4v3h2v-3a2 2 0 0 0-1-4"/></svg>';
 const eatIcon='<svg viewBox="0 0 40 36" aria-hidden="true"><path d="M3 8q17-10 34 0v12q-17 22-34 0Z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M6 6h6v12H6zm11-3h6v14h-6zm11 3h6v12h-6zM11 27h5v-6h-5zm13 0h5v-6h-5z" fill="currentColor"/></svg>';
-const scene3d=new PrisonScene3D({stage:document.querySelector('.game-stage'),board:$('board'),motion:()=>preferences.motion,fast:()=>preferences.fast});
+const scene3d=new LazyPrisonScene({options:{stage:document.querySelector('.game-stage'),board:$('board'),motion:()=>preferences.motion,fast:()=>preferences.fast},canAttach:()=>!busy});
 const audio=new PrisonAudio({onStatus:renderAudioState});
 $('audio-music-track').innerHTML='<option value="random">随机播放</option>'+musicTracks.map(track=>`<option value="${track.id}">${esc(track.title)}</option>`).join('');
 function renderAudioState(status){
@@ -641,6 +641,8 @@ $('advice-section').addEventListener('toggle',()=>{
   preferences.adviceExpanded=$('advice-section').open;
   try{localStorage.setItem('ss14-prison-ui-v2',JSON.stringify(preferences));}catch{}
 });
-matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',syncPreferences);
+listenMediaChange(matchMedia('(prefers-reduced-motion: reduce)'),syncPreferences);
 syncPreferences();
 showStartup();
+window.TalosStartupGuard?.ready();
+scene3d.start();
