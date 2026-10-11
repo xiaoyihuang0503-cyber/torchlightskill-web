@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0a0d10">
+  <meta name="description" content="火炬议会 Torchlight Council。SS14 开荒阵营战、老虎机随机英雄、玩家呼声站队。独立玩家社区互动预览。">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="火炬议会 | SS14 开荒阵营战">
+  <meta property="og:description" content="你的开荒英雄，现在排第几？来火炬议会选择阵营，体验英雄追赶战况与随机开荒命运机。">
+  <meta property="og:url" content="https://torchlightskill.com/council/">
+  <title>火炬议会 Torchlight Council · SS14 开荒阵营战</title>
+  <link rel="canonical" href="https://torchlightskill.com/council/">
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="stylesheet" href="./style.css?v=20261012-1">
+  <script defer src="./app.js?v=20261012-1"></script>
+</head>
+<body>
+  <div class="page-haze" aria-hidden="true"></div>
+  <div id="top" class="page">
+    <header class="site-header">
+      <a class="logo" href="#top" aria-label="火炬议会，回到顶部">
+        <span class="logo-glyph" aria-hidden="true"><span class="glyph-star">✳</span></span>
+        <span class="logo-copy"><strong>火炬议会</strong><small>TORCHLIGHT COUNCIL</small></span>
+      </a>
+      <nav class="header-actions" aria-label="站内导航">
+        <a class="nav-link" href="#topics">玩家呼声 <span aria-hidden="true">↗</span></a>
+        <span class="header-season">SS14 <span class="header-dot"></span> PRE-SEASON</span>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero-intro" aria-labelledby="site-title">
+        <div class="eyebrow-line"><span class="eyebrow-line-mark"></span><span>SEASON 14 / THE PRISON OF TAROS</span><span class="intro-separator"></span><span>PLAYER SIGNAL 001</span></div>
+        <div class="intro-row">
+          <div class="intro-copy">
+            <p class="intro-status"><span class="status-pulse"></span> 阵营集结中 <span class="intro-status-separator">/</span> 互动预览版</p>
+            <h1 id="site-title">你选的英雄，<br><em>现在排第几？</em></h1>
+            <p class="intro-description">SS14「塔罗斯的困兽」即将开服。<br>为你的开荒英雄站队，看谁率先冲上榜首。</p>
+          </div>
+          <div class="countdown-card" aria-label="SS14 开服倒计时">
+            <span class="countdown-label">SEASON OPENS IN</span>
+            <div class="countdown-time" id="countdown" aria-live="off">--<span>天</span> --<span>时</span></div>
+            <p class="countdown-caption">10.16 <span class="countdown-cross">✳</span> 10:00 <span class="countdown-zone">北京时间</span></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="arena-section" aria-labelledby="arena-title">
+        <header class="section-header">
+          <div><p class="section-index">01 / OPENING WAR</p><h2 id="arena-title">开荒阵营战 <span class="title-arrow" aria-hidden="true">↗</span></h2><p class="section-description">选一个英雄特性，站上你的位置。排名随票数变化。</p></div>
+          <span class="preview-badge"><span class="small-dot"></span> 演示数据 · 非实时投票</span>
+        </header>
+
+        <div class="arena-panel">
+          <div class="arena-toolbar">
+            <div class="arena-toolbar-left"><span class="live-marker">●</span><span class="arena-toolbar-label">CAMP RANKING</span><span class="toolbar-divider">/</span><span id="ranking-label">前 6 位</span></div>
+            <div class="arena-toolbar-right"><span><strong id="hero-total">--</strong> <small>个候选特性</small></span><i class="toolbar-split"></i><span><strong id="demo-vote-total">--</strong> <small>模拟票</small></span></div>
+          </div>
+
+          <div class="arena-stage">
+            <div class="arena-grid" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+            <div class="arena-grid-corner">SS14 <span>／</span> 2026</div>
+            <div id="chart" class="chart" aria-label="英雄阵营排名与投票互动">
+              <p class="chart-loading">正在载入英雄阵营…</p>
+            </div>
+            <div class="stage-axis" aria-hidden="true"></div>
+          </div>
+
+          <div class="arena-below">
+            <div id="my-camp" class="my-camp" aria-live="polite">尚未站队 · 点击英雄加入阵营</div>
+            <button type="button" class="text-action" id="simulate-btn" title="仅演示柱子追赶与换位效果">模拟一轮追赶 <span aria-hidden="true">↻</span></button>
+          </div>
+          <div class="arena-actions">
+            <button type="button" id="pick-hero" class="button-primary"><span class="button-icon">✚</span><span>选择我的开荒英雄</span><span aria-hidden="true">↗</span></button>
+            <button type="button" id="open-lottery" class="button-secondary"><span class="slot-icon">▥</span><span>老虎机随机英雄</span><span aria-hidden="true">↗</span></button>
+          </div>
+          <p class="demo-disclosure">本页为交互预览：榜单初始数字为<span>模拟示例</span>，投票仅保存在你的浏览器中，不会计入全站总票数。点击「模拟一轮追赶」只演示动画。</p>
+        </div>
+        <div class="arena-footnote"><span>✳</span> 选错了随时改选，每道题仅保留一张有效票。 <button type="button" id="share-arena" class="footnote-share">分享阵营战 <span aria-hidden="true">↗</span></button></div>
+      </section>
+
+      <section id="topics" class="topics-section" aria-labelledby="topics-title">
+        <div class="topics-heading">
+          <div><p class="section-index">02 / THE PEOPLE HAVE SPOKEN</p><h2 id="topics-title">火炬玩家，<em>你站哪边？</em></h2></div>
+          <p>两场关于新赛季的争论。<br>只需点一下，你的态度就有了位置。</p>
+        </div>
+        <div class="topics-grid">
+          <article class="topic-card topic-card-maze" aria-labelledby="maze-title">
+            <div class="topic-top"><span class="topic-no">ISSUE / 001</span><span class="topic-flag">争议话题</span></div>
+            <div class="topic-main"><span class="topic-symbol maze-symbol" aria-hidden="true">⌘</span><p class="topic-eyebrow">SEASON BALANCE</p><h3 id="maze-title">迷城燃料下调，<br>这一刀砍得合理吗？</h3><p>官方更新日志确认迷城燃料产量下调。现在，轮到玩家表达态度。</p></div>
+            <div class="poll-options" id="maze-options" aria-label="迷城削弱态度投票"></div>
+            <div class="topic-bottom"><span id="maze-summary">演示投票 · 可改选</span><a href="https://torchlight.xd.com/ss14pn" target="_blank" rel="noopener noreferrer">查看官方更新日志 ↗</a></div>
+          </article>
+
+          <article class="topic-card topic-card-roundtable" aria-labelledby="roundtable-title">
+            <div class="topic-top"><span class="topic-no">ISSUE / 002</span><span class="topic-flag">玩家呼声</span></div>
+            <div class="topic-main"><span class="topic-symbol round-symbol" aria-hidden="true">✳</span><p class="topic-eyebrow">THE ROUNDTABLE</p><h3 id="roundtable-title">10 月 14 日圆桌，<br>你最想问策划什么？</h3><p>选择你最在意的一件事，让你的观点被看见。</p></div>
+            <div class="poll-options poll-options-quad" id="roundtable-options" aria-label="圆桌会谈玩家呼声投票"></div>
+            <div class="topic-bottom"><span id="roundtable-summary">演示投票 · 可改选</span><span>10.14 / 20:00</span></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="manifesto" aria-label="火炬议会说明">
+        <div class="manifesto-asterisk" aria-hidden="true">✳</div>
+        <div><p class="manifesto-label">ONE CLICK. ONE SIDE.</p><h2>每个赛季，总要有人先站出来。</h2><p>开荒选谁、玩法留谁、哪一刀砍得太狠。让意见有形状，让争论有结果。</p></div>
+        <a href="#top" class="manifesto-back">回到阵营战 ↑</a>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="footer-brand"><span aria-hidden="true">✳</span><div><strong>火炬议会</strong><small>TORCHLIGHT COUNCIL</small></div></div>
+      <p>玩家独立制作的免费互动预览，与《火炬之光：无限》官方无隶属关系。投票数据为演示样例，尚未开放公共计票。</p>
+      <div class="footer-bottom"><span>© 2026 Torchlight Council</span><a href="https://torchlightskill.com/" target="_blank" rel="noopener noreferrer">刷宝游戏工具箱 ↗</a></div>
+    </footer>
+  </div>
+
+  <dialog id="hero-dialog" class="tc-dialog" aria-labelledby="hero-dialog-title">
+    <div class="dialog-shell">
+      <div class="dialog-heading"><div><span class="dialog-index">SELECT YOUR SIDE / 01</span><h2 id="hero-dialog-title">选择开荒英雄</h2><p>所有可选英雄特性 · 一次选择，随时可以更改</p></div><button type="button" class="dialog-close" data-close="hero-dialog" aria-label="关闭英雄列表">×</button></div>
+      <div class="hero-search-wrap"><span aria-hidden="true">⌕</span><input id="hero-search" type="search" placeholder="搜索英雄、特性或玩家简称" autocomplete="off" aria-label="搜索英雄"></div>
+      <div class="hero-picker-meta"><span id="hero-search-summary">28 个英雄特性</span><span>当前预览使用演示票数</span></div>
+      <div id="hero-list" class="hero-list"></div>
+      <div class="dialog-footer"><span>所选阵营只在当前浏览器保存</span><button type="button" class="button-small" data-close="hero-dialog">返回榜单</button></div>
+    </div>
+  </dialog>
+
+  <dialog id="lottery-dialog" class="tc-dialog" aria-labelledby="lottery-title">
+    <div class="dialog-shell lottery-shell">
+      <div class="dialog-heading"><div><span class="dialog-index">FATE SELECTOR / 01</span><h2 id="lottery-title">开荒命运机</h2><p>还没决定？那就交给随机数。</p></div><button type="button" class="dialog-close" data-close="lottery-dialog" aria-label="关闭老虎机">×</button></div>
+      <div class="lottery-stage">
+        <div class="lottery-stripes" aria-hidden="true"></div>
+        <div class="slot-frame" aria-live="off">
+          <div id="slot-prev" class="slot-row slot-dim">—</div>
+          <div id="slot-current" class="slot-row slot-active">✳<span>点击开始抽签</span></div>
+          <div id="slot-next" class="slot-row slot-dim">—</div>
+        </div>
+        <span class="slot-pointer slot-pointer-left" aria-hidden="true">▶</span><span class="slot-pointer slot-pointer-right" aria-hidden="true">◀</span>
+      </div>
+      <div class="lottery-result"><p id="lottery-result-label">SS14 · 全部可选英雄特性等概率随机</p><strong id="lottery-result-name">命运尚未揭晓</strong><span id="lottery-result-sub">不影响当前投票 · 完全免费</span></div>
+      <p class="lottery-announce" id="lottery-announce" role="status" aria-live="polite"></p>
+      <div class="lottery-buttons">
+        <button type="button" id="lottery-spin" class="button-primary"><span>✳</span><span id="spin-label">开始抽签</span><span aria-hidden="true">↻</span></button>
+        <button type="button" id="lottery-accept" class="button-secondary" disabled>接受天命 · 加入阵营 ↗</button>
+      </div>
+      <div class="lottery-minor"><button type="button" id="lottery-choose" class="text-action">还是自己选英雄 ↗</button><button type="button" id="lottery-share" class="text-action" disabled>分享抽签结果 ↗</button></div>
+      <p class="lottery-disclosure">随机抽签只是娱乐玩法。抽中不会自动投票；不涉及付费、奖品或真实游戏掉率。</p>
+    </div>
+  </dialog>
+
+  <dialog id="share-dialog" class="tc-dialog" aria-labelledby="share-title">
+    <div class="dialog-shell share-shell"><div class="dialog-heading"><div><span class="dialog-index">SHARE / COUNCIL</span><h2 id="share-title">邀请朋友来站队</h2><p>预览模式的投票不会计入真实社区数据。</p></div><button type="button" class="dialog-close" data-close="share-dialog" aria-label="关闭分享窗口">×</button></div><label class="share-label" for="share-link">分享链接</label><input id="share-link" class="share-input" type="text" readonly><button type="button" class="button-primary" id="copy-share">复制分享链接 ↗</button><p class="share-tip" id="share-tip" role="status" aria-live="polite">复制失败时可以直接选中链接分享。</p></div>
+  </dialog>
+</body>
+</html>
