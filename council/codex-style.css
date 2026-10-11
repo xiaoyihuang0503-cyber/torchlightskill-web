@@ -545,3 +545,8 @@ button:disabled { opacity: .58; cursor: not-allowed; }
   html { scroll-behavior: auto; }
   *,*:before,*:after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* Keep each exact-trait portrait centered over the fallback initial while loading. */
+.contender-avatar.has-portrait, .hero-choice-avatar.has-portrait { position: relative; display: block; }
+.contender-avatar .portrait-initial, .hero-choice-avatar .portrait-initial { position: absolute; inset: 0; width: 100%; height: 100%; }
+.contender-avatar .portrait-image, .hero-choice-avatar .portrait-image { position: absolute; inset: 0; width: 100%; height: 100%; }
