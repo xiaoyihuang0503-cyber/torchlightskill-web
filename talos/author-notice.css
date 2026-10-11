@@ -1,0 +1,37 @@
+/* Free-play declaration owns its shell and never changes the game layout. */
+#author-notice-dialog:not([open]){display:none}
+html[data-author-notice-pending] #startup-screen,html[data-author-notice-pending] #game-screen,html[data-author-notice-pending] body>dialog:not(#author-notice-dialog){visibility:hidden!important;pointer-events:none!important}
+html[data-author-notice-pending] #author-notice-dialog{position:fixed;inset:14px;margin:auto;z-index:10000}
+#author-notice-dialog{width:min(760px,calc(100vw - 28px));max-width:none;max-height:calc(100vh - 28px);max-height:calc(100dvh - 28px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:0;border:1px solid #8b6254;border-radius:0;background:radial-gradient(ellipse at 50% 0,#69291c35,transparent 58%),linear-gradient(135deg,#1b1715,#0d0c0c);color:#e4dccf;box-shadow:inset 0 0 0 3px #402c2480,0 24px 90px #000d;overflow:hidden}
+#author-notice-dialog[open]{display:flex;flex-direction:column}
+#author-notice-dialog::backdrop{background:#050303e8;backdrop-filter:blur(5px)}
+#author-notice-dialog .author-notice-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:19px 26px;border-bottom:1px solid #795044;background:linear-gradient(110deg,#51221c,#251714 72%);flex-shrink:0}
+.author-notice-heading p{margin:0;color:#bd9282;font-size:11px;letter-spacing:.14em}
+.author-notice-heading h2{margin:5px 0 0;color:#f0e4d5;font-family:Georgia,"SimSun",serif;font-size:23px;letter-spacing:.04em}
+.author-notice-close{width:44px;height:44px;flex-shrink:0;border:1px solid #70574b;background:#14100fa8;color:#d6c7b8;font-size:25px;cursor:pointer}
+.author-notice-body{padding:25px 28px 22px;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#775343 #100e0d}
+.author-notice-warning{margin:0 0 12px;color:#ff675c;font-size:clamp(27px,5.3vw,43px);font-weight:800;letter-spacing:.025em;line-height:1.25;text-shadow:0 2px 0 #320c08,0 0 24px #d73c2729}
+.author-notice-statement{margin:0;color:#e9ad9e;font-size:clamp(16px,2.4vw,19px);font-weight:600;line-height:1.75}
+.author-notice-scope{margin:0 0 13px;color:#ff9385;font-size:18px;font-weight:700;line-height:1.5}
+.author-notice-limits{margin:15px 0 0;padding:12px 14px;border:1px solid #8b5545;background:#4b241d4d;color:#f0bcaa;font-size:14px;line-height:1.8}
+.author-notice-boundary{margin:12px 0 0;color:#b9ad9e;font-size:13px;line-height:1.7}
+.author-notice-feedback{margin:13px 0 0;padding:11px 14px;border-left:3px solid #ab4d3c;background:#47251d40;color:#e1c2af;font-size:13px;line-height:1.8}
+.author-identity{display:flex;align-items:center;gap:14px;margin:24px 0 16px;padding-top:19px;border-top:1px solid #584337}
+.author-identity img{width:64px;height:64px;flex-shrink:0;object-fit:cover;border:2px solid #af8760;border-radius:50%;box-shadow:0 3px 15px #0006}
+.author-identity strong{display:block;font-size:17px;color:#e2c99e}.author-identity p{margin:5px 0 0;font-size:12px;color:#b9aa96;line-height:1.6}
+.author-profiles{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.author-profile{display:grid;justify-items:center;gap:7px;padding:17px 12px 12px;border:1px solid #584638;background:#171411;min-width:0}
+.author-platform{font-size:12px;letter-spacing:.08em;color:#af9a80}.author-profile h3{margin:0;text-align:center;font-size:15px;color:#ead9bc;font-weight:600;line-height:1.5}
+.author-qr-link{display:block;padding:7px;background:#fff;line-height:0;margin:5px 0}.author-qr-link img{width:132px;height:132px;display:block;image-rendering:pixelated}
+.author-profile small{color:#b1a493;font-size:11px}.author-profile-link{min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:7px 13px;color:#e4c399;text-decoration:none;border-bottom:1px solid #8f67464d;font-size:13px}
+.author-profile-link:hover{color:#fff0d5;border-color:#b48e66}
+#author-notice-dialog .author-notice-footer{display:flex;flex-direction:column;align-items:center;gap:9px;flex-shrink:0;margin:0;padding:16px 24px max(16px,env(safe-area-inset-bottom,0px));border-top:1px solid #654337;background:#1e1712}
+.author-notice-footer button{min-height:48px;width:min(360px,100%);padding:10px 20px;border:1px solid #af6e56;background:linear-gradient(#73342b,#4b201b);color:#f7e5d1;font-size:16px;font-weight:600;cursor:pointer;box-shadow:inset 0 0 0 2px #a35d3c22}
+.author-notice-footer button:hover{background:linear-gradient(#8c4135,#612820)}.author-notice-footer small{font-size:11px;line-height:1.5;text-align:center;color:#b1a08b}
+.author-notice-reload{min-height:36px;display:inline-flex;align-items:center;padding:4px 7px;color:#d7b69c;font-size:12px;line-height:1.5;text-align:center;text-decoration:underline;text-underline-offset:3px}
+#author-notice-dialog button:focus-visible,#author-notice-dialog a:focus-visible{outline:2px solid #ebc198;outline-offset:3px}
+#author-notice-dialog.author-notice-fallback{position:fixed;inset:14px;margin:auto;z-index:10000;box-shadow:0 0 0 100vmax #050303ef}
+.startup-free-notice{display:flex;flex-wrap:wrap;align-items:center;gap:5px 12px;margin:14px 0 0;padding:10px 13px;border:1px solid #794539;background:#4b231c45;color:#f19682;font-size:14px;line-height:1.6}
+.startup-free-notice strong{font-size:16px;font-weight:700}.startup-free-notice span{font-size:12px;color:#d7ae9d}
+@media(max-width:420px){#author-notice-dialog .author-notice-heading{padding:15px 16px}.author-notice-heading h2{font-size:20px}.author-notice-body{padding:20px 17px}.author-notice-warning{font-size:28px}.author-notice-statement{font-size:16px}.author-profiles{gap:9px}.author-profile{padding:13px 7px 8px}.author-profile h3{font-size:13px}.author-qr-link{padding:4px}.author-qr-link img{width:108px;height:108px}.author-profile-link{font-size:12px;padding:6px 3px}.author-identity strong{font-size:15px}#author-notice-dialog .author-notice-footer{padding:12px 16px}.author-notice-footer button{min-height:46px}}
+@media(max-height:480px) and (orientation:landscape){#author-notice-dialog .author-notice-heading{padding:10px 22px}.author-notice-heading h2{font-size:20px}.author-notice-heading p{display:none}.author-notice-body{padding:18px 24px}.author-notice-warning{font-size:30px}#author-notice-dialog .author-notice-footer{padding:9px 20px}.author-notice-footer small{display:none}.author-notice-footer button{min-height:44px}}
