@@ -4,37 +4,136 @@ const $=id=>document.getElementById(id);
 const OPEN_AT=Date.parse("2026-10-16T10:00:00+08:00");
 const ROUND_END=Date.parse("2026-10-14T20:00:00+08:00");
 const KEY="torchlight-council-preview-choice-v1";
-const heroRows=[
-["yuga3","尤加","最终之人","时空3","终","#aaa4cf",128],
-["bin2","宾","创想鬼才","宾2","创","#d4b68c",127],
-["selena2","赛琳娜","与深海共舞","人鱼2","汐","#82b9c8",126],
-["carino2","卡里诺","至暗掠影","枪2","影","#c78d9e",125],
-["erika2","艾瑞卡","电光猫影","猫2","猫","#b8cd85",124],
-["gemma1","吉玛","冰结之心","冰1","冰","#8cbbdc",123],
-["raine1","雷恩","怒火","狂1","怒","#cb9d87",78],
-["raine2","雷恩","怒影","狂2","狂","#b98e7c",74],
-["carino1","卡里诺","荣光游侠","枪1","枪","#b3a98f",71],
-["carino3","卡里诺","战火狂徒","枪3","火","#d1a486",69],
-["erika1","艾瑞卡","疾风追猎","猫1","风","#94b9aa",65],
-["erika3","艾瑞卡","寻仇之刺","猫3","刺","#a0acba",63],
-["bin1","宾","爆破新星","宾1","爆","#ccb08b",58],
-["gemma2","吉玛","冰火融合","冰2","融","#c1a8ca",55],
-["gemma3","吉玛","欢愉之焰","吉玛3","焰","#b9a18a",54],
-["thea1","希雅","众神之伟智","希雅1","神","#b2adcb",50],
-["thea2","希雅","众神之化身","希雅2","化","#c0a2bd",49],
-["thea3","希雅","渎神","希雅3","渎","#a8b9be",45],
-["yuga1","尤加","时空幻象","时空1","时","#959ec8",44],
-["yuga2","尤加","时空流逝","时空2","空","#a7b1ce",42],
-["moto1","莫托","号令征召","莫托1","令","#b3b99c",39],
-["moto2","莫托","冲锋征召","莫托2","冲","#b6a98a",37],
-["moto3","莫托","圣庭战车","莫托3","庭","#abb5a3",35],
-["rosa1","罗莎","无垢之刃","罗莎","刃","#beafb0",32],
-["iris1","伊瑞斯","生长的微风","魔灵1","灵","#9bb6a2",30],
-["iris2","伊瑞斯","守望的暖风","魔灵2","守","#b3c49e",28],
-["selena1","赛琳娜","与海潮同歌","人鱼1","歌","#90b9c7",26],
-["sechi1","赛琪","甘草前调","药娘","药","#b1be92",25]];
-const heroes=heroRows.map(r=>({id:r[0],name:r[1],trait:r[2],alias:r[3],mark:r[4],color:r[5],base:r[6]}));
-const heroIds=new Map(heroes.map(h=>[h.id,h]));
+const AVATAR_MANIFEST_URL="/assets/torchlight-mentor-avatars/manifest.json";
+const VERSION_TRAIT_NOTE="当前官方英雄模块参考，不代表已确认 SS14 新版角色立绘";
+const HERO_ALIASES={
+  youga_1:"时空1",youga_2:"时空2",youga_3:"时空3",
+  bing_1:"宾1",bing_2:"宾2",selena_1:"人鱼1",selena_2:"人鱼2",
+  carino_1:"枪1",carino_2:"枪2",carino_3:"枪3",
+  erika_1:"猫1",erika_2:"猫2",erika_3:"猫3",
+  gemma_1:"吉玛1",gemma_2:"冰2",gemma_4:"吉玛4",
+  rehan_1:"狂1",rehan_2:"狂2",iris_1:"魔灵1",iris_2:"魔灵2",
+  rosa_1:"罗莎1",rosa_2:"罗莎2",thea_1:"希雅1",thea_2:"希雅2",thea_3:"希雅3",
+  moto_1:"莫托1",moto_2:"莫托2",sage_1:"药娘"
+};
+const DEMO_VOTES={
+  youga_3:218,bing_2:215,selena_2:211,carino_2:207,
+  erika_2:205,gemma_2:201,iris_2:154,rehan_2:148,
+  carino_1:137,carino_3:133,erika_1:129,erika_3:122,
+  bing_1:116,gemma_1:112,gemma_4:108,thea_1:104,
+  thea_2:100,thea_3:96,youga_1:93,youga_2:88,
+  moto_1:84,moto_2:80,rosa_1:77,rosa_2:74,
+  iris_1:70,selena_1:67,rehan_1:63,sage_1:60
+};
+const LEGACY_IDS={
+  yuga3:"youga_3",yuga1:"youga_1",yuga2:"youga_2",
+  bin2:"bing_2",bin1:"bing_1",selena2:"selena_2",selena1:"selena_1",
+  carino2:"carino_2",carino1:"carino_1",carino3:"carino_3",
+  erika2:"erika_2",erika1:"erika_1",erika3:"erika_3",
+  gemma1:"gemma_2",gemma2:"gemma_1",gemma3:"gemma_4",
+  raine1:"rehan_1",raine2:"rehan_2",thea1:"thea_1",thea2:"thea_2",thea3:"thea_3",
+  moto1:"moto_1",moto2:"moto_2",moto3:"rosa_1",rosa1:"rosa_2",
+  iris1:"iris_1",iris2:"iris_2",sechi1:"sage_1"
+};
+const heroes=[];
+const heroIds=new Map();
+let manifestLoaded=false;
+
+function assetImg(asset,alt,cssClass){
+  const img=document.createElement("img");
+  img.className=cssClass||"";
+  img.alt=alt;
+  img.loading="lazy";
+  img.decoding="async";
+  img.referrerPolicy="no-referrer";
+  // Use the manifest's own published site URL. Never borrow another trait's portrait.
+  img.src=asset.site_url;
+  return img;
+}
+function setHeroPortrait(host,hero){
+  host.classList.add("has-portrait");
+  const initial=document.createElement("span");
+  initial.className="portrait-initial";
+  initial.textContent=hero.mark;
+  const img=assetImg(hero.asset,name(hero)+" · 英雄特性头像","portrait-image");
+  img.addEventListener("load",()=>{initial.hidden=true;});
+  img.addEventListener("error",()=>{img.hidden=true;initial.hidden=false;host.classList.add("image-error");});
+  host.replaceChildren(initial,img);
+}
+function validPortraitAsset(a,type){
+  if(!a || a.type!==type || typeof a.id!=="string" || !a.id || typeof a.site_url!=="string" || typeof a.repository_path!=="string")return false;
+  try{
+    const u=new URL(a.site_url);
+    if(u.protocol!=="https:"||u.hostname!=="torchlightskill.com")return false;
+    if(u.pathname!=="/"+a.repository_path)return false;
+  }catch(error){return false;}
+  if(type==="hero")return a.trait===a.id && typeof a.trait_name==="string" && !!a.trait_name.trim() && !!a.source_url && !!a.source_snapshot_date && !!a.source_freshness;
+  return ["mia","shiyu","reina"].includes(a.id);
+}
+function addPortraitSources(manifest,entries){
+  const ul=$("avatar-source-list");
+  const fragment=document.createDocumentFragment();
+  entries.forEach(a=>{
+    const li=document.createElement("li");
+    const strong=document.createElement("strong");
+    strong.textContent=a.type==="hero"?a.name+" · "+a.trait_name+" ("+a.id+")":a.name+" · 导师 ("+a.id+")";
+    li.append(strong,document.createTextNode("　"));
+    if(a.source_url){
+      const link=document.createElement("a");
+      link.href=a.source_url;link.target="_blank";link.rel="noopener noreferrer";link.textContent="原始图片 ↗";
+      li.append(link,document.createTextNode("　"));
+    }
+    const details=document.createElement("span");
+    details.textContent=a.type==="hero"
+      ?(a.source_snapshot_date+" · "+a.source_freshness+(a.covered_face?" · 遮面角色":""))
+      :(a.source||"来源待确认");
+    li.append(details);
+    fragment.append(li);
+  });
+  ul.replaceChildren(fragment);
+  $("avatar-source-status").textContent="清单 v"+manifest.schema_version+" · 发布 "+manifest.published_date+" · 28 个特性头像与 3 位导师的来源详见下方；SS14 最新立绘未作权威核验。";
+}
+function hydrateMentors(entries){
+  ["mia","shiyu","reina"].forEach(id=>{
+    const a=entries.find(asset=>asset.type==="mentor"&&asset.id===id);
+    const img=document.querySelector('[data-mentor-image="'+id+'"]');
+    const holder=img?.closest(".mentor-art");
+    if(!a||!img||!holder) return;
+    const placeholder=holder.querySelector(".portrait-placeholder");
+    img.src=a.site_url;
+    img.hidden=false;
+    img.addEventListener("load",()=>{if(placeholder)placeholder.hidden=true;});
+    img.addEventListener("error",()=>{img.hidden=true;if(placeholder)placeholder.hidden=false;});
+  });
+}
+async function loadAvatarManifest(){
+  const response=await fetch(AVATAR_MANIFEST_URL,{cache:"no-cache"});
+  if(!response.ok)throw new Error("头像清单 HTTP "+response.status);
+  const m=await response.json();
+  if(m.schema_version!==1||!Array.isArray(m.assets))throw new Error("头像清单格式不兼容");
+  const filtered=m.assets.filter(a=>a.type==="hero"||a.type==="mentor");
+  const ids=new Set();
+  for(const a of filtered){
+    if(!validPortraitAsset(a,a.type))throw new Error("头像条目缺少来源、类型或特性字段："+String(a.id));
+    const key=a.type+":"+a.id;
+    if(ids.has(key))throw new Error("头像清单含重复 id："+key);
+    ids.add(key);
+  }
+  const heroAssets=filtered.filter(a=>a.type==="hero");
+  const mentorAssets=filtered.filter(a=>a.type==="mentor");
+  if(!heroAssets.length || !["mia","shiyu","reina"].every(id=>mentorAssets.some(a=>a.id===id)))throw new Error("头像清单缺少英雄或导师条目");
+  const built=heroAssets.map((a,i)=>({
+    id:a.id,name:a.name,trait:a.trait_name,alias:HERO_ALIASES[a.id]||a.name,
+    mark:(a.trait_name||a.name).charAt(0),
+    color:["#ffb9cc","#a5dcff","#ffd84d","#b8e3a4","#ffcda0","#cebcff"][i%6],
+    base:DEMO_VOTES[a.id]??Math.max(15,58-i),asset:a
+  }));
+  heroes.splice(0,heroes.length,...built);
+  heroIds.clear();heroes.forEach(h=>heroIds.set(h.id,h));
+  hydrateMentors(mentorAssets);
+  addPortraitSources(m,filtered);
+  manifestLoaded=true;
+}
 const topics=[
 {id:"maze",host:"maze-options",summary:"maze-summary",deadline:0,options:[["agree","调整合理",67],["disagree","砍过头了",66]]},
 {id:"roundtable",host:"roundtable-options",summary:"roundtable-summary",deadline:ROUND_END,options:[["drops","开荒掉落与收益",47],["balance","英雄与技能平衡",45],["pets","契灵与氪金体验",44],["season","赛季玩法节奏",43]]}
@@ -53,7 +152,8 @@ const topicVotes=(t,o)=>o[2]+(choices[t.id]===o[0]?1:0);
 const fmt=n=>new Intl.NumberFormat("zh-CN").format(n);
 function read(){
   try{const saved=JSON.parse(localStorage.getItem(KEY)||"{}");
-    if(heroIds.has(saved.hero))choices.hero=saved.hero;
+    const savedId=LEGACY_IDS[saved.hero]||saved.hero;
+    if(heroIds.has(savedId))choices.hero=savedId;
     for(const t of topics)if(t.options.some(o=>o[0]===saved[t.id]))choices[t.id]=saved[t.id];
   }catch(e){}
 }
@@ -73,7 +173,7 @@ function notice(text){
 function makeNode(h){
   const btn=document.createElement("button");btn.type="button";btn.className="contender";btn.dataset.hero=h.id;btn.style.setProperty("--hero-color",h.color);
   btn.innerHTML='<span class="contender-rank"></span><span class="contender-top"><span class="contender-votes"></span><span class="contender-avatar"></span></span><span class="contender-bar"></span><span class="contender-ground"><span class="contender-name"></span><span class="contender-trait"></span><span class="contender-cta"></span></span>';
-  btn.querySelector(".contender-avatar").textContent=h.mark;
+  setHeroPortrait(btn.querySelector(".contender-avatar"),h);
   btn.querySelector(".contender-name").textContent=h.name;
   btn.querySelector(".contender-trait").textContent=h.trait;
   btn.addEventListener("click",()=>voteHero(h.id,false));
@@ -106,7 +206,8 @@ function chart(){
   $("demo-vote-total").textContent=fmt(heroes.reduce((s,h)=>s+heroVotes(h),0));
   const mine=heroIds.get(choices.hero),camp=$("my-camp");
   if(!mine){
-    const from=heroIds.get(new URLSearchParams(location.search).get("hero"));
+    const linkedId=new URLSearchParams(location.search).get("hero");
+    const from=heroIds.get(LEGACY_IDS[linkedId]||linkedId);
     camp.textContent=from?"好友邀请你关注「"+name(from)+"」阵营":"尚未站队 · 点击英雄加入阵营";return;
   }
   const i=ranked.findIndex(h=>h.id===mine.id);
@@ -132,7 +233,7 @@ function picker(){
   const fragment=document.createDocumentFragment();
   found.forEach(h=>{
     const btn=document.createElement("button");btn.type="button";btn.className="hero-choice";btn.classList.toggle("is-selected",choices.hero===h.id);btn.style.setProperty("--hero-color",h.color);
-    const ava=document.createElement("span");ava.className="hero-choice-avatar";ava.textContent=h.mark;
+    const ava=document.createElement("span");ava.className="hero-choice-avatar";setHeroPortrait(ava,h);
     const copy=document.createElement("span");copy.className="hero-choice-body";
     const title=document.createElement("strong");title.textContent=name(h);
     const alias=document.createElement("span");alias.textContent=h.alias;copy.append(title,alias);
@@ -179,7 +280,7 @@ function countdown(){
 }
 function showDialog(d){if(!d.open){if(typeof d.showModal==="function")d.showModal();else d.setAttribute("open","");}document.body.classList.add("dialog-active");}
 function closeDialog(d){if(d.id==="lottery-dialog")cancelSpin();if(d.open){if(typeof d.close==="function")d.close();else d.removeAttribute("open");}if(!document.querySelector(".tc-dialog[open]"))document.body.classList.remove("dialog-active");}
-function openPicker(){$("hero-search").value="";picker();showDialog($("hero-dialog"));setTimeout(()=>$("hero-search").focus(),50);}
+function openPicker(){if(!manifestLoaded){notice("英雄清单尚未加载");return;}$("hero-search").value="";picker();showDialog($("hero-dialog"));setTimeout(()=>$("hero-search").focus(),50);}
 function slotRows(a,b,c){$("slot-prev").textContent=a;$("slot-current").textContent=b;$("slot-next").textContent=c;}
 function cancelSpin(){clearTimeout(spinTimer);spinTimer=null;spinning=false;$("lottery-spin").disabled=closedHero();}
 function settle(h){
@@ -194,7 +295,7 @@ function settle(h){
   $("lottery-share").disabled=false;$("spin-label").textContent="再抽一次";
 }
 function spin(){
-  if(spinning||closedHero())return;
+  if(spinning||closedHero()||!heroes.length)return;
   let h;try{h=heroes[random(heroes.length)];}catch(err){notice(err.message);return;}
   draw=null;spinning=true;$("lottery-spin").disabled=true;$("lottery-accept").disabled=true;$("lottery-share").disabled=true;
   $("lottery-result-label").textContent="命运旋转中…";$("lottery-result-name").textContent="???";$("lottery-result-sub").textContent="所有特性等概率抽取";$("lottery-announce").textContent="";
@@ -209,6 +310,7 @@ function spin(){
   };tick();
 }
 function openSlot(){
+  if(!manifestLoaded){notice("英雄清单尚未加载");return;}
   cancelSpin();draw=null;slotRows("—","✳  点击开始抽签","—");
   $("lottery-result-label").textContent="SS14 · 全部可选英雄特性等概率随机";
   $("lottery-result-name").textContent="命运尚未揭晓";
@@ -217,7 +319,7 @@ function openSlot(){
   $("lottery-spin").disabled=closedHero();showDialog($("lottery-dialog"));
 }
 function simulate(){
-  if(closedHero()){notice("本期战况已封榜");return;}
+  if(closedHero()||!heroes.length){notice("本期尚不能参与演示追赶");return;}
   const list=rank().slice(0,6);let h;
   try{h=list[1+random(list.length-1)];}catch(e){h=list[1];}
   const bonus=2+Math.floor(Math.random()*3);fake[h.id]=(fake[h.id]||0)+bonus;
@@ -241,10 +343,19 @@ async function copyShare(){
   catch(e){input.focus();input.select();$("share-tip").textContent="复制未成功。链接已选中，请使用系统复制。";}
 }
 function init(){
-  read();chart();topics.forEach(renderTopic);countdown();
+  topics.forEach(renderTopic);countdown();
+  ["pick-hero","open-lottery","simulate-btn"].forEach(id=>{$(id).disabled=true;});
+  loadAvatarManifest().then(()=>{
+    read();chart();
+    ["pick-hero","open-lottery","simulate-btn"].forEach(id=>{$(id).disabled=closedHero();});
+  }).catch(error=>{
+    $("chart").textContent="头像或特性清单加载失败，请刷新重试。"+error.message;
+    $("avatar-source-status").textContent="清单暂时无法加载："+error.message+"。为避免错配头像，已经暂停英雄投票与抽签。";
+    $("hero-total").textContent="—";$("demo-vote-total").textContent="—";
+  });
   setInterval(countdown,1000);
   setInterval(()=>{
-    if(closedHero()&&$("chart").querySelector("button:not(:disabled)")){chart();if($("hero-dialog").open)picker();}
+    if(manifestLoaded&&closedHero()&&$("chart").querySelector("button:not(:disabled)")){chart();if($("hero-dialog").open)picker();}
     if(closedTopic(topics[1]))renderTopic(topics[1]);
   },15000);
   $("pick-hero").addEventListener("click",openPicker);
@@ -263,7 +374,7 @@ function init(){
     d.addEventListener("close",()=>{if(d.id==="lottery-dialog")cancelSpin();if(!document.querySelector(".tc-dialog[open]"))document.body.classList.remove("dialog-active");});
     d.addEventListener("cancel",()=>{if(d.id==="lottery-dialog")cancelSpin();});
   });
-  window.addEventListener("resize",()=>{const m=window.innerWidth<=700;if(m!==lastMobile){lastMobile=m;chart();}},{passive:true});
+  window.addEventListener("resize",()=>{const m=window.innerWidth<=700;if(m!==lastMobile){lastMobile=m;if(manifestLoaded)chart();}},{passive:true});
 }
 init();
 })();
