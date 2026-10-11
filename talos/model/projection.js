@@ -2,8 +2,12 @@ import * as THREE from '../vendor/three/three.module.js';
 
 /** Shared camera for the entire scene, including HTML interaction rectangles. */
 export function fitPrisonCamera(camera,width,height){
+  if(!Number.isFinite(width)||!Number.isFinite(height)||width<=0||height<=0)return;
+  // Narrow windows retain the full board width instead of cropping its two sides.
+  // WebGL and DOM hit targets continue to use this one camera.
+  camera.zoom=Math.min(1,(width/height)/(16/9));
   camera.aspect=width/height;camera.position.set(0,26,23);camera.up.set(0,1,0);camera.lookAt(0,-.2,0);
-  camera.setViewOffset(width,height,0,height*.13,width,height);
+  camera.setViewOffset(width,height,0,height*(width<height?.04:.13),width,height);
   camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
 }
 function project(point,camera,width,height){point.project(camera);return {x:(point.x+1)*width/2,y:(1-point.y)*height/2};}

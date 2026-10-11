@@ -1,0 +1,405 @@
+/* Player-facing modal shell. The board and its gameplay controls are deliberately scoped out. */
+dialog.arpg-dialog {
+  --modal-ink: #dad3c5;
+  --modal-muted: #aea69a;
+  --modal-faint: #89837b;
+  --modal-line: #615b51;
+  --modal-edge: #898071;
+  --modal-red: #762e2b;
+  --modal-serif: "Songti SC", "STSong", "SimSun", Georgia, serif;
+  --modal-padding: 24px;
+  --modal-width: 560px;
+  width: min(var(--modal-width), calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 40px);
+  margin: auto;
+  padding: var(--modal-padding);
+  border: 1px solid var(--modal-edge);
+  border-radius: 0;
+  color: var(--modal-ink);
+  background:
+    linear-gradient(125deg, #242220e8, #141414f5 45%, #101010fa),
+    repeating-linear-gradient(17deg, #ffffff04 0 1px, transparent 1px 4px),
+    url("assets/prison-stone-v2.png") center / cover;
+  box-shadow: inset 0 0 0 3px #101110, inset 0 0 0 4px #504c43, inset 0 0 38px #0004, 0 28px 90px #000d;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #6c6255 #131313;
+  scroll-padding-block: 90px 64px;
+  font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.75;
+  color-scheme: dark;
+}
+dialog.arpg-dialog::backdrop { background: #050505dc; backdrop-filter: blur(5px); }
+dialog.arpg-dialog [hidden] { display: none !important; }
+dialog.arpg-dialog :is(button, a, input, select, textarea, summary):focus-visible {
+  outline: 2px solid #e0d3bd;
+  outline-offset: 3px;
+}
+dialog.arpg-dialog :is(button, a.button) { min-height: 44px; }
+dialog.arpg-dialog :is(p, ul, ol) { overflow-wrap: anywhere; }
+
+/* The narrow red title strip and muted metal edges take precedence over decoration. */
+dialog.arpg-dialog .dialog-heading,
+dialog.arpg-dialog .audio-settings-header {
+  position: sticky;
+  top: calc(-1 * var(--modal-padding));
+  z-index: 3;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: calc(-1 * var(--modal-padding)) calc(-1 * var(--modal-padding)) 22px;
+  padding: 18px var(--modal-padding) 16px;
+  border-bottom: 1px solid #847463;
+  background:
+    linear-gradient(180deg, #b75f3520, transparent 24%, #00000034 87%),
+    repeating-linear-gradient(23deg, #e9b78506 0 1px, transparent 1px 4px),
+    linear-gradient(90deg, #401b1bed, #291c1bf0 62%, #191716f7),
+    url("assets/prison-stone-v2.png") center / cover;
+  box-shadow: inset 0 3px #101110, inset 0 4px #73513e, inset 0 5px #a05d3524, 0 3px 12px #0005;
+  text-align: left;
+}
+dialog.arpg-dialog .dialog-heading h2,
+dialog.arpg-dialog .audio-settings-header h2 {
+  margin: 0;
+  color: #e4dacc;
+  font-family: var(--modal-serif);
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  line-height: 1.35;
+  text-shadow: 0 2px 3px #000;
+}
+dialog.arpg-dialog .dialog-kicker {
+  display: block;
+  margin-bottom: 5px;
+  color: #b7a18b;
+  font-size: 10px;
+  line-height: 1.4;
+  letter-spacing: .18em;
+}
+dialog.arpg-dialog :is(.close, .audio-settings-close) {
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 !important;
+  border: 1px solid #77685a66 !important;
+  border-radius: 0;
+  background: #100f0f80 !important;
+  color: #bdb4a7;
+  font-family: Georgia, serif;
+  font-size: 29px !important;
+  font-weight: 400;
+  line-height: 1 !important;
+}
+dialog.arpg-dialog :is(.close, .audio-settings-close):hover { color: #f3e7d4; border-color: #a39480 !important; background: #302624 !important; }
+
+/* Direct body wrappers let the title and footer remain visible on short screens. */
+dialog.arpg-dialog:has(> .modal-body) { padding: 0; overflow: hidden; }
+dialog.arpg-dialog:has(> .modal-body)[open] { display: flex; flex-direction: column; }
+dialog.arpg-dialog:has(> .modal-body) > .dialog-heading { position: relative; top: auto; margin: 0; }
+dialog.arpg-dialog > .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 22px var(--modal-padding) 24px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #6c6255 #131313;
+  scroll-padding-block: 12px;
+}
+dialog.arpg-dialog .modal-footer {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 22px calc(-1 * var(--modal-padding)) calc(-1 * var(--modal-padding));
+  padding: 14px var(--modal-padding);
+  border-top: 1px solid #5c5248;
+  background: linear-gradient(#22201de8, #151414fa);
+  box-shadow: inset 0 1px #a5977720;
+}
+dialog.arpg-dialog:has(> .modal-body) > .modal-footer { margin: 0; }
+dialog.arpg-dialog .modal-footer .hint { flex: 1; margin: 0; }
+dialog.arpg-dialog .modal-footer .button { min-width: 118px; }
+dialog.arpg-dialog :is(.hint, .new-mode-help, .inspect-text) { color: var(--modal-muted); font-size: 13px; line-height: 1.8; }
+dialog.arpg-dialog .hint { margin-top: 10px; }
+dialog.arpg-dialog :is(h3, h4) { color: #d8c9b2; font-family: var(--modal-serif); font-weight: 600; letter-spacing: .04em; }
+dialog.arpg-dialog h3 { margin: 0 0 10px; font-size: 18px; line-height: 1.5; }
+dialog.arpg-dialog h4 { margin: 0 0 8px; font-size: 15px; }
+dialog.arpg-dialog label { margin-bottom: 16px; color: #c4bbad; font-size: 13px; line-height: 1.7; }
+dialog.arpg-dialog label small { color: var(--modal-muted); font-size: 12px; }
+
+dialog.arpg-dialog .button,
+dialog.arpg-dialog .audio-option button,
+dialog.arpg-dialog #audio-music-refresh {
+  padding: 10px 16px;
+  border: 1px solid #7b6e5d;
+  border-radius: 0;
+  background: linear-gradient(#302d28, #1a1918);
+  color: #d3c6b3;
+  box-shadow: inset 0 0 0 2px #161615, inset 0 0 0 3px #8a796c27, 0 2px 4px #0004;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  transition: border-color .15s, background-color .15s, color .15s;
+}
+dialog.arpg-dialog .button:hover:not(:disabled),
+dialog.arpg-dialog .audio-option button:hover:not(:disabled),
+dialog.arpg-dialog #audio-music-refresh:hover:not(:disabled) { color: #f0e1cb; border-color: #b7a289; background: linear-gradient(#443b31, #24211e); }
+dialog.arpg-dialog .button.gold {
+  border-color: #ae7765;
+  color: #ead7c1;
+  background: linear-gradient(#78362f, #391d1c);
+  box-shadow: inset 0 0 0 2px #291818, inset 0 0 0 3px #ba866146, 0 3px 8px #0005;
+  font-weight: 600;
+}
+dialog.arpg-dialog .button.gold:hover:not(:disabled) { border-color: #d3a58a; background: linear-gradient(#96493d, #502524); color: #fff0d7; }
+dialog.arpg-dialog .button:disabled { opacity: .5; color: #9a9287; cursor: not-allowed; }
+dialog.arpg-dialog :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #6d6152;
+  border-radius: 0;
+  background: linear-gradient(#101010, #1a1917);
+  color: #e0d4c1;
+  box-shadow: inset 0 2px 5px #0006;
+  font-size: 14px;
+}
+dialog.arpg-dialog textarea { font-family: Consolas, monospace; font-size: 12px; line-height: 1.75; }
+dialog.arpg-dialog :is(input[type=checkbox], input[type=radio]) { accent-color: #a95c4d; width: 17px; height: 17px; flex: 0 0 17px; margin: 0; }
+dialog.arpg-dialog input[type=range] { accent-color: #b37860; }
+dialog.arpg-dialog .check { min-height: 52px; gap: 12px; }
+dialog.arpg-dialog .settings-switches { display: grid; gap: 0; }
+dialog.arpg-dialog .settings-switches .check { margin: 0; padding: 15px 12px; border-bottom: 1px solid #61564a66; background: linear-gradient(90deg, #3c332724, transparent); }
+dialog.arpg-dialog .settings-switches .check:last-child { border-bottom: 0; }
+
+#menu-dialog.arpg-dialog { --modal-width: 660px; }
+#manual-dialog.arpg-dialog { --modal-width: 880px; }
+#run-dialog.arpg-dialog { --modal-width: 750px; }
+#changelog-dialog.arpg-dialog { --modal-width: 720px; }
+#settings-dialog.arpg-dialog { --modal-width: 580px; }
+#calibration-dialog.arpg-dialog { --modal-width: 660px; }
+#editor-dialog.arpg-dialog { --modal-width: 610px; }
+#rules-dialog.arpg-dialog { --modal-width: 860px; max-height: calc(100dvh - 40px); }
+#new-dialog.arpg-dialog { --modal-width: 690px; }
+#audio-dialog.arpg-dialog { --modal-width: 510px; }
+#delivery-dialog.arpg-dialog { --modal-width: 720px; }
+#export-dialog.arpg-dialog { --modal-width: 680px; }
+#result-dialog.arpg-dialog { --modal-width: 690px; }
+
+.arpg-dialog .menu-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.arpg-dialog .menu-entry {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-height: 90px;
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid #655e53;
+  border-radius: 0;
+  background: linear-gradient(100deg, #38322959, #181818ed);
+  box-shadow: inset 0 0 0 2px #151515, inset 0 0 0 3px #6d635c25;
+  color: #d4cbbb;
+  text-align: left;
+  transition: border-color .15s, background-color .15s;
+}
+.arpg-dialog .menu-entry:hover { border-color: #b09778; background: linear-gradient(100deg, #57422f70, #251e1ced); }
+.arpg-dialog .menu-glyph { display: grid; place-items: center; flex: 0 0 40px; width: 40px; color: #b9a485; font-family: Georgia, serif; font-size: 27px; line-height: 1; }
+.arpg-dialog .menu-glyph svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.arpg-dialog .menu-entry:disabled { opacity: .4; cursor: not-allowed; }
+.arpg-dialog .menu-entry-copy { min-width: 0; }
+.arpg-dialog .menu-entry-copy strong { display: block; font-family: var(--modal-serif); font-size: 19px; font-weight: 600; line-height: 1.4; letter-spacing: .04em; }
+.arpg-dialog .menu-entry-copy small { display: block; margin-top: 5px; color: #a99f91; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; font-size: 12px; line-height: 1.6; }
+.arpg-dialog .menu-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid #64574b70; display: flex; flex-wrap: wrap; gap: 8px; }
+.arpg-dialog .menu-footer .button { flex: 0 0 auto; min-width: 126px; margin-left: auto; }
+.arpg-dialog .menu-footer .button:first-child { min-width: 0; margin-left: 0; padding-inline: 2px; border-color: transparent; background: transparent; box-shadow: none; color: #a4937e; font-size: 12px; }
+.arpg-dialog .menu-footer .button:first-child:hover { color: #d3bea0; border-color: transparent; background: transparent; text-decoration: underline; text-underline-offset: 5px; }
+.arpg-dialog .calibration-list { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.arpg-dialog .calibration-list .menu-entry { min-height: 84px; }
+
+/* Secondary information stays separate from the startup page's start/continue actions. */
+.startup-info-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #6e5b4359; }
+.startup-info-nav button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 7px 0; border: 0; border-bottom: 1px solid transparent; border-radius: 0; background: transparent; color: #bda888; font-size: 13px; line-height: 1.5; letter-spacing: .02em; }
+.startup-info-nav button:hover { color: #e5cfaa; border-bottom-color: #8c7251; }
+.startup-info-nav button:focus-visible { outline: 2px solid #deccaa; outline-offset: 3px; }
+.startup-info-nav .startup-info-version { margin-left: auto; color: #8d8170; font-size: 11px; letter-spacing: .04em; }
+
+.arpg-dialog .manual-tabs { display: flex; flex-wrap: wrap; gap: 0; margin: -3px 0 23px; padding: 0; border-bottom: 1px solid #756452; background: #100f0f7a; }
+.arpg-dialog .manual-tabs [role=tab] { flex: 1; min-width: 90px; padding: 11px 15px; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: transparent; color: #a79c8d; font-family: var(--modal-serif); font-size: 16px; line-height: 1.5; letter-spacing: .04em; }
+.arpg-dialog .manual-tabs [role=tab]:hover { color: #e1d3bd; background: #35251f66; }
+.arpg-dialog .manual-tabs [role=tab][aria-selected=true] { border-bottom-color: #b16752; background: linear-gradient(#53302966, #251c1b88); color: #ead8c0; text-shadow: 0 1px #000; }
+.arpg-dialog .manual-section { min-height: 240px; color: #c6bcad; }
+.arpg-dialog .manual-section > p { margin: 0 0 16px; line-height: 1.85; }
+.arpg-dialog .manual-section > :last-child { margin-bottom: 0; }
+.arpg-dialog .manual-flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 0; margin: 22px 0; list-style: none; counter-reset: manual-step; }
+.arpg-dialog .manual-flow > * { position: relative; padding: 16px 0 15px; border-block: 1px solid #6b5d494f; line-height: 1.75; font-size: 13px; counter-increment: manual-step; }
+.arpg-dialog .manual-flow strong { display: block; margin-bottom: 8px; color: #dbccb3; font-family: var(--modal-serif); font-size: 18px; font-weight: 600; }
+.arpg-dialog .manual-flow p { margin-top: 8px; color: #aaa092; }
+.arpg-dialog .manual-flow > li::before { content: "0" counter(manual-step); display: block; margin-bottom: 8px; color: #a17a5a; font-family: Georgia, serif; font-size: 12px; letter-spacing: .12em; }
+.arpg-dialog .manual-panel { margin: 20px 0; padding: 17px 20px; border: 1px solid #736454; border-left: 3px solid #97745c; background: linear-gradient(100deg, #44342747, #19171688); box-shadow: inset 0 0 0 2px #151414; color: #c5bba9; line-height: 1.85; }
+.arpg-dialog .manual-panel p + p { margin-top: 10px; }
+.arpg-dialog .manual-warning { margin: 16px 0; padding-left: 12px; border-left: 2px solid #9b5b4c; color: #c7a58d; font-size: 13px; line-height: 1.85; }
+.arpg-dialog .manual-warning:empty { display: none; }
+.arpg-dialog .rarity-path { padding-block: 12px; color: #d5bd98; font-family: var(--modal-serif); font-size: 16px; line-height: 1.8; }
+.arpg-dialog .food-chain-list { list-style: none; padding: 0; margin: 15px 0; border-block: 1px solid #74645170; }
+.arpg-dialog .food-chain-list > li { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; min-height: 52px; padding: 10px 14px; border-bottom: 1px solid #74645144; color: #bfb4a4; background: linear-gradient(90deg, #3a2d2135, transparent); }
+.arpg-dialog .food-chain-list > li:last-child { border-bottom: 0; }
+.arpg-dialog .food-chain-list strong { min-width: 68px; color: #dfcfb4; font-family: var(--modal-serif); font-size: 17px; }
+.arpg-dialog .food-chain-list small { color: #b18d79; font-size: 12px; }
+.arpg-dialog .manual-section :is(ul:not(.food-chain-list), ol:not(.manual-flow)) { padding-left: 20px; margin: 14px 0; }
+.arpg-dialog .manual-section :is(ul:not(.food-chain-list), ol:not(.manual-flow)) > li { margin: 8px 0; line-height: 1.85; }
+
+.arpg-dialog .modal-section { margin: 0 0 24px; padding: 0 0 22px; border-bottom: 1px solid #65574770; }
+.arpg-dialog .modal-section:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
+.arpg-dialog details.modal-section > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 10px 12px; border: 1px solid #665747; background: #2a241d5e; color: #cdb99c; cursor: pointer; list-style: none; font-size: 14px; }
+.arpg-dialog details.modal-section > summary::after { content: "+"; font-family: Georgia, serif; font-size: 20px; color: #a78f71; }
+.arpg-dialog details.modal-section[open] > summary::after { content: "−"; }
+.arpg-dialog .modal-section > p { color: var(--modal-muted); margin: 6px 0 15px; font-size: 13px; line-height: 1.8; }
+.arpg-dialog .management-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.arpg-dialog .management-actions .button { flex: 1; min-width: 130px; }
+.arpg-dialog :is(.inspect-portrait, .rarity-tag) { border-radius: 0; }
+.arpg-dialog .inspect-portrait { width: 132px; max-height: 126px; margin-bottom: 16px; border-width: 1px; box-shadow: inset 0 0 0 3px #151414; }
+.arpg-dialog .empty-inspect { min-height: 90px; align-items: flex-start; gap: 7px; font-size: 13px; }
+.arpg-dialog .empty-inspect .door-icon { display: none; }
+.arpg-dialog .inspect-name strong { color: #dbceba; font-family: var(--modal-serif); font-size: 22px; }
+.arpg-dialog .goal-meter { border-radius: 0; background: #38312b; }
+.arpg-dialog .goal-meter span { background: linear-gradient(90deg, #754b3e, #b4906b); }
+.arpg-dialog #log { max-height: 260px; overflow-y: auto; padding-right: 8px; scrollbar-width: thin; }
+.arpg-dialog #log li { padding: 10px 0; border-color: #6b5d494d; color: #c1b8aa; font-size: 12px; line-height: 1.8; }
+.arpg-dialog #log li time { color: #a18f79; font-size: 11px; }
+.arpg-dialog .release-entry { margin-bottom: 28px; padding: 0 0 26px; border-bottom: 1px solid #75634d66; }
+.arpg-dialog .release-entry:last-child { margin: 0; border: 0; padding-bottom: 0; }
+.arpg-dialog .release-version { display: inline-block; margin-right: 12px; color: #e1cfb2; font-family: Georgia, "SimSun", serif; font-size: 22px; line-height: 1.4; }
+.arpg-dialog .release-date { color: #a8967c; font-size: 12px; letter-spacing: .04em; }
+.arpg-dialog .release-entry ul { padding-left: 19px; margin: 14px 0 0; color: #c1b7a8; }
+.arpg-dialog .release-entry li { padding-left: 3px; margin: 9px 0; line-height: 1.85; font-size: 13px; }
+.arpg-dialog .release-entry li::marker { color: #a97e61; }
+.arpg-dialog .config-grid { column-gap: 22px; margin-top: 22px; }
+.arpg-dialog .config-grid .check { min-height: 44px; padding: 8px 0; }
+.arpg-dialog .assumption { grid-template-columns: 105px 1fr; gap: 16px; padding: 12px 0; border-color: #6b5d494d; font-size: 12px; }
+.arpg-dialog .assumption strong { color: #c4a787; }
+.arpg-dialog .assumption p { color: #a99e8c; }
+.arpg-dialog .build-choice { border-color: #64584a; background: #211e1b; border-radius: 0; padding: 14px; }
+.arpg-dialog .build-choice:has(input:checked) { border-color: #b57c64; background: linear-gradient(100deg, #572d2747, #211919); box-shadow: inset 3px 0 #ad6552; }
+.arpg-dialog .build-choice strong { color: #dfcbb1; font-family: var(--modal-serif); font-size: 16px; }
+.arpg-dialog .build-choice small { color: #aea18f; font-size: 12px; line-height: 1.7; }
+.arpg-dialog .challenge-origin { color: #ae9a83 !important; font-size: 12px !important; line-height: 1.8; }
+.arpg-dialog .new-dialog-actions { gap: 10px; border-top: 1px solid #64574770; padding-top: 18px; }
+.arpg-dialog .audio-option { min-height: 44px; margin: 15px 0; }
+.arpg-dialog .audio-volume { border-color: #6d5d4b70; margin-top: 20px; }
+.arpg-dialog :is(.audio-hint, .audio-status, .current-music) { color: #b09f89; font-size: 12px; line-height: 1.75; }
+.arpg-dialog .audio-sample-label { color: #bdb09b; }
+.arpg-dialog .cargo-choice { border-color: #64574a; background: #211e1b; padding: 12px 10px; }
+.arpg-dialog .cargo-choice:has(input:checked) { border-color: #b57c64; background: #4c2b254d; }
+.arpg-dialog .cargo-choice strong { color: #dcc7a9; font-size: 12px; }
+.arpg-dialog .cargo-choice small { color: #b1a38e; font-size: 11px; }
+.arpg-dialog .escort-options { border-color: #64574a; background: #1a1816; padding: 14px; }
+.arpg-dialog .escort-options label { font-size: 13px; line-height: 1.7; }
+.arpg-dialog .escort-options small { color: #b1a38e; font-size: 11px; }
+
+/* Preserve the illustrated reward/event layouts, while sharing the same metal and ink palette. */
+#reward-dialog.arpg-dialog { --modal-width: 1160px; padding: 24px 30px; }
+#reward-dialog.arpg-dialog .dialog-heading { top: -24px; margin: -24px -30px 22px; padding: 18px 30px; justify-content: center; text-align: center; }
+#reward-dialog.arpg-dialog .reward-choice { --frame-color: #6e685b; --frame-light: #918574; }
+#reward-dialog.arpg-dialog .reward-choice[aria-pressed=true] { --frame-color: #bd8068; --frame-light: #c29778; }
+#reward-dialog.arpg-dialog #confirm-reward { min-height: 48px; }
+#event-dialog.arpg-dialog { padding: 0; --modal-width: 960px; }
+#event-dialog.arpg-dialog #event-sheet { border: 0; box-shadow: none; background: linear-gradient(100deg, #23211bdd, #171515f5 65%); }
+#event-dialog.arpg-dialog .event-heading { color: #e1d2bc; border-color: #8b705655; }
+#event-dialog.arpg-dialog .event-description { color: #b0a18c; }
+#event-dialog.arpg-dialog .event-rule { border-color: #8a7460; background: linear-gradient(100deg, #4b382344, #1d1b18a8); color: #dad0bd; }
+#event-dialog.arpg-dialog .event-options .button { min-height: 44px; }
+#result-dialog.arpg-dialog .result-summary strong { color: #d7bc92; }
+#result-dialog.arpg-dialog .wave { border-color: #6b5d494d; font-size: 13px; }
+
+/* The share dialog has an independent controller, but uses the same visual shell. */
+#game-share-dialog.arpg-dialog { --modal-width: 760px; }
+#game-share-dialog.arpg-dialog h2 { color: #e0d3bf; font-family: var(--modal-serif); font-weight: 600; }
+#game-share-dialog.arpg-dialog .game-share-close { border-radius: 0; color: #c3b7a6; }
+#game-share-dialog.arpg-dialog :is(.game-share-formats button, .game-share-downloads a, .game-share-action) { border-radius: 0; border-color: #796953; box-shadow: inset 0 0 0 2px #131313, inset 0 0 0 3px #70614b33; }
+#game-share-dialog.arpg-dialog .game-share-formats button[aria-pressed=true] { border-color: #b78368; background: linear-gradient(#67352b, #291c19); color: #ead6b9; }
+#game-share-dialog.arpg-dialog .game-share-action { border-color: #ae7765; background: linear-gradient(#78362f, #391d1c); color: #ead7c1; }
+#game-share-dialog.arpg-dialog .game-share-system { background: linear-gradient(#302b25, #191817); }
+#game-share-dialog.arpg-dialog :is(.game-share-intro, .game-share-status, .game-share-link-label) { color: #b5a893; }
+
+@media (max-width: 620px) {
+  dialog.arpg-dialog { --modal-padding: 18px; }
+  dialog.arpg-dialog .dialog-heading, dialog.arpg-dialog .audio-settings-header { padding-block: 13px; gap: 10px; }
+  dialog.arpg-dialog .dialog-heading h2, dialog.arpg-dialog .audio-settings-header h2 { font-size: 22px; }
+  dialog.arpg-dialog > .modal-body { padding-block: 18px; }
+  .arpg-dialog .menu-grid { grid-template-columns: 1fr; gap: 8px; }
+  .arpg-dialog .menu-entry { min-height: 76px; padding: 12px 14px; }
+  .arpg-dialog .menu-entry-copy strong { font-size: 18px; }
+  .arpg-dialog .manual-flow { grid-template-columns: 1fr; gap: 0; }
+  .arpg-dialog .manual-flow > * { border-top: 0; padding: 14px 0; }
+  .arpg-dialog .manual-flow > *:first-child { border-top: 1px solid #6b5d494f; }
+  .arpg-dialog .manual-flow > li::before { display: inline; margin: 0 8px 0 0; }
+  .arpg-dialog .manual-flow strong { display: inline; }
+  .arpg-dialog .manual-tabs [role=tab] { font-size: 14px; padding-inline: 8px; min-width: 82px; }
+  .arpg-dialog .manual-panel { padding: 14px 16px; }
+  .arpg-dialog .manual-section { min-height: 0; }
+  .arpg-dialog .config-grid { grid-template-columns: 1fr; }
+  .arpg-dialog .assumption { grid-template-columns: 85px 1fr; gap: 12px; }
+  .arpg-dialog .food-chain-list > li { gap: 9px; padding-inline: 10px; }
+  .arpg-dialog .management-actions .button { min-width: 110px; }
+  .arpg-dialog .release-version { font-size: 20px; }
+  .arpg-dialog .modal-footer { padding-block: 10px; }
+}
+
+@media (max-width: 1100px) and (max-height: 500px), (pointer: coarse) and (max-width: 1100px) {
+  dialog.arpg-dialog { --modal-padding: 18px; max-height: calc(100dvh - 16px); max-width: calc(100vw - 16px); }
+  dialog.arpg-dialog .dialog-heading, dialog.arpg-dialog .audio-settings-header { padding-block: 7px; margin-bottom: 14px; }
+  dialog.arpg-dialog .dialog-heading h2, dialog.arpg-dialog .audio-settings-header h2 { font-size: 21px; letter-spacing: .05em; }
+  dialog.arpg-dialog .dialog-kicker { margin-bottom: 3px; font-size: 9px; }
+  dialog.arpg-dialog:has(> .modal-body) > .dialog-heading { margin-bottom: 0; }
+  dialog.arpg-dialog > .modal-body { padding-block: 14px; }
+  dialog.arpg-dialog .modal-footer { padding-block: 8px; gap: 8px; }
+  dialog.arpg-dialog .modal-footer .hint { font-size: 11px; }
+  dialog.arpg-dialog :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea) { font-size: 16px; }
+  .arpg-dialog .menu-entry { min-height: 75px; padding-block: 10px; }
+  .arpg-dialog .manual-tabs { margin-bottom: 14px; }
+  .arpg-dialog .manual-tabs [role=tab] { padding-block: 9px; }
+  .arpg-dialog .manual-section { min-height: 0; }
+  .arpg-dialog .manual-flow { margin-block: 14px; }
+  .arpg-dialog .manual-panel { margin-block: 14px; }
+  .arpg-dialog .modal-section { margin-bottom: 18px; padding-bottom: 17px; }
+}
+
+/* Native visualViewport measurements are supplied by the existing mobile module. */
+@media (max-width: 1100px) {
+  html.mobile-ui-active :is(#menu-dialog, #manual-dialog, #run-dialog, #changelog-dialog, #settings-dialog, #calibration-dialog, #editor-dialog, #rules-dialog, #new-dialog, #audio-dialog, #export-dialog, #result-dialog, #delivery-dialog).arpg-dialog {
+    position: fixed;
+    top: calc(var(--mobile-visible-top, 0px) + max(8px, var(--mobile-safe-top, env(safe-area-inset-top))));
+    bottom: auto;
+    width: min(var(--modal-width), calc(100vw - max(8px, var(--mobile-safe-left, env(safe-area-inset-left))) - max(8px, var(--mobile-safe-right, env(safe-area-inset-right)))));
+    max-width: calc(100vw - max(8px, var(--mobile-safe-left, env(safe-area-inset-left))) - max(8px, var(--mobile-safe-right, env(safe-area-inset-right))));
+    max-height: calc(var(--mobile-visible-height, 100dvh) - max(8px, var(--mobile-safe-top, env(safe-area-inset-top))) - max(8px, var(--mobile-safe-bottom, env(safe-area-inset-bottom))));
+    margin: 0 auto;
+    padding: var(--modal-padding);
+    overflow-y: auto;
+  }
+  html.mobile-ui-active :is(#menu-dialog, #manual-dialog, #run-dialog, #changelog-dialog, #settings-dialog, #calibration-dialog, #editor-dialog, #rules-dialog).arpg-dialog:has(> .modal-body) { padding: 0; overflow: hidden; }
+  html.mobile-ui-active dialog.arpg-dialog .dialog-heading, html.mobile-ui-active dialog.arpg-dialog .audio-settings-header { margin-bottom: 14px; }
+  html.mobile-ui-active dialog.arpg-dialog:has(> .modal-body) > .dialog-heading { margin: 0; }
+  html.mobile-ui-active #new-dialog.arpg-dialog .new-dialog-actions { background: #171513f5; }
+  html.mobile-ui-active #reward-dialog.arpg-dialog { padding: 10px 12px; }
+  html.mobile-ui-active #reward-dialog.arpg-dialog .dialog-heading { position: relative; top: auto; margin: -10px -12px 10px; padding: 10px 12px; }
+  html.mobile-ui-active #reward-dialog.arpg-dialog .dialog-heading h2 { font-size: 20px; }
+  html.mobile-ui-active #event-dialog.arpg-dialog { padding: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog.arpg-dialog, dialog.arpg-dialog * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

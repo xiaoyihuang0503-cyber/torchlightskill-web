@@ -107,7 +107,7 @@ export class MobilePrisonUI {
     for(const host of [document.querySelector('.startup-content'),this.viewport]){
       if(!host)continue;
       const note=document.createElement('p');note.className='mobile-orientation-note';
-      note.textContent='横屏可看清全部牢房；当前仍可开始或继续经营。';
+      note.textContent='竖屏已显示完整牢笼；横屏操作更舒适。';
       host.prepend(note);this.notes.push(note);
     }
     this.toolDialog=document.createElement('dialog');this.toolDialog.id='mobile-tool-dialog';

@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three/three.module.js';
 import {createTalosPrison} from './model/prison.js?v=0.6.4-1';
-import {projectRoom, fitPrisonCamera, batchEditableNodes} from './model/projection.js?v=0.6.4-1';
+import {projectRoom, fitPrisonCamera, batchEditableNodes} from './model/projection.js?v=0.6.9-1';
 
 const TIER_COLORS=[0xa4a798,0x68abc1,0xa785cf,0xd7a863,0xe08e83,0xe7abd6];
 const ATLAS={elephant:[0,.5],lion:[.5,.5],rat:[0,0],wolf:[.5,0]};

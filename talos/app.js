@@ -4,14 +4,15 @@ import {preyCodes} from './engine.js?v=0.6.8-1';
 import {pairDecision} from './interaction.js?v=0.6.8-1';
 import {PrisonEffects} from './effects.js?v=0.6.3-1';
 import {goalGuide} from './goal-guide.js?v=0.6.8-1';
-import {PrisonScene3D} from './scene3d.js?v=0.6.5-1';
+import {PrisonScene3D} from './scene3d.js?v=0.6.9-1';
 import {PrisonAudio,musicTracks} from './audio.js?v=0.6.5-1';
 import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.6.8-1';
 import {rewardIcon,ruleText} from './reward-icons.js?v=0.6.2-1';
 import {rainbowMarkup,animateRainbowArrivals} from './rainbow-ui.js?v=0.6.8-1';
 import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.8-1';
 import {journalMarkup,effectsMarkup,journalDetailMarkup} from './run-journal.js?v=0.6.8-1';
-import {MobilePrisonUI} from './mobile-ui.js?v=0.6.7-1';
+import {ModalNavigation,initManualTabs} from './modal-ui.js?v=0.6.9-1';
+import {MobilePrisonUI} from './mobile-ui.js?v=0.6.9-1';
 
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -61,7 +62,7 @@ document.addEventListener('pointerdown',event=>audio.unlock(event),{capture:true
 document.addEventListener('keydown',event=>{if(!event.repeat)audio.unlock(event);},{capture:true});
 $('audio-toggle').addEventListener('click',()=>audio.setPreferences({enabled:!audio.getStatus().preferences.enabled}));
 $('startup-audio').addEventListener('click',()=>audio.setPreferences({enabled:!audio.getStatus().preferences.enabled}));
-$('audio-settings-open').addEventListener('click',()=>$('audio-dialog').showModal());
+$('audio-settings-open').addEventListener('click',event=>modalNavigation.open('audio-dialog',event.currentTarget));
 $('audio-master').addEventListener('change',event=>audio.setPreferences({enabled:event.target.checked}));
 for(const kind of ['sfx','voice','ambience','music']){
   $(`audio-${kind}`).addEventListener('change',event=>audio.setPreferences({[kind]:event.target.checked}));
@@ -83,7 +84,11 @@ function persist(){
   if(!result.saved)showError(result.error);
   return result.saved;
 }
-function showError(message){$('error').hidden=false;$('error').textContent=message;}
+function showError(message){
+  $('error').hidden=false;$('error').textContent=message;
+  const inline=document.querySelector('dialog[open] [data-modal-error]');
+  if(inline){inline.hidden=false;inline.textContent=message;inline.scrollIntoView({block:'nearest'});}
+}
 function showStartupError(message){$('startup-error').hidden=!message;$('startup-error').textContent=message;}
 function renderStartup(){
   const run=startupSave.run,summary=run?startupRunSummary(run.current):null;
@@ -91,11 +96,32 @@ function renderStartup(){
   if(summary){$('continue-run').textContent=summary.label;$('saved-run-summary').textContent=summary.detail;}
   showStartupError(startupSave.error);
 }
+const modalNavigation=new ModalNavigation({document,ids:['menu-dialog','manual-dialog','run-dialog','settings-dialog','calibration-dialog','editor-dialog','changelog-dialog','rules-dialog','audio-dialog','export-dialog'],
+  canOpen:id=>!busy&&(id!=='run-dialog'||!startupActive&&!!state)&&(id!=='editor-dialog'||!startupActive&&!!state&&!isChallenge(state))&&(id!=='rules-dialog'||startupActive||!isChallenge(state)),
+  prepare:id=>{
+    hideGoalGuide();hideMechanics();hideJournalDetail();
+    for(const error of $(id).querySelectorAll('[data-modal-error]')){error.hidden=true;error.textContent='';}
+    for(const button of $(id).querySelectorAll('.modal-footer [data-close]'))button.textContent=startupActive?'返回起始页':'返回游戏';
+    $('menu-run').disabled=startupActive||!state;
+    $('menu-run').title=startupActive?'开始或继续经营后查看本局':'';
+    const challenge=!startupActive&&state&&isChallenge(state);
+    $('open-editor').disabled=startupActive||!state||!!challenge;
+    $('open-rules').disabled=!!challenge;
+    $('calibration-note').textContent=challenge?'当前为原创挑战，采用固定规则。切换到基础练习后可校准。':startupActive?'尚未进入本局。可以先调整实验参数，再开始练习。':'场面编辑立即作用于本局；实验参数只用于之后的新局。';
+    if(id==='rules-dialog')fillConfig();
+  },fallback:()=>startupActive?$('startup-menu'):$('lab-settings')});
+initManualTabs(document);
+document.addEventListener('click',event=>{
+  const opener=event.target.closest('[data-modal-open]');if(!opener)return;
+  event.preventDefault();event.stopImmediatePropagation();modalNavigation.open(opener.dataset.modalOpen,opener);
+},{capture:true});
+
 function showStartup(){
   if(busy)return;
   startupActive=true;cancelChoice();rewardChoice=null;hideGoalGuide();hideMechanics();hideJournalDetail();
   if(state)startupSave.run={current:structuredClone(state),initial:structuredClone(initial)};
-  for(const id of ['settings-dialog','result-dialog','new-dialog','event-dialog'])if($(id).open)$(id).close();
+  modalNavigation.closeAll();
+  for(const id of ['result-dialog','new-dialog','event-dialog'])if($(id).open)$(id).close();
   $('game-screen').hidden=true;$('game-screen').inert=true;$('game-screen').setAttribute('aria-hidden','true');
   $('startup-screen').hidden=false;renderStartup();
   (startupSave.run?$('continue-run'):$('startup-empty')).focus({preventScroll:true});
@@ -104,7 +130,8 @@ function enterRun(run,{save=false,musicEntry=true}={}){
   cancelChoice();rewardChoice=null;state=upgradeFoodChain(run.current);initial=run.initial;
   save=save||state!==run.current;
   configDraft=startupConfigDraft(state);selected=0;resultShown=-1;
-  for(const id of ['settings-dialog','result-dialog','new-dialog','event-dialog'])if($(id).open)$(id).close();
+  modalNavigation.closeAll();
+  for(const id of ['result-dialog','new-dialog','event-dialog'])if($(id).open)$(id).close();
   startupActive=false;$('startup-screen').hidden=true;
   $('game-screen').hidden=false;$('game-screen').inert=false;$('game-screen').removeAttribute('aria-hidden');
   $('motion-status').textContent='';delete $('motion-status').dataset.lastEffect;$('error').hidden=true;
@@ -129,23 +156,7 @@ function hideGoalGuide(){
   clearTimeout(goalGuideHideTimer);goalGuidePinned=false;$('goal-tooltip').hidden=true;
   $('goal-details-trigger').setAttribute('aria-expanded','false');
 }
-let mechanicsHideTimer;
-function showMechanics(){
-  clearTimeout(mechanicsHideTimer);
-  const tip=$('mechanics-tooltip'),anchor=$('lab-settings').getBoundingClientRect();
-  tip.style.maxHeight=`${Math.max(80,innerHeight-anchor.bottom-24)}px`;
-  tip.hidden=false;$('lab-settings').setAttribute('aria-expanded','true');
-  tip.style.left=`${Math.max(12,Math.min(anchor.left,innerWidth-tip.offsetWidth-12))}px`;
-  tip.style.top=`${anchor.bottom+12}px`;
-}
-function hideMechanics(){ $('mechanics-tooltip').hidden=true; $('lab-settings').setAttribute('aria-expanded','false'); }
-$('lab-settings').addEventListener('mouseenter',showMechanics);
-$('lab-settings').addEventListener('focus',showMechanics);
-$('lab-settings').addEventListener('mouseleave',()=>{mechanicsHideTimer=setTimeout(hideMechanics,140);});
-$('lab-settings').addEventListener('blur',()=>{mechanicsHideTimer=setTimeout(hideMechanics,140);});
-$('lab-settings').addEventListener('click',hideMechanics);
-$('mechanics-tooltip').addEventListener('mouseenter',()=>clearTimeout(mechanicsHideTimer));
-$('mechanics-tooltip').addEventListener('mouseleave',hideMechanics);
+function hideMechanics(){ $('mechanics-tooltip').hidden=true; }
 function renderJournal(){
   if(journalInitial===initial&&journalRevision===state.revision)return;
   const old=$('run-journal').querySelector('.run-journal-scroll');
@@ -399,7 +410,7 @@ function render(deferDialogs=false){
 function renderInspect(){
   const r=state.rooms[selected];$('room-number').textContent=`${String(selected+1).padStart(2,'0')}`;
   if(!r.prisoner){
-    $('inspect').innerHTML=`<div class="empty-inspect"><span class="door-icon" aria-hidden="true">${r.status==='closed'?'▥':'◇'}</span><span>${r.nest?`鼠巢，第 ${r.nest.due} 日预计成熟`:r.status==='closed'?'尚未开启':'囚犯已离开'}</span></div>${state.phase==='patrol'&&state.destinations.includes(selected)&&!state.pending.length?buttonsFor({type:'visit',room:selected},'前往这间牢房','gold full'):''}`;
+    $('inspect').innerHTML=`<div class="empty-inspect"><span class="door-icon" aria-hidden="true">${r.status==='closed'?'▥':'◇'}</span><span>${r.nest?`鼠巢，第 ${r.nest.due} 日预计成熟`:r.status==='closed'?'尚未开启':'囚犯已离开'}</span></div>`;
     return;
   }
   const p=r.prisoner,prey=targets(state,selected);
@@ -467,7 +478,8 @@ function exportCurrent(){
   $('export-json').value=data;
   $('download-run').href=exportUrl;
   $('download-run').download=`ss14-prison-day${state.day}-${state.revision}.json`;
-  if(!$('export-dialog').open)$('export-dialog').showModal();
+  if($('result-dialog').open)$('result-dialog').close();
+  modalNavigation.open('export-dialog',document.activeElement);
 }
 function startDialog(mode='practice',preset='empty'){
   if(busy)return;showStartup();
@@ -523,7 +535,7 @@ document.addEventListener('click',event=>{
     cancelChoice();selected=clicked;armed=!!state.rooms[clicked].prisoner;render();
   }
 });
-document.addEventListener('click',event=>{const inside=event.composedPath().some(node=>node.id==='context-actions'||node.matches?.('.room,#confirm-action,[data-action],.run-sidebar,.layout-toggle'));if(!$('context-actions').hidden&&!inside){cancelChoice();render();}});
+document.addEventListener('click',event=>{const inside=event.composedPath().some(node=>node.id==='context-actions'||node.matches?.('.room,#confirm-action,[data-action],.run-sidebar,.layout-toggle,dialog,[data-modal-open],#lab-settings'));if(!$('context-actions').hidden&&!inside){cancelChoice();render();}});
 $('board').addEventListener('contextmenu',event=>{const room=event.target.closest('[data-room]');if(!room||busy)return;event.preventDefault();cancelChoice();selected=Number(room.dataset.room);armed=true;render();showSingle({x:event.clientX,y:event.clientY});});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'){hideGoalGuide();hideMechanics();hideJournalDetail();if(!document.querySelector('dialog[open]')){cancelChoice();render();}}});
 const goalTrigger=$('goal-details-trigger'),goalTooltip=$('goal-tooltip');
@@ -555,7 +567,7 @@ $('new-form').addEventListener('submit',event=>{
 });
 $('undo').addEventListener('click',()=>{
   if(busy)return;
-  try{cancelChoice();rewardChoice=null;state=undoUserAction(initial,state);audio.reset();resultShown=-1;$('settings-dialog').close();persist();render();}
+  try{cancelChoice();rewardChoice=null;state=undoUserAction(initial,state);audio.reset();resultShown=-1;modalNavigation.closeAll();persist();render();}
   catch(e){showError(e.message);}
 });
 $('export').addEventListener('click',exportCurrent);$('result-export').addEventListener('click',exportCurrent);
@@ -566,12 +578,12 @@ $('import-file').addEventListener('change',async event=>{
   }catch(e){const message=`导入失败：${e.message}`;if(startupActive)showStartupError(message);else showError(message);}finally{event.target.value='';}
 });
 $('edit-room').addEventListener('click',()=>{
-  try{state=editRoom(state,selected,$('edit-code').value,Number($('edit-tier').value));$('error').hidden=true;persist();render();}catch(e){showError(e.message);}
+  try{state=editRoom(state,selected,$('edit-code').value,Number($('edit-tier').value));cancelChoice();$('error').hidden=true;persist();render();}catch(e){showError(e.message);}
 });
 $('add-tool').addEventListener('click',()=>{
-  try{state=addTool(state,$('add-tool-select').value);$('error').hidden=true;persist();render();}catch(e){showError(e.message);}
+  try{state=addTool(state,$('add-tool-select').value);cancelChoice();$('error').hidden=true;persist();render();}catch(e){showError(e.message);}
 });
-$('open-rules').addEventListener('click',()=>{if(busy)return;$('settings-dialog').close();fillConfig();$('rules-dialog').showModal();});
+$('open-rules').addEventListener('click',event=>modalNavigation.open('rules-dialog',event.currentTarget));
 $('config-form').addEventListener('submit',event=>{
   event.preventDefault();
   try{
@@ -622,7 +634,7 @@ $('immersive-toggle').addEventListener('change',event=>{
   if(mobileUI.setImmersive(event.target.checked))return;
   preferences.journalHidden=event.target.checked;preferences.sidebarHidden=event.target.checked;syncPreferences();
 });
-$('lab-settings').addEventListener('click',()=>{if(!busy){cancelChoice();render();$('settings-dialog').showModal();}});
+
 for(const [id,key] of [['advice-toggle','advice'],['advice-rail-toggle','advice'],['motion-toggle','motion'],['quick-toggle','quick']])$(id).addEventListener('change',event=>{preferences[key]=event.target.checked;syncPreferences();render();});
 $('speed-toggle').addEventListener('click',()=>{preferences.fast=!preferences.fast;syncPreferences();});
 $('advice-section').addEventListener('toggle',()=>{
