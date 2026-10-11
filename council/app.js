@@ -47,7 +47,6 @@ function assetImg(asset,alt,cssClass){
   img.decoding="async";
   img.referrerPolicy="no-referrer";
   // Use the manifest's own published site URL. Never borrow another trait's portrait.
-  img.src=asset.site_url;
   return img;
 }
 function setHeroPortrait(host,hero){
@@ -55,9 +54,11 @@ function setHeroPortrait(host,hero){
   const initial=document.createElement("span");
   initial.className="portrait-initial";
   initial.textContent=hero.mark;
+  initial.setAttribute("aria-hidden","true");
   const img=assetImg(hero.asset,name(hero)+" · 英雄特性头像","portrait-image");
   img.addEventListener("load",()=>{initial.hidden=true;});
   img.addEventListener("error",()=>{img.hidden=true;initial.hidden=false;host.classList.add("image-error");});
+  img.src=hero.asset.site_url;
   host.replaceChildren(initial,img);
 }
 function validPortraitAsset(a,type){
