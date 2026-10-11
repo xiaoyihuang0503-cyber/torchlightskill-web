@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN" data-author-notice-pending>
-<head><script src="startup-guard.js?v=0.6.10-1"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#11100e"><title>塔罗斯监狱 · 经营模拟</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="scene.css"><link rel="stylesheet" href="scene3d.css?v=0.6.5-1"><link rel="stylesheet" href="controls-game.css?v=0.6.6-1"><link rel="stylesheet" href="audio.css?v=0.6.5-1"><link rel="stylesheet" href="challenge.css?v=0.6.3-1"><link rel="stylesheet" href="startup.css?v=0.6.10-1"><link rel="stylesheet" href="goals.css?v=0.6.2-2"><link rel="stylesheet" href="reward-ui.css?v=0.6.3-1"><link rel="stylesheet" href="rainbow-ui.css?v=0.6.3-1"><link rel="stylesheet" href="run-journal.css?v=0.6.6-1"><link rel="stylesheet" href="game-share.css?v=0.6.7-1"><link rel="stylesheet" href="mobile.css?v=0.6.9-1"><script type="module" src="app.js?v=0.6.10-1"></script><script type="module" src="game-share.js?v=0.6.7-1"></script><link rel="stylesheet" href="fullscreen-ui.css?v=0.6.9-1"><script type="module" src="fullscreen-ui.js?v=0.6.9-1"></script><link rel="stylesheet" href="modal-ui.css?v=0.6.9-1"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="assets/pwa/app-icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="assets/pwa/app-icon-180.png" sizes="180x180"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="塔罗斯监狱"><link rel="stylesheet" href="author-notice.css?v=0.6.11-1"><script defer src="author-notice.js?v=0.6.11-1"></script><script src="https://torchlightskill-analytics.hyx920503.workers.dev/tracker.js" async></script>
+<head><script src="startup-guard.js?v=0.6.10-1"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#11100e"><title>塔罗斯监狱 · 经营模拟</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="scene.css"><link rel="stylesheet" href="scene3d.css?v=0.6.5-1"><link rel="stylesheet" href="controls-game.css?v=0.6.6-1"><link rel="stylesheet" href="audio.css?v=0.6.5-1"><link rel="stylesheet" href="challenge.css?v=0.6.3-1"><link rel="stylesheet" href="startup.css?v=0.6.10-1"><link rel="stylesheet" href="goals.css?v=0.6.2-2"><link rel="stylesheet" href="reward-ui.css?v=0.6.3-1"><link rel="stylesheet" href="rainbow-ui.css?v=0.6.3-1"><link rel="stylesheet" href="run-journal.css?v=0.6.6-1"><link rel="stylesheet" href="game-share.css?v=20261011-3"><link rel="stylesheet" href="mobile.css?v=0.6.9-1"><script type="module" src="app.js?v=0.6.10-1"></script><script type="module" src="game-share.js?v=20261011-3"></script><link rel="stylesheet" href="fullscreen-ui.css?v=0.6.9-1"><script type="module" src="fullscreen-ui.js?v=0.6.9-1"></script><link rel="stylesheet" href="modal-ui.css?v=0.6.9-1"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="assets/pwa/app-icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="assets/pwa/app-icon-180.png" sizes="180x180"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="塔罗斯监狱"><link rel="stylesheet" href="author-notice.css?v=0.6.11-1"><script defer src="author-notice.js?v=0.6.11-1"></script><script src="https://torchlightskill-analytics.hyx920503.workers.dev/tracker.js" async></script>
 </head>
 <body>
 <dialog open id="author-notice-dialog" role="dialog" aria-labelledby="author-notice-title" aria-describedby="author-notice-statement author-notice-limits">
@@ -80,17 +80,25 @@
   <span class="game-share-kicker">TORCHLIGHTSKILL · 分享</span>
   <h2 id="game-share-title">把塔罗斯监狱分享给朋友</h2>
   <p id="game-share-intro" class="game-share-intro">快人一步熟悉玩法，搬砖猛猛起飞。下载分享图或二维码海报，邀请朋友一起试试。</p>
+  <section class="game-share-notice" aria-label="二创声明与作者信息">
+    <strong>永久免费，请勿付费</strong>
+    <p>参考公开展示与测试资料进行个人二创，玩家自制、非官方。模拟中的节奏、难度与收益不代表正式游戏；游戏名称、官方玩法及相关素材的权利归原权利人。</p>
+    <div class="game-share-authors">
+      <a href="https://v.douyin.com/okD24Xnc6wo/" target="_blank" rel="noopener noreferrer"><span>抖音作者 · 2051823335 ↗</span><b>爱玩游戏的吉吉罗</b></a>
+      <a href="https://space.bilibili.com/39881994" target="_blank" rel="noopener noreferrer"><span>B 站作者 ↗</span><b>二零后游戏荒</b></a>
+    </div>
+  </section>
   <div class="game-share-formats" role="group" aria-label="选择分享图片">
     <button type="button" data-game-share-format="card" aria-pressed="true" aria-controls="game-share-preview">横向分享图</button>
     <button type="button" data-game-share-format="poster" aria-pressed="false" aria-controls="game-share-preview">竖版二维码海报</button>
   </div>
   <figure class="game-share-preview">
-    <img id="game-share-preview" src="./assets/share/talos-share-card-v2.png" alt="塔罗斯监狱横向分享图：快人一步熟悉玩法，搬砖猛猛起飞" loading="lazy">
+    <img id="game-share-preview" src="./assets/share/talos-share-card-v3.png" alt="塔罗斯监狱横向分享图：永久免费，请勿付费；附作者抖音、B站与官网二维码" loading="lazy">
     <p id="game-share-preview-note" class="game-share-preview-note" hidden>图片暂时无法加载，你仍可复制官网链接。</p>
   </figure>
   <div class="game-share-downloads">
-    <a href="./assets/share/talos-share-card-v2.png" data-game-share-download="card" download="TorchlightSkill-塔罗斯监狱-分享图.png">下载分享图 PNG</a>
-    <a href="./assets/share/talos-share-poster-v2.png" data-game-share-download="poster" download="TorchlightSkill-塔罗斯监狱-海报.png">下载海报 PNG</a>
+    <a href="./assets/share/talos-share-card-v3.png" data-game-share-download="card" download="TorchlightSkill-塔罗斯监狱-分享图.png">下载分享图 PNG</a>
+    <a href="./assets/share/talos-share-poster-v3.png" data-game-share-download="poster" download="TorchlightSkill-塔罗斯监狱-海报.png">下载海报 PNG</a>
   </div>
   <figure class="game-share-qr"><img id="game-share-qr" src="./assets/share/torchlightskill-home-qr.svg" alt="扫码打开 TorchlightSkill 官网" width="592" height="592"><figcaption>扫码打开官网</figcaption></figure>
   <label for="game-share-link" class="game-share-link-label">官网链接</label>

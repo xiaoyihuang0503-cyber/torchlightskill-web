@@ -1,7 +1,7 @@
 const HOME_URL = 'https://torchlightskill.com/';
 const assets = {
-  card: {url: './assets/talos-share-card-v2.png', name: 'TorchlightSkill-塔罗斯监狱-分享图.png', alt: '塔罗斯监狱横向分享图'},
-  poster: {url: './assets/talos-share-poster-v2.png', name: 'TorchlightSkill-塔罗斯监狱-海报.png', alt: '塔罗斯监狱竖版分享海报，包含官网二维码'},
+  card: {url: './assets/talos-share-card-v3.png', name: 'TorchlightSkill-塔罗斯监狱-分享图.png', alt: '塔罗斯监狱横向分享图，附免费声明与作者信息'},
+  poster: {url: './assets/talos-share-poster-v3.png', name: 'TorchlightSkill-塔罗斯监狱-海报.png', alt: '塔罗斯监狱竖版分享海报，附免费声明、作者信息与三个二维码'},
 };
 const dialog = document.getElementById('site-share');
 const preview = document.getElementById('share-preview-image');
@@ -119,7 +119,7 @@ systemButton.addEventListener('click', async () => {
   if (!nativeShare || sharing || systemButton.disabled) return;
   const data = preparedSelection
     ? {files: [preparedSelection], title: '塔罗斯监狱 · TorchlightSkill'}
-    : {url: HOME_URL, title: 'TorchlightSkill · 火炬工具箱', text: '塔罗斯监狱，先练一轮，再做选择。'};
+    : {url: HOME_URL, title: 'TorchlightSkill · 火炬工具箱', text: '塔罗斯监狱玩家自制模拟，永久免费，请勿付费。非官方个人二创，体验以正式游戏为准。作者：抖音「爱玩游戏的吉吉罗」 / B站「二零后游戏荒」。'};
   sharing = true;
   updateSystemButton();
   try {

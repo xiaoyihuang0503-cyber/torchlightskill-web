@@ -5,6 +5,14 @@
 #game-share-dialog .game-share-kicker{display:block;color:#a99474;font-size:10px;letter-spacing:.14em}
 #game-share-dialog h2{margin:9px 40px 10px 0;font-family:Georgia,"SimSun",serif;font-size:25px;font-weight:400;line-height:1.5;letter-spacing:.06em}
 #game-share-dialog .game-share-intro{margin:0 25px 18px 0;color:#a99f90;font-size:13px;line-height:1.8}
+#game-share-dialog .game-share-notice{margin:0 0 17px;padding:13px 15px;border:1px solid #766344;background:#191815;color:#bcb19d;font-size:12px;line-height:1.8}
+#game-share-dialog .game-share-notice strong{display:block;margin-bottom:5px;color:#ead29c;font-size:16px}
+#game-share-dialog .game-share-notice p{margin:0}
+#game-share-dialog .game-share-authors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:11px 0 0}
+#game-share-dialog .game-share-authors a{display:flex;flex-direction:column;justify-content:center;min-height:60px;min-width:0;padding:9px 11px;border:1px solid #5a5042;border-radius:2px;background:#25221d;color:#e2d5bd;text-decoration:none;line-height:1.6;overflow-wrap:anywhere}
+#game-share-dialog .game-share-authors a:hover{border-color:#b1976c;background:#30281f}
+#game-share-dialog .game-share-authors span{color:#af9c7e;font-size:11px}
+#game-share-dialog .game-share-authors b{font-size:13px;font-weight:600}
 #game-share-dialog .game-share-close{position:absolute;top:12px;right:12px;min-width:44px;min-height:44px;padding:0;border:1px solid transparent;background:transparent;color:#b9ae9b;font-size:27px;line-height:1;cursor:pointer}
 #game-share-dialog .game-share-close:hover{border-color:#736254;color:#f1e6d1;background:#392f282f}
 #game-share-dialog .game-share-formats{display:flex;gap:9px;margin:0 0 13px}
