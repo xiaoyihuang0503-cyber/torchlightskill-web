@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0a0d10">
+  <meta name="theme-color" content="#fff4dd">
   <meta name="description" content="火炬议会 Torchlight Council。SS14 开荒阵营战、老虎机随机英雄、玩家呼声站队。独立玩家社区互动预览。">
   <meta property="og:type" content="website">
   <meta property="og:title" content="火炬议会 | SS14 开荒阵营战">
@@ -13,7 +13,8 @@
   <link rel="canonical" href="https://torchlightskill.com/council/">
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="stylesheet" href="./style.css?v=20261012-1">
-  <script defer src="./app.js?v=20261012-1"></script>
+  <link rel="stylesheet" href="./codex-style.css?v=20261012-2">
+  <script defer src="./app.js?v=20261012-2"></script>
 </head>
 <body>
   <div class="page-haze" aria-hidden="true"></div>
@@ -24,7 +25,7 @@
         <span class="logo-copy"><strong>火炬议会</strong><small>TORCHLIGHT COUNCIL</small></span>
       </a>
       <nav class="header-actions" aria-label="站内导航">
-        <a class="nav-link" href="#topics">玩家呼声 <span aria-hidden="true">↗</span></a>
+        <a class="nav-link" href="#topics">玩家呼声 <span aria-hidden="true">↗</span></a><a class="nav-link nav-mentor" href="#mentors">导师团 ↗</a>
         <span class="header-season">SS14 <span class="header-dot"></span> PRE-SEASON</span>
       </nav>
     </header>
@@ -49,7 +50,7 @@
       <section class="arena-section" aria-labelledby="arena-title">
         <header class="section-header">
           <div><p class="section-index">01 / OPENING WAR</p><h2 id="arena-title">开荒阵营战 <span class="title-arrow" aria-hidden="true">↗</span></h2><p class="section-description">选一个英雄特性，站上你的位置。排名随票数变化。</p></div>
-          <span class="preview-badge"><span class="small-dot"></span> 演示数据 · 非实时投票</span>
+          <span class="preview-badge"><span class="small-dot"></span> 互动预览 · 模拟票数</span>
         </header>
 
         <div class="arena-panel">
@@ -62,7 +63,7 @@
             <div class="arena-grid" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
             <div class="arena-grid-corner">SS14 <span>／</span> 2026</div>
             <div id="chart" class="chart" aria-label="英雄阵营排名与投票互动">
-              <p class="chart-loading">正在载入英雄阵营…</p>
+              <p class="chart-loading">正在从头像清单核对英雄特性…</p>
             </div>
             <div class="stage-axis" aria-hidden="true"></div>
           </div>
@@ -102,12 +103,31 @@
         </div>
       </section>
 
+
+      <section class="mentor-section" id="mentors" aria-labelledby="mentor-title">
+        <div class="mentor-heading"><div><p class="section-index">03 / MENTOR ROOM</p><h2 id="mentor-title">议会有争论，<em>导师有办法。</em></h2><p>站队之后，想知道自己的英雄怎么开荒？认识一下火炬 AI 导师团。</p></div><a href="https://torchlightskill.com/#products" target="_blank" rel="noopener noreferrer" class="sticker-link">了解火炬 AI 导师 ↗</a></div>
+        <div class="mentor-grid">
+          <article class="mentor-card" data-mentor-id="mia"><div class="mentor-art mentor-mia"><img data-mentor-image="mia" alt="米娅导师角色头像" loading="lazy" hidden><span class="portrait-placeholder" aria-hidden="true">M</span></div><div class="mentor-card-copy"><span class="mentor-num">01 / MIA</span><h3>米娅</h3><p>下一步先做什么？</p></div></article>
+          <article class="mentor-card" data-mentor-id="shiyu"><div class="mentor-art mentor-shiyu"><img data-mentor-image="shiyu" alt="诗雨导师角色头像" loading="lazy" hidden><span class="portrait-placeholder" aria-hidden="true">S</span></div><div class="mentor-card-copy"><span class="mentor-num">02 / SHIYU</span><h3>诗雨</h3><p>卡点到底在哪里？</p></div></article>
+          <article class="mentor-card" data-mentor-id="reina"><div class="mentor-art mentor-reina"><img data-mentor-image="reina" alt="雷娜导师角色头像" loading="lazy" hidden><span class="portrait-placeholder" aria-hidden="true">R</span></div><div class="mentor-card-copy"><span class="mentor-num">03 / REINA</span><h3>雷娜</h3><p>哪一笔投入先停？</p></div></article>
+        </div>
+      </section>
+
       <section class="manifesto" aria-label="火炬议会说明">
         <div class="manifesto-asterisk" aria-hidden="true">✳</div>
         <div><p class="manifesto-label">ONE CLICK. ONE SIDE.</p><h2>每个赛季，总要有人先站出来。</h2><p>开荒选谁、玩法留谁、哪一刀砍得太狠。让意见有形状，让争论有结果。</p></div>
         <a href="#top" class="manifesto-back">回到阵营战 ↑</a>
       </section>
     </main>
+      <details class="source-details" id="avatar-sources">
+        <summary>头像来源、权利说明与 SS14 形象待确认 <span aria-hidden="true">↗</span></summary>
+        <p id="avatar-source-status">正在加载公开头像清单…</p>
+        <div class="sources-inner">
+          <p>头像按公开清单的 <code>type</code>、<code>id</code> 和英雄 <code>trait</code> 一一匹配。旧赛季官方图仅作识别参考，不表示已经核实 SS14 最新立绘。蒙面头像会按清单标注。导师素材的原始授权尚未独立核实。</p>
+          <ul id="avatar-source-list"><li>正在载入来源记录…</li></ul>
+          <a href="/assets/torchlight-mentor-avatars/manifest.json" target="_blank" rel="noopener noreferrer">查看完整头像清单 ↗</a>
+        </div>
+      </details>
     <footer class="site-footer">
       <div class="footer-brand"><span aria-hidden="true">✳</span><div><strong>火炬议会</strong><small>TORCHLIGHT COUNCIL</small></div></div>
       <p>玩家独立制作的免费互动预览，与《火炬之光：无限》官方无隶属关系。投票数据为演示样例，尚未开放公共计票。</p>
@@ -119,7 +139,7 @@
     <div class="dialog-shell">
       <div class="dialog-heading"><div><span class="dialog-index">SELECT YOUR SIDE / 01</span><h2 id="hero-dialog-title">选择开荒英雄</h2><p>所有可选英雄特性 · 一次选择，随时可以更改</p></div><button type="button" class="dialog-close" data-close="hero-dialog" aria-label="关闭英雄列表">×</button></div>
       <div class="hero-search-wrap"><span aria-hidden="true">⌕</span><input id="hero-search" type="search" placeholder="搜索英雄、特性或玩家简称" autocomplete="off" aria-label="搜索英雄"></div>
-      <div class="hero-picker-meta"><span id="hero-search-summary">28 个英雄特性</span><span>当前预览使用演示票数</span></div>
+      <div class="hero-picker-meta"><span id="hero-search-summary">正在核对清单</span><span>按英雄特性 ID 精确匹配头像</span></div>
       <div id="hero-list" class="hero-list"></div>
       <div class="dialog-footer"><span>所选阵营只在当前浏览器保存</span><button type="button" class="button-small" data-close="hero-dialog">返回榜单</button></div>
     </div>
