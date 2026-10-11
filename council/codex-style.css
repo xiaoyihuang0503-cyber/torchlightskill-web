@@ -550,3 +550,7 @@ button:disabled { opacity: .58; cursor: not-allowed; }
 .contender-avatar.has-portrait, .hero-choice-avatar.has-portrait { position: relative; display: block; }
 .contender-avatar .portrait-initial, .hero-choice-avatar .portrait-initial { position: absolute; inset: 0; width: 100%; height: 100%; }
 .contender-avatar .portrait-image, .hero-choice-avatar .portrait-image { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* High-contrast labels and physical orange CTA controls. */
+.section-index, .dialog-index, .manifesto-label { color: #a63212; }
+.button-primary, .button-primary:hover:not(:disabled) { color: var(--ink); }
