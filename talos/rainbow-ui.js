@@ -1,4 +1,4 @@
-import { SPECIES } from './rules.js';
+import { SPECIES } from './rules.js?v=0.6.8-1';
 
 const escape = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 

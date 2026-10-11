@@ -1,5 +1,5 @@
-import {legalActions, nameOf, onBoard} from './engine.js';
-import {RARITIES, TOOLS} from './rules.js';
+import {legalActions, nameOf, onBoard} from './engine.js?v=0.6.8-1';
+import {RARITIES, TOOLS} from './rules.js?v=0.6.8-1';
 
 // Read visible state only. A route is one legal action, never a predicted RNG chain.
 export function goalGuide(s) {

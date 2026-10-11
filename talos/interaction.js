@@ -1,4 +1,4 @@
-import {canEat} from './engine.js';
+import {canEat} from './engine.js?v=0.6.8-1';
 
 // Selection is presentation state: it never consumes a prisoner or RNG.
 export function pairDecision(state, source, target) {

@@ -1,10 +1,10 @@
-import * as engine from './engine.js';
-import {SPECIES,RARITIES,TOOLS} from './rules.js';
-import {CHALLENGE_VERSION,LEGACY_CHALLENGE_VERSION,ESCORTS,isChallenge,withoutChallenge,baseFingerprint,sameValue,refreshDestinations,deliveryOptions,deliveryPreview,settleChallenge,validateChallenge,challengeView,createChallenge,canOpenEarlyDelivery,currentContract} from './challenge.js?v=0.6.3-1';
-import {queueRestock,restockOptions,restockView} from './challenge-v2.js?v=0.6.3-1';
+import * as engine from './engine.js?v=0.6.8-1';
+import {SPECIES,RARITIES,TOOLS,FOOD_CHAIN_VERSION} from './rules.js?v=0.6.8-1';
+import {CHALLENGE_VERSION,LEGACY_CHALLENGE_VERSION,ESCORTS,isChallenge,withoutChallenge,baseFingerprint,sameValue,refreshDestinations,deliveryOptions,deliveryPreview,settleChallenge,validateChallenge,challengeView,createChallenge,canOpenEarlyDelivery,currentContract} from './challenge.js?v=0.6.8-1';
+import {queueRestock,restockOptions,restockView} from './challenge-v2.js?v=0.6.8-1';
 
-export {onBoard,targets,nameOf,canEat,seedNumber} from './engine.js';
-export {createChallenge,isChallenge,challengeView,deliveryPreview} from './challenge.js?v=0.6.3-1';
+export {onBoard,targets,nameOf,canEat,seedNumber} from './engine.js?v=0.6.8-1';
+export {createChallenge,isChallenge,challengeView,deliveryPreview} from './challenge.js?v=0.6.8-1';
 export const createGame=engine.createGame;
 export const CHALLENGE_EXPORT_SCHEMA='ss14.prison.challenge.export.v1';
 const exact=(a,keys)=>a&&typeof a==='object'&&!Array.isArray(a)&&Object.keys(a).length===keys.length&&keys.every(k=>Object.hasOwn(a,k));
@@ -27,6 +27,21 @@ function record(before,next,action){
   next.revision=before.revision+1;next.history=[...structuredClone(before.history),{...structuredClone(action),revision:next.revision,day:before.day}];
   validateChallenge(next);return next;
 }
+export function upgradeFoodChain(state){
+  validateState(state);
+  if(state.foodChain===FOOD_CHAIN_VERSION)return state;
+  const s=engine.upgradeFoodChain(state);
+  if(isChallenge(s)){
+    if(s.challenge.preview){
+      const nextBase=s.challenge.preview.nextBase;
+      nextBase.foodChain=FOOD_CHAIN_VERSION;
+      nextBase.log.splice(state.log.length,0,structuredClone(s.log.at(-1)));
+      s.challenge.preview.baseFingerprint=baseFingerprint(s);
+    }
+    validateChallenge(s);
+  }
+  return s;
+}
 function advanceAfterDelivery(s){
   if(s.day===12||s.challenge.earlyDelivery===true)return settleChallenge(s);
   const c=structuredClone(s.challenge),base=engine.applyAction(withoutChallenge(s),{type:'end'});base.challenge=c;
@@ -34,6 +49,10 @@ function advanceAfterDelivery(s){
 }
 
 export function applyAction(state,action){
+  if(action?.type==='upgradeFoodChain'){
+    if(!exact(action,['type','version'])||action.version!==FOOD_CHAIN_VERSION||state.foodChain!==undefined)throw new Error('吞噬规则升级操作无效');
+    return upgradeFoodChain(state);
+  }
   if(!isChallenge(state))return engine.applyAction(state,action);
   validateChallenge(state);
   if(!action||typeof action!=='object'||Array.isArray(action))throw new Error('挑战操作格式无效');
@@ -112,6 +131,12 @@ export function replay(run){
   for(const a of run.actions){const {revision,day,...action}=a;s=applyAction(s,action);}
   return s;
 }
+export function undoUserAction(initial,state){
+  let end=state.history.length;
+  while(end&&state.history[end-1].type==='upgradeFoodChain')end--;
+  if(!end)throw new Error('还没有可撤回的操作');
+  return upgradeFoodChain(replay({initial,actions:state.history.slice(0,end-1)}));
+}
 export function exportRun(current,initial){
   if(!isChallenge(current)&&!isChallenge(initial))return engine.exportRun(current,initial);
   if(!isChallenge(current)||!isChallenge(initial))throw new Error('挑战存档的初始与当前模式不一致');
@@ -126,7 +151,7 @@ export function importRun(payload){
   }
   if(![LEGACY_CHALLENGE_VERSION,CHALLENGE_VERSION].includes(payload.version)||!Array.isArray(payload.actions)||payload.actions.length>10000||!isChallenge(payload.initial)||!isChallenge(payload.current)||payload.initial.challenge.version!==payload.version||payload.current.challenge.version!==payload.version)throw new Error('挑战存档版本或操作记录无效');
   validateChallenge(payload.initial);validateChallenge(payload.current);
-  const expected=createChallenge(payload.initial.seed,{build:payload.initial.challenge.build,version:payload.version});
+  const expected=createChallenge(payload.initial.seed,{build:payload.initial.challenge.build,version:payload.version,foodChain:payload.initial.foodChain??null});
   if(!sameValue(expected,payload.initial))throw new Error('挑战初始场面必须与固定开局一致');
   const rebuilt=replay(payload);if(!sameValue(rebuilt,payload.current))throw new Error('挑战存档与操作记录不一致');
   return {initial:structuredClone(payload.initial),current:rebuilt};

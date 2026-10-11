@@ -1,5 +1,5 @@
-import {applyAction,editRoom,addTool} from './session-engine.js?v=0.6.3-1';
-import {SPECIES,RARITIES,TOOLS,GIFTS} from './rules.js';
+import {applyAction,editRoom,addTool} from './session-engine.js?v=0.6.8-1';
+import {SPECIES,RARITIES,TOOLS,GIFTS} from './rules.js?v=0.6.8-1';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const species=code=>SPECIES.find(item=>item.id===code);
@@ -33,7 +33,9 @@ function describeAction(before,after,action,index){
   const actionDay=before.day,logAdded=after.log.slice(before.log.length).map(item=>item.text),knownBefore=visiblePopulation(before),knownAfter=visiblePopulation(after);
   const previousIds=new Set(knownBefore.map(p=>p.id)),arrivals=knownAfter.filter(p=>!previousIds.has(p.id));
   let verb='操作',summary='场面更新',icons=[],details=[];
-  if(action.type==='visit'){
+  if(action.type==='upgradeFoodChain'){
+    verb='规则';summary='吞噬关系更新';details.push('象吃狮、狼；狮吃狼、鼠；狼吃鼠；鼠吃象。象不能吃鼠，双方仍需同稀有度。更新不消耗天数、囚犯或调度券。');
+  }else if(action.type==='visit'){
     const count=after.stats.opened-before.stats.opened;verb=count?'开门':'巡监';summary=`前往 ${action.room+1} 号 · ${count?`开 ${count} 间`:'已开牢房'}`;
     icons=uniqueIcons(arrivals);details.push(`前往 ${action.room+1} 号牢房。`);
     for(const p of arrivals)details.push(`${p.room===null?'绮彩单独收容':`${p.room+1}号`}：${prisonerName(p)}。`);

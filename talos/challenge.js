@@ -1,6 +1,6 @@
-import {createGame as createBaseGame,onBoard,nameOf,validateState} from './engine.js';
-import {DEFAULT_CONFIG,TOOLS} from './rules.js';
-import {CHALLENGE_V2,createContracts,qualifiesV2,cargoBonus,restockOptions,restockView} from './challenge-v2.js?v=0.6.3-1';
+import {createGame as createBaseGame,onBoard,nameOf,validateState} from './engine.js?v=0.6.8-1';
+import {DEFAULT_CONFIG,TOOLS,FOOD_CHAIN_VERSION} from './rules.js?v=0.6.8-1';
+import {CHALLENGE_V2,createContracts,qualifiesV2,cargoBonus,restockOptions,restockView} from './challenge-v2.js?v=0.6.8-1';
 
 export const LEGACY_CHALLENGE_VERSION='talos-original-contract-v1';
 export const CHALLENGE_VERSION=CHALLENGE_V2;
@@ -35,10 +35,12 @@ export function refreshDestinations(s){
   return s;
 }
 
-export function createChallenge(seed='talos-challenge',{build='supply',version=CHALLENGE_VERSION}={}){
+export function createChallenge(seed='talos-challenge',{build='supply',version=CHALLENGE_VERSION,foodChain=FOOD_CHAIN_VERSION}={}){
   if(![LEGACY_CHALLENGE_VERSION,CHALLENGE_VERSION].includes(version))throw new Error('挑战规则版本不存在');
+  if(foodChain!==null&&foodChain!==FOOD_CHAIN_VERSION)throw new Error('吞噬规则版本不存在');
   const item=BUILDS.find(x=>x.id===build);if(!item)throw new Error('挑战开局不存在');
   const s=createBaseGame(seed,{...DEFAULT_CONFIG,days:12},item.preset);
+  if(foodChain===null)delete s.foodChain;
   if(build==='supply')s.tools.push('keys');
   s.phase='patrol';
   s.challenge={schema:CHALLENGE_SCHEMA,version,build,tickets:6,completed:0,score:0,

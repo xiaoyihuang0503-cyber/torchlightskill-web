@@ -1,15 +1,16 @@
-import { DEFAULT_CONFIG, SPECIES, RARITIES, TOOLS, GIFTS, ASSUMPTIONS, validateConfig } from './rules.js';
-import { applyAction, targets, onBoard, nameOf, editRoom, addTool, recommend, replay, exportRun, importRun, isChallenge, challengeView } from './session-engine.js?v=0.6.3-1';
-import {pairDecision} from './interaction.js';
+import { DEFAULT_CONFIG, SPECIES, RARITIES, TOOLS, GIFTS, ASSUMPTIONS, validateConfig } from './rules.js?v=0.6.8-1';
+import { applyAction, targets, onBoard, nameOf, editRoom, addTool, recommend, replay, exportRun, importRun, isChallenge, challengeView, upgradeFoodChain, undoUserAction } from './session-engine.js?v=0.6.8-1';
+import {preyCodes} from './engine.js?v=0.6.8-1';
+import {pairDecision} from './interaction.js?v=0.6.8-1';
 import {PrisonEffects} from './effects.js?v=0.6.3-1';
-import {goalGuide} from './goal-guide.js?v=0.6.2-1';
+import {goalGuide} from './goal-guide.js?v=0.6.8-1';
 import {PrisonScene3D} from './scene3d.js?v=0.6.5-1';
 import {PrisonAudio,musicTracks} from './audio.js?v=0.6.5-1';
-import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.6.3-1';
+import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.6.8-1';
 import {rewardIcon,ruleText} from './reward-icons.js?v=0.6.2-1';
-import {rainbowMarkup,animateRainbowArrivals} from './rainbow-ui.js?v=0.6.3-1';
-import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.3-1';
-import {journalMarkup,effectsMarkup,journalDetailMarkup} from './run-journal.js?v=0.6.7-1';
+import {rainbowMarkup,animateRainbowArrivals} from './rainbow-ui.js?v=0.6.8-1';
+import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.8-1';
+import {journalMarkup,effectsMarkup,journalDetailMarkup} from './run-journal.js?v=0.6.8-1';
 import {MobilePrisonUI} from './mobile-ui.js?v=0.6.7-1';
 
 const $=id=>document.getElementById(id);
@@ -100,7 +101,8 @@ function showStartup(){
   (startupSave.run?$('continue-run'):$('startup-empty')).focus({preventScroll:true});
 }
 function enterRun(run,{save=false,musicEntry=true}={}){
-  cancelChoice();rewardChoice=null;state=run.current;initial=run.initial;
+  cancelChoice();rewardChoice=null;state=upgradeFoodChain(run.current);initial=run.initial;
+  save=save||state!==run.current;
   configDraft=startupConfigDraft(state);selected=0;resultShown=-1;
   for(const id of ['settings-dialog','result-dialog','new-dialog','event-dialog'])if($(id).open)$(id).close();
   startupActive=false;$('startup-screen').hidden=true;
@@ -352,7 +354,7 @@ function render(deferDialogs=false){
   $('confirm-choice-label').hidden=pendingAction?.type!=='visit';
   $('confirm-action').hidden=uiMode==='eat'&&!pendingAction;
   $('cancel-action').hidden=!(uiMode==='eat'&&!pendingAction);
-  $('undo').disabled=!state.history.length;
+  $('undo').disabled=!state.history.some(action=>action.type!=='upgradeFoodChain');
   const r=state.rooms[selected];
   $('selection-hint').textContent=r?.prisoner?`${selected+1} 号${nameOf(r.prisoner)} · ${edible.length} 个可吃目标`:`已选 ${selected+1} 号牢房`;
   renderInspect();
@@ -401,7 +403,9 @@ function renderInspect(){
     return;
   }
   const p=r.prisoner,prey=targets(state,selected);
-  $('inspect').innerHTML=`<div class="inspect-portrait portrait ${p.code} tier-${p.tier}" role="img" aria-label="${nameOf(p)}"></div><div class="inspect-name tier-${p.tier}"><strong>${speciesOf(p.code).name}</strong><span class="rarity-tag">${RARITIES[p.tier]}</span></div><p class="inspect-text">可吃同阶${speciesOf(speciesOf(p.code).prey).name}${p.code==='rat'&&state.tools.includes('rathead')?'或同阶硕鼠':''}。吃后随机调整代号。</p><p class="hint">${prey.length?`可吃目标：${prey.map(target=>`${target+1}号`).join('、')}`:'当前没有可吃目标。'}<br>今日换：${state.rerolls} / ${state.config.rerollsPerDay} 次（实验设定）</p>`;
+  const foods=preyCodes(state,p.code).map(code=>speciesOf(code).name);
+  if(p.code==='rat'&&state.tools.includes('rathead'))foods.push('硕鼠');
+  $('inspect').innerHTML=`<div class="inspect-portrait portrait ${p.code} tier-${p.tier}" role="img" aria-label="${nameOf(p)}"></div><div class="inspect-name tier-${p.tier}"><strong>${speciesOf(p.code).name}</strong><span class="rarity-tag">${RARITIES[p.tier]}</span></div><p class="inspect-text">可吃同阶${foods.join('、')}。${p.code==='elephant'?'不能吃硕鼠。':''}吃后随机调整代号。</p><p class="hint">${prey.length?`可吃目标：${prey.map(target=>`${target+1}号`).join('、')}`:'当前没有可吃目标。'}<br>今日换：${state.rerolls} / ${state.config.rerollsPerDay} 次（实验设定）</p>`;
 }
 function showResults(){
   const population=[...onBoard(state),...state.rainbow];
@@ -551,7 +555,7 @@ $('new-form').addEventListener('submit',event=>{
 });
 $('undo').addEventListener('click',()=>{
   if(busy)return;
-  try{cancelChoice();rewardChoice=null;state=replay({initial,actions:state.history.slice(0,-1)});audio.reset();resultShown=-1;$('settings-dialog').close();persist();render();}
+  try{cancelChoice();rewardChoice=null;state=undoUserAction(initial,state);audio.reset();resultShown=-1;$('settings-dialog').close();persist();render();}
   catch(e){showError(e.message);}
 });
 $('export').addEventListener('click',exportCurrent);$('result-export').addEventListener('click',exportCurrent);

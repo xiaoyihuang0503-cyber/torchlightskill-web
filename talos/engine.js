@@ -1,4 +1,4 @@
-import { DEFAULT_CONFIG, SPECIES, RARITIES, TOOLS, GIFTS, validateConfig } from './rules.js';
+import { DEFAULT_CONFIG, SPECIES, RARITIES, TOOLS, GIFTS, FOOD_CHAIN_VERSION, validateConfig } from './rules.js?v=0.6.8-1';
 
 export function seedNumber(value) {
   let n = 2166136261;
@@ -32,9 +32,14 @@ function prisoner(s, code=null, tier=null) {
   return { id:`p${s.nextId++}`, code:code ?? SPECIES[weighted(s,s.config.codeWeights)].id,
     tier:tier ?? weighted(s,s.config.rarityWeights) };
 }
+// Saves without a marker replay their original cycle until the recorded upgrade.
+export function preyCodes(s, code) {
+  const item=species(code);
+  return item ? s.foodChain===FOOD_CHAIN_VERSION ? [...item.prey] : [item.legacyPrey] : [];
+}
 export function canEat(s, a, b) {
   if (!a || !b || a.id===b.id || a.tier!==b.tier || a.tier>=5) return false;
-  return species(a.code).prey===b.code || (has(s,'rathead') && a.code==='rat' && b.code==='rat');
+  return preyCodes(s,a.code).includes(b.code) || (has(s,'rathead') && a.code==='rat' && b.code==='rat');
 }
 export function targets(s, room) {
   const a=s.rooms[room]?.prisoner;
@@ -99,7 +104,12 @@ function eat(s, eaterId, preyId) {
   const current=s.rooms.find(r=>r.prisoner?.id===eaterIdentity)?.prisoner;
   if (revenge && current) {
     const available=s.rooms.filter(r=>r.status==='closed');
-    if (available.length) open(s,pick(s,available).id,false,{code:species(current.code).prey,tier:current.tier});
+    if (available.length) {
+      const room=pick(s,available).id,foods=preyCodes(s,current.code);
+      // Keep the original RNG sequence for the legacy one-target rule.
+      const code=foods.length===1 ? foods[0] : pick(s,foods);
+      open(s,room,false,{code,tier:current.tier});
+    }
   }
   if (current) log(s,`当前变为${nameOf(current)}，已重新计算可吃目标。`);
 }
@@ -155,7 +165,7 @@ function finalize(s) {
   if (s.combatIndex<0) s.phase='finished';
 }
 export function createGame(seed='talos',config=DEFAULT_CONFIG,preset='normal') {
-  const s={schema:'ss14.prison.run.v1',seed:String(seed),rng:seedNumber(seed),config:validateConfig(config),
+  const s={schema:'ss14.prison.run.v1',foodChain:FOOD_CHAIN_VERSION,seed:String(seed),rng:seedNumber(seed),config:validateConfig(config),
     day:1,phase:'patrol',position:0,rooms:[],tools:[],rainbow:[],pending:[],event:null,chain:false,
     destinations:[],rerolls:0,goalIndex:0,nextId:1,log:[],history:[],revision:0,
     stats:{opened:0,eaten:0,swaps:0,points:0},waves:[],combatIndex:-1};
@@ -187,7 +197,20 @@ export function legalActions(s) {
   if(s.phase==='riot')return [{type:'fight'}];
   return [];
 }
+export function upgradeFoodChain(state) {
+  validateState(state);
+  if(state.foodChain===FOOD_CHAIN_VERSION)return state;
+  const s=structuredClone(state);
+  s.foodChain=FOOD_CHAIN_VERSION;s.revision++;
+  s.history.push({type:'upgradeFoodChain',version:FOOD_CHAIN_VERSION,revision:s.revision,day:s.day});
+  log(s,'吞噬规则更新：象吃狮、狼；狮吃狼、鼠；狼吃鼠；鼠吃象。象不能吃鼠，双方仍需同稀有度。');
+  return s;
+}
 export function applyAction(state,action) {
+  if(action?.type==='upgradeFoodChain') {
+    if(Object.keys(action).length!==2||action.version!==FOOD_CHAIN_VERSION||state.foodChain!==undefined)throw new Error('吞噬规则升级操作无效');
+    return upgradeFoodChain(state);
+  }
   if(!legalActions(state).some(a=>Object.keys(a).length===Object.keys(action).length&&Object.keys(a).every(k=>a[k]===action[k])))throw new Error('场面已变化或该操作当前不可用');
   const s=structuredClone(state);
   s.revision++;s.history.push({...action,revision:s.revision,day:s.day});
@@ -222,7 +245,8 @@ export function applyAction(state,action) {
     else if(event.kind==='chain'){s.chain=true;log(s,'连锁反应生效：下次移动开启路径上的未开牢房。');}
     else{
       const r=s.rooms[event.room],code=r.prisoner.code,tier=r.prisoner.tier;
-      const victims=s.rooms.filter(other=>other.id!==r.id&&other.prisoner&&other.prisoner.code===species(code).prey&&(!s.config.executionSameTier||other.prisoner.tier===tier));
+      const foods=preyCodes(s,code);
+      const victims=s.rooms.filter(other=>other.id!==r.id&&other.prisoner&&foods.includes(other.prisoner.code)&&(!s.config.executionSameTier||other.prisoner.tier===tier));
       for(const victim of victims)release(s,victim);
       log(s,`处刑效率移除 ${victims.length} 名囚犯（采用当前实验筛选）。`);
       if(victims.length)promote(s,r,victims.length,true);
@@ -272,6 +296,7 @@ export function replay(run) {
 }
 export function validateState(s) {
   if(!s||s.schema!=='ss14.prison.run.v1')throw new Error('这不是监狱实验场存档');
+  if(s.foodChain!==undefined&&s.foodChain!==FOOD_CHAIN_VERSION)throw new Error('吞噬规则版本无效');
   validateConfig(s.config);
   if(!Number.isInteger(s.day)||s.day<1||s.day>s.config.days||!['patrol','manage','event','riot','finished'].includes(s.phase))throw new Error('游戏日或阶段无效');
   if(!Number.isInteger(s.rng)||s.rng<1||s.rng>4294967295||!Number.isInteger(s.nextId)||s.nextId<1)throw new Error('随机状态无效');

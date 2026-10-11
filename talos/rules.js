@@ -1,8 +1,9 @@
+export const FOOD_CHAIN_VERSION = 'beast-chess-v1';
 export const SPECIES = [
-  { id: 'elephant', name: '巨象', icon: '🐘', prey: 'lion' },
-  { id: 'lion', name: '狂狮', icon: '🦁', prey: 'wolf' },
-  { id: 'wolf', name: '头狼', icon: '🐺', prey: 'rat' },
-  { id: 'rat', name: '硕鼠', icon: '🐀', prey: 'elephant' },
+  { id: 'elephant', name: '巨象', icon: '🐘', prey: ['lion', 'wolf'], legacyPrey: 'lion' },
+  { id: 'lion', name: '狂狮', icon: '🦁', prey: ['wolf', 'rat'], legacyPrey: 'wolf' },
+  { id: 'wolf', name: '头狼', icon: '🐺', prey: ['rat'], legacyPrey: 'rat' },
+  { id: 'rat', name: '硕鼠', icon: '🐀', prey: ['elephant'], legacyPrey: 'elephant' },
 ];
 export const RARITIES = ['普通', '魔法', '稀有', '传奇', '至臻', '绮彩'];
 export const TOOLS = [
