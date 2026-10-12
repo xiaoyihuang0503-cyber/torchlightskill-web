@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#080808">
   <title>刷宝游戏工具箱</title>
-  <meta name="description" content="为刷宝游戏玩家准备的工具箱。火炬 AI 导师、塔罗斯监狱玩法工具，持续更新。">
+  <meta name="description" content="为刷宝游戏玩家准备的工具箱。火炬 AI 导师、塔罗斯监狱与火炬议会，持续更新。">
   <link rel="canonical" href="https://torchlightskill.com/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="刷宝游戏工具箱">
@@ -21,9 +21,11 @@
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./style.css?v=20261011-7">
   <link rel="stylesheet" href="./share.css?v=20261011-3">
-  <script src="./app.js" defer></script>
+  <link rel="stylesheet" href="./carousel.css?v=20261012-1">
+  <script src="./app.js?v=20261012-1" defer></script>
+  <script src="./product-carousel.js?v=20261012-1" defer></script>
   <script src="./ambient.js?v=20261012-1" defer></script>
-  <script type="module" src="./share.js?v=20261011-5"></script>
+  <script type="module" src="./share.js?v=20261012-1"></script>
 <script src="https://torchlightskill-analytics.hyx920503.workers.dev/tracker.js" async></script>
 </head>
 <body>
@@ -44,18 +46,27 @@
     <p>从构筑问题到赛季玩法，<br class="mobile-break">让每一次选择更有把握。</p>
     </div>
   </section>
-  <section class="products" id="products" aria-labelledby="products-title">
-    <div class="section-heading"><div><span class="eyebrow">OUR TOOLS</span><h2 id="products-title">选一个工具，开始。</h2></div><p>围绕刷宝游戏，持续更新</p></div>
-    <div class="product-grid">
-      <article class="product-card mentor-card">
+  <section class="products" id="products" aria-labelledby="products-title" data-product-carousel aria-roledescription="产品轮播">
+    <div class="section-heading"><div><h2 id="products-title">选一个工具，开始。</h2></div><p>左右滑动，探索工具</p></div>
+    <div class="product-stage">
+      <button class="product-arrow" type="button" data-product-previous aria-label="上一个工具">‹</button>
+      <div class="product-viewport" aria-label="横向浏览产品">
+      <article class="product-card mentor-card" data-product="mentor">
         <div class="product-visual mentor-visual"><div class="mentor-scan-rings" aria-hidden="true"></div><img src="./assets/mentor-mia.png" alt="火炬 AI 导师米娅" width="1024" height="1536"><span class="visual-word" aria-hidden="true">MENTOR</span></div>
         <div class="product-copy"><div class="product-topline"><span class="eyebrow">AI MENTOR</span><span class="badge">内测中</span></div><h3>火炬 AI 导师</h3><p>抄了作业，还是不知道问题在哪？<br>围绕你的构筑，了解伤害、生存与提升顺序。</p><div class="tags"><span>构筑诊断</span><span>阶段建议</span><span>流派诊断</span></div><button class="product-button" data-dialog="mentor-detail">了解导师 <span aria-hidden="true">↗</span></button></div>
       </article>
-      <article class="product-card prison-card">
+      <article class="product-card prison-card" data-product="talos" data-product-initial>
         <div class="product-visual prison-visual"><img src="./assets/talos-beasts-cover-v1.png" alt="巨象、狂狮、头狼与硕鼠，塔罗斯监狱玩法字标" width="1672" height="941" loading="lazy"></div>
         <div class="product-copy"><div class="product-topline"><span class="eyebrow">SEASON TOOL</span><span class="badge amber">测试中</span></div><h3>塔罗斯监狱</h3><p>先练一轮，再做选择。<br>复刻练习与原创挑战，规则持续校准。</p><div class="tags"><span>经营模拟</span><span>玩法练习</span><span>收益辅助</span></div><div class="product-action-row"><a class="product-button" href="/talos/" target="_blank" rel="noopener noreferrer">开始试玩 <span aria-hidden="true">↗</span></a><div class="product-secondary-actions"><button class="product-detail-button" data-dialog="prison-detail">了解玩法与测试说明</button><button type="button" class="share-card-trigger" data-dialog="site-share" data-share-open aria-haspopup="dialog" aria-controls="site-share">分享给朋友</button></div></div></div>
       </article>
+      <article class="product-card council-card" data-product="council">
+        <div class="product-visual council-visual"><img src="./assets/council-cover.svg" alt="火炬议会：英雄投票与策划圆桌" width="280" height="280" loading="lazy"></div>
+        <div class="product-copy"><div class="product-topline"><span class="eyebrow">PLAYER COMMUNITY</span><span class="badge">已上线</span></div><h3>火炬议会</h3><p>新赛季开荒，你玩谁？<br>选英雄、投焦点议题，让你关心的问题上桌。</p><div class="tags"><span>英雄投票</span><span>随机开荒</span><span>策划圆桌</span></div><a class="product-button" href="/council/" target="_blank" rel="noopener noreferrer">进入火炬议会 <span aria-hidden="true">↗</span></a></div>
+      </article>
+      </div>
+      <button class="product-arrow" type="button" data-product-next aria-label="下一个工具">›</button>
     </div>
+    <div class="product-pagination"><div class="product-dots" role="group" aria-label="选择工具"></div><span class="product-position" aria-live="polite" aria-atomic="true"></span></div>
   </section>
   <section class="home-author-section" id="about" aria-labelledby="home-author-title">
     <div class="home-author-heading"><img src="./talos/assets/author/douyin-avatar.jpg" alt="作者头像" width="36" height="36"><div><h2 id="home-author-title">作者</h2><p>交流玩法，关注工具更新。</p></div></div>

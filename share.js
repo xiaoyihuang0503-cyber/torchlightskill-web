@@ -88,10 +88,11 @@ function selectFormat(format) {
   }
 }
 
-document.querySelectorAll('[data-share-open]').forEach(button => button.addEventListener('click', () => {
+document.addEventListener('click', event => {
+  if (!event.target.closest('[data-share-open]')) return;
   status.textContent = '';
   selectFormat(selected);
-}));
+});
 formats.forEach(button => button.addEventListener('click', () => {
   status.textContent = '';
   selectFormat(button.dataset.shareFormat);

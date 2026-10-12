@@ -1,5 +1,8 @@
-document.querySelectorAll('[data-dialog]').forEach(button => {
-  button.addEventListener('click', () => document.getElementById(button.dataset.dialog).showModal());
+document.addEventListener('click', event => {
+  const button = event.target.closest('[data-dialog]');
+  if (!button) return;
+  const dialog = document.getElementById(button.dataset.dialog);
+  if (dialog && !dialog.open) dialog.showModal();
 });
 document.querySelectorAll('dialog').forEach(dialog => {
   dialog.querySelectorAll('.close-dialog,.close-action').forEach(button => button.addEventListener('click', () => dialog.close()));
