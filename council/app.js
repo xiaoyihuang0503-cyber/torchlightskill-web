@@ -622,11 +622,23 @@ function shareEntry(kind,heroId){
     caption="朋友点开就能去玩开荒老虎机。";
    }
    break;
+  case "topic": {
+   const current=topicById(heroId)||topicById(activeTopicId);
+   if(!current)throw Error("找不到这道问题");
+   url.searchParams.set("kind","topic");
+   url.searchParams.set("topic",current.id);
+   const chosenId=state[current.id];
+   const chosen=current.choices.find(c=>c[0]===chosenId);
+   if(chosen)url.searchParams.set("choice",chosen[0]);
+   title=chosen?"我在圆桌上选了「"+chosen[1]+"」，你呢？":current.title;
+   caption="朋友点开就能看到这把椅子对应的问题，直接投上自己的一票。";
+   break;
+  }
   case "maze":
+   // Kept only for old historical links; new v2 doesn't cast the two-choice poll.
    url.searchParams.set("kind","maze");
-   if(state.maze)url.searchParams.set("choice",state.maze);
-   title=state.maze==="support"?"我觉得迷城这次调整还能接受，你呢？":state.maze==="oppose"?"迷城这次砍得太狠了，你觉得呢？":"迷城燃料被砍，你能接受吗？";
-   caption="朋友可以在分享页直接选择自己的立场。";
+   title="以前的迷城调整投票";
+   caption="这里保留历史链接，现在可以进入新的四道圆桌问题。";
    break;
   case "roundtable-question":
    url.searchParams.set("kind","roundtable");
@@ -642,11 +654,8 @@ function shareEntry(kind,heroId){
    break;
   case "roundtable":
    url.searchParams.set("kind","roundtable");
-   if(state.roundtable)url.searchParams.set("choice",state.roundtable);
-   const topic=polling.find(t=>t.id==="roundtable");
-   const answer=topic.choices.find(c=>c[0]===state.roundtable);
-   title=answer?"圆桌会谈，我最想问："+answer[1]+"。你想问什么？":"官方圆桌会谈，你最想让策划回答什么？";
-   caption="朋友可以直接投票，选出最关心的话题。";
+   title="你最想问策划什么？";
+   caption="朋友点开后可以进入圆桌提问，也可以投四道焦点议题。";
    break;
   default:
    url.searchParams.set("kind","ranking");
