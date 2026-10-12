@@ -124,45 +124,55 @@
       </div>
     </section>
 
-    <section class="roundtable-section" id="roundtable" aria-labelledby="roundtable-title">
-      <div class="section-heading">
-        <div><span class="section-index">04 / 玩家提问</span><h2 id="roundtable-title">策划圆桌，你想问什么？</h2>
-          <p>10 月 14 日 20:00。把你最想问的写下来，也能看看问题集中在哪些方面。</p></div>
-        <button type="button" class="roundtable-top-share" id="share-roundtable">分享圆桌提问 ↗</button>
+    <section class="roundtable-section v2-roundtable" id="roundtable" aria-labelledby="roundtable-title">
+      <div class="section-heading v2-heading">
+        <div><span class="section-index">03 / 策划圆桌</span><h2 id="roundtable-title">来圆桌给问题占个座 🪑</h2>
+          <p>每把椅子代表一道问题。点一下，看详情、投支持票。</p></div>
+        <button type="button" class="roundtable-top-share" id="share-roundtable">📣 分享圆桌 ↗</button>
       </div>
-      <div class="roundtable-layout">
-        <div class="roundtable-compose">
-          <span class="roundtable-kicker">写给策划的问题</span>
-          <h3>你最想让策划回答哪件事？</h3>
-          <form id="roundtable-question-form">
-            <label class="question-label" for="roundtable-question-input">写下具体问题</label>
-            <textarea id="roundtable-question-input" rows="4" minlength="8" maxlength="160" placeholder="例如：迷城燃料下调之后，前期刷图收益要怎么平衡？" required></textarea>
-            <div class="compose-bottom">
-              <span id="question-length">0 / 160 字</span>
-              <button type="submit" class="submit-question" id="submit-roundtable-question">提交问题 ↗</button>
+      <div class="roundtable-v2-layout">
+        <div class="roundtable-stage">
+          <div class="seat-map" id="seat-map" role="group" aria-label="策划圆桌的八个问题席位">
+            <div class="table-center">
+              <span class="table-symbol" aria-hidden="true">✳</span>
+              <strong>策划圆桌</strong>
+              <small>点椅子 · 看问题</small>
+              <span id="table-total" class="table-total">等待玩家参与</span>
             </div>
-          </form>
-          <p class="question-notice" id="roundtable-submit-feedback" role="status" aria-live="polite">问题匿名提交后进入待审核，关键词计数会实时更新。请勿填写手机号等个人信息。</p>
-        </div>
-        <div class="roundtable-trends">
-          <div class="trends-heading">
-            <div><span class="roundtable-kicker">问题热词</span><h3>大家都在关心什么？</h3></div>
-            <span class="trends-local" id="keyword-status">实时统计连接中</span>
           </div>
-          <p>玩家提问后的关键词会实时汇总，问题正文审核后才会公开。</p>
-          <div id="keyword-cloud" class="keyword-cloud" aria-live="polite"><span class="keyword-empty">还没有提交的问题</span></div>
-          <div class="recent-questions">
-            <div class="recent-heading"><strong>最近提交</strong><span id="question-total">0 条</span></div>
-            <ul id="roundtable-question-list"><li class="question-empty">等你提交第一个问题</li></ul>
+          <div class="seat-strip" id="seat-strip" aria-label="滑动查看更多问题席位"></div>
+          <p class="seat-hint">🔥 每人每把椅子可支持一次。空椅子可以提交问题。</p>
+        </div>
+        <div class="seat-panel">
+          <div id="seat-detail" class="seat-detail">
+            <span class="seat-detail-kicker" id="seat-detail-tag">点一把椅子</span>
+            <h3 id="seat-detail-title">看看大家最想问什么</h3>
+            <p id="seat-detail-body">四道焦点追问固定上桌，玩家审核通过的问题也会进入席位。</p>
+            <span id="seat-detail-count" class="seat-detail-count"></span>
+            <div class="seat-detail-actions">
+              <button type="button" class="button primary" id="seat-support" disabled>🔥 我也想问这个</button>
+              <button type="button" class="button secondary" id="seat-share" disabled>📣 分享席位</button>
+            </div>
+          </div>
+          <div id="seat-ask-panel" class="seat-ask-panel" hidden>
+            <span class="seat-detail-kicker">➕ 空椅子 · 我来提问</span>
+            <h3>你想问策划什么？</h3>
+            <form id="roundtable-question-form">
+              <label for="roundtable-question-input">写一个具体问题（8～160 字）</label>
+              <textarea id="roundtable-question-input" rows="4" minlength="8" maxlength="160" required placeholder="例如：迷城调整后，相同配置一小时收益少了多少？"></textarea>
+              <div class="compose-bottom"><span id="question-length">0 / 160 字</span><button class="submit-question" type="submit" id="submit-roundtable-question">提交问题 ↗</button></div>
+            </form>
+            <p id="roundtable-submit-feedback" class="question-notice" role="status" aria-live="polite">提交后先审核，审核通过就有机会进入圆桌席位。</p>
+            <button id="seat-ask-back" type="button" class="focus-ask">← 返回圆桌</button>
+          </div>
+          <div class="table-trends">
+            <div class="table-trends-title"><strong>📈 玩家提问热词</strong><span id="keyword-status">正在同步</span></div>
+            <p>包含待审核投稿的关键词统计，不公开未审核原文。</p>
+            <div id="keyword-cloud" class="keyword-cloud" aria-live="polite"><span class="keyword-empty">等待第一条提问</span></div>
+            <div class="table-recent"><strong>已审核的问题</strong><span id="question-total">0 条</span></div>
+            <ul id="roundtable-question-list"><li class="question-empty">目前还没有已审核的问题</li></ul>
           </div>
         </div>
-      </div>
-      <div class="roundtable-quick">
-        <div class="roundtable-quick-head">
-          <div><strong>不想打字？也可以直接选一个方向。</strong><small>投票计入全站真实票数，选择可以修改。</small></div>
-          <span id="roundtable-summary">正在读取票数…</span>
-        </div>
-        <div id="roundtable-options" class="poll-options roundtable-poll-options" aria-label="圆桌关注方向投票"></div>
       </div>
     </section>
 
