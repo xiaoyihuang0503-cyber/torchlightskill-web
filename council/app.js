@@ -92,7 +92,6 @@ function newPortrait(asset,alt,className){
  const img=document.createElement("img");
  img.className=className||"";
  img.alt=alt;img.loading="lazy";img.decoding="async";img.referrerPolicy="no-referrer";
- img.src=asset.site_url;
  return img;
 }
 function portrait(hero,small){
@@ -101,6 +100,7 @@ function portrait(hero,small){
  const img=newPortrait(hero.asset,sourceName(hero)+"头像","");
  img.addEventListener("load",()=>{fallback.hidden=true;});
  img.addEventListener("error",()=>{img.hidden=true;fallback.hidden=false;holder.classList.add("portrait-error");});
+ img.src=hero.asset.site_url;
  holder.append(fallback,img);
  return holder;
 }
@@ -294,7 +294,7 @@ function showActivity(value,simulated){
  lastActivity=value;
  const now=new Date();
  const stamp=new Intl.DateTimeFormat("zh-CN",{timeZone:"Asia/Shanghai",hour:"2-digit",minute:"2-digit",hour12:false}).format(now);
- $("activity-line").textContent=stamp+" · "+(simulated?"演示：":"")+value;
+ $("activity-line").textContent=stamp+" · "+(simulated?"模拟：":"")+value;
 }
 function bubble(hero,label,simulation){
  const item=chartCards.get(hero.id);
@@ -307,7 +307,7 @@ function bubble(hero,label,simulation){
  const y=Math.max(63,target.top-area.top-4);
  const bubble=document.createElement("div");bubble.className="vote-bubble";
  bubble.style.left=x+"px";bubble.style.top=y+"px";
- const image=newPortrait(hero.asset,"","bubble-avatar");
+ const image=newPortrait(hero.asset,"","bubble-avatar");image.src=hero.asset.site_url;
  const line=document.createElement("span");line.className="bubble-copy";
  const lineTop=document.createElement("strong");lineTop.textContent=simulation?"演示 +1":label;
  const lineBottom=document.createElement("small");lineBottom.textContent=sourceName(hero);
@@ -322,7 +322,7 @@ function tickDemo(){
  const candidate=top[random(top.length)];
  state.simulated[candidate.id]=(state.simulated[candidate.id]||0)+1;
  chart();updateRoster();bubble(candidate,"",true);
- showActivity("模拟玩家投给了 "+sourceName(candidate)+" +1",true);
+ showActivity("有人投给了 "+sourceName(candidate)+" +1",true);
 }
 function toggleMotion(){
  state.motion=!state.motion;
@@ -462,6 +462,7 @@ function setUp(){
  $("lottery-share").addEventListener("click",()=>share("slot"));
  $("lottery-choose").addEventListener("click",()=>closeModal($("lottery-dialog")));
  $("copy-share").addEventListener("click",copyLink);
+ $("share-arena").addEventListener("click",()=>share("vote"));
  $("simulate-btn").addEventListener("click",()=>{
   if(!loaded||isHeroClosed())return;
   const prev=state.motion;state.motion=true;tickDemo();state.motion=prev;
