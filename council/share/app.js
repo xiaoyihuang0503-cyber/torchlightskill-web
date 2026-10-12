@@ -45,12 +45,12 @@ function showPicture(hero){
  const ring=$("invite-portrait-ring");
  ring.replaceChildren();
  const image=document.createElement("img");
- image.src=hero.site_url;
  image.alt=labelHero(hero)+"头像";
  image.referrerPolicy="no-referrer";
  image.addEventListener("error",()=>{
   ring.replaceChildren(document.createTextNode(hero.trait_name.slice(0,1)));
  });
+ image.src=hero.site_url;
  ring.appendChild(image);
  $("invite-portrait-caption").textContent=labelHero(hero);
  wrap.hidden=false;
