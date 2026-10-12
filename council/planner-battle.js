@@ -49,6 +49,63 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
     state.expanded=false;
     syncRows();
   }
+  function updateMobileDockLabel(){
+    const node=$("mobile-bomb-title"),combo=$("mobile-bomb-combo");
+    const selected=state.ranked.find(row=>row.key===state.selected);
+    if(node){
+      node.textContent=selected?"🎯 "+selected.title:"💣 选择问题开始炸";
+      node.title=selected?.title||"";
+    }
+    if(combo)combo.textContent=state.combo?"💥 "+fmt(state.combo)+" 连击":"连击 0";
+  }
+  function editingText(){
+    const active=document.activeElement;
+    if(!active)return false;
+    return /^(INPUT|TEXTAREA|SELECT)$/i.test(active.tagName||"")||
+      Boolean(active.isContentEditable);
+  }
+  function syncMobileDock(){
+    const dock=$("mobile-bomb-dock"),arena=$("topics"),body=document.body;
+    if(!dock||!arena||!body)return;
+    if(window.innerWidth>700||document.hidden){
+      dock.hidden=true;
+      body.classList.remove("bomb-dock-visible");
+      $("mobile-bomb-fx")?.classList.remove("active");
+      return;
+    }
+    body.classList.add("bomb-dock-ready");
+    const height=window.visualViewport?.height||window.innerHeight||680;
+    const rect=arena.getBoundingClientRect();
+    const dialogOpen=$("lottery-dialog")?.open||$("share-dialog")?.open;
+    const keyboardOpen=window.visualViewport?.height && window.innerHeight &&
+      window.visualViewport.height<window.innerHeight*.7;
+    const visible=rect.top<height*.83 && rect.bottom>Math.min(height*.45,130) &&
+      !dialogOpen&&!editingText()&&!keyboardOpen;
+    dock.hidden=!visible;
+    body.classList.toggle("bomb-dock-visible",visible);
+    $("mobile-bomb-fx")?.classList.toggle("active",visible);
+    if(visible){
+      const dockHeight=Math.ceil(dock.getBoundingClientRect().height||104);
+      body.style.setProperty("--bomb-dock-height",dockHeight+"px");
+      updateMobileDockLabel();
+    }
+  }
+  function revealPlannerOnMobile(){
+    if(window.innerWidth>700||!document.body?.classList.contains("bomb-dock-visible"))return false;
+    const stage=$("planner-stage");
+    if(!stage)return false;
+    const rect=stage.getBoundingClientRect();
+    const dockHeight=$("mobile-bomb-dock")?.getBoundingClientRect().height||105;
+    const freeBottom=(window.visualViewport?.height||window.innerHeight||680)-dockHeight-12;
+    if(rect.top>=0&&rect.bottom<=freeBottom)return false;
+    stage.scrollIntoView?.({behavior:"auto",block:"start"});
+    return true;
+  }
+  function effectLayer(){
+    if(window.innerWidth<=700&&document.body?.classList.contains("bomb-dock-visible"))
+      return $("mobile-bomb-fx")||$("planner-fx-layer");
+    return $("planner-fx-layer");
+  }
   function tierFor(key){
     const place=state.ranked.findIndex(row=>row.key===key);
     const votes=nSupport(key);
@@ -132,6 +189,7 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
     const shuffle=$("planner-shuffle");if(shuffle)shuffle.disabled=all.length<=8;
     if(!order.some(row=>row.key===state.selected))state.selected=order[0]?.key||"topic:bomb_01";
     refreshSelected();
+    updateMobileDockLabel();
     const pending=$("planner-pending-count");
     if(pending){
       pending.hidden=!state.pending.length;
@@ -164,6 +222,7 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
       fields.get(row.key)?.button.setAttribute("aria-pressed",String(row.key===key));
     }
     refreshSelected();
+    updateMobileDockLabel();
   }
   function openForm(open=true){
     const form=$("planner-question-form");
@@ -232,7 +291,7 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
   function impact(tier,real){
     reactToImpact(tier,real);
     if(reduced||document.hidden)return;
-    const layer=$("planner-fx-layer"),card=$("planner-stage"),target=$("planner-target");
+    const layer=effectLayer(),card=$("planner-stage"),target=$("planner-target");
     if(!layer||!target||!card)return;
     const b=framePoint(target,layer);
     if(!b)return;
@@ -268,10 +327,11 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
   function fireBomb(key=state.selected,{real=false,force=false}={}){
     if(document.hidden)return;
     if(reduced){impact(tierFor(key),real);return;}
-    const layer=$("planner-fx-layer"),stage=$("planner-stage"),target=$("planner-target");
+    const layer=effectLayer(),stage=$("planner-stage"),target=$("planner-target");
     if(!layer||!stage||!target)return;
-    if(layer.querySelectorAll(".planner-projectile").length>=10)return;
-    const row=fields.get(key)?.button||$("petition-orb");
+    if(layer.querySelectorAll(".planner-projectile").length>=10){impact(tierFor(key),real);return;}
+    const fromDock=window.innerWidth<=700&&document.body?.classList.contains("bomb-dock-visible");
+    const row=fromDock?$("mobile-bomb-fire"):(fields.get(key)?.button||$("petition-orb"));
     const source=framePoint(row,layer),end=framePoint(target,layer);
     if(!source||!end)return;
     const tier=tierFor(key);
@@ -407,8 +467,14 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
     state.pendingBySeat.set(row.key,(state.pendingBySeat.get(row.key)||0)+1);
     $("petition-total").textContent=fmt(state.localClicks);
     $("petition-combo").textContent="💥 "+fmt(state.combo)+" 连击";
-    fireBomb(row.key);
+    updateMobileDockLabel();
+    const reveal=revealPlannerOnMobile();
     syncRows();
+    if(reveal){
+      const run=()=>{if(!document.hidden)fireBomb(row.key);};
+      if(typeof window.requestAnimationFrame==="function")window.requestAnimationFrame(run);
+      else window.setTimeout(run,18);
+    }else fireBomb(row.key);
     const msg=state.combo===10?"⚡ 10 连炸！策划快看！":state.combo===30?"💥 30 连炸！全桌都听见了！":
       state.combo===100?"👑 100 连炸！整场都炸响！":state.combo>=5?"🔥 "+fmt(state.combo)+" 连击！火力全开！":
       "💣 策划又被炸一下！当前问题热度 +1";
@@ -416,7 +482,7 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
     if(state.localClicks%5===0||now-state.lastSave>1100)saveClicks();
     queueFlush(950);
     window.clearTimeout(state.timer);
-    state.timer=window.setTimeout(()=>{state.combo=0;$("petition-combo").textContent="0 连击";},1750);
+    state.timer=window.setTimeout(()=>{state.combo=0;$("petition-combo").textContent="0 连击";updateMobileDockLabel();},1750);
   }
   function updateQuestions(){
     state.questions=(LIVE?.getQuestions?.()||[]).filter(q=>q.status==="approved");
@@ -456,6 +522,15 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
     $("petition-orb").addEventListener("click",tap);
     $("planner-target").addEventListener("click",tap);
     $("planner-vote").addEventListener("click",supportCurrent);
+    $("mobile-bomb-fire")?.addEventListener("click",tap);
+    $("mobile-bomb-repeat")?.addEventListener("click",tap);
+    window.addEventListener("scroll",syncMobileDock,{passive:true});
+    window.addEventListener("resize",syncMobileDock,{passive:true});
+    window.visualViewport?.addEventListener?.("resize",syncMobileDock,{passive:true});
+    document.addEventListener("focusin",syncMobileDock);
+    document.addEventListener("focusout",()=>window.setTimeout(syncMobileDock,100));
+    $("lottery-dialog")?.addEventListener("close",syncMobileDock);
+    $("share-dialog")?.addEventListener("close",syncMobileDock);
     $("planner-more").addEventListener("click",()=>{state.expanded=!state.expanded;syncRows();});
     $("planner-shuffle").addEventListener("click",nextBatch);
     $("planner-write").addEventListener("click",()=>openForm($("planner-question-form").hidden));
@@ -470,6 +545,7 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
       else if(state.pendingClicks>0)queueFlush(1000);
     });
     // Wait for a verified public database read before claiming a real global count.
+    syncMobileDock();
   }
   return{
     mount,tap,select,refreshSeats,updateQuestions,onGlobalCount,
