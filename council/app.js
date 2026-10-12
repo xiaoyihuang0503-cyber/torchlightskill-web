@@ -166,7 +166,7 @@ function chart(){
   // Use consistent zero baseline and a fixed chart height: no label overlap.
   const maxPixels=mobile?172:188;
   refs.bar.style.height=Math.max(4,Math.round(count(hero)/max*maxPixels))+"px";
-  b.classList.toggle("leader",index===0);
+  b.classList.toggle("leader",index===0&&count(hero)>0);
   b.classList.toggle("mine",state.hero===hero.id);
   b.disabled=isHeroClosed()||!remoteReady;
   b.setAttribute("aria-pressed",String(state.hero===hero.id));
@@ -182,6 +182,8 @@ function chart(){
  });
  $("ranking-label").textContent=take;
  $("demo-vote-total").textContent=fmt(heroes.reduce((sum,h)=>sum+count(h),0));
+ const totalReal=heroes.reduce((sum,h)=>sum+count(h),0);
+ if(!totalReal) $("my-camp").textContent="🗳️ 等待第一个开荒投票";
  $("hero-total").textContent=heroes.length;
  const mine=heroMap.get(state.hero);
  if(mine){
@@ -217,11 +219,28 @@ function makeRosterHero(hero){
  rosterCards.set(hero.id,{button:card,action:action,shareButton:shareButton,votes,check:tick,meter:meterValue});
  return card;
 }
+function sortRoster(){
+ const host=$("hero-list"),drawer=$("all-heroes");
+ if(!host||!loaded||!rosterCards.size||!drawer?.open)return;
+ // Do not move a focused voting control under someone's finger or keyboard.
+ const focus=document.activeElement;
+ if(focus&&host.contains(focus))return;
+ const order=heroes.slice().sort((a,b)=>
+   rosterSort==="name"
+     ?a.name.localeCompare(b.name,"zh-CN")||a.position-b.position
+     :count(b)-count(a)||a.position-b.position
+ );
+ const current=Array.from(host.children).map(n=>n.dataset?.hero||"").join(",");
+ const wanted=order.map(h=>h.id).join(",");
+ if(current===wanted)return;
+ const fragment=document.createDocumentFragment();
+ order.forEach(h=>fragment.appendChild(rosterCards.get(h.id).button));
+ host.replaceChildren(fragment);
+}
 function buildRoster(){
- const frag=document.createDocumentFragment();
- const order=heroes.slice().sort((a,b)=>a.position-b.position);
- order.forEach(h=>frag.appendChild(makeRosterHero(h)));
- $("hero-list").replaceChildren(frag);
+ const fragment=document.createDocumentFragment();
+ heroes.slice().sort((a,b)=>a.position-b.position).forEach(h=>fragment.appendChild(makeRosterHero(h)));
+ $("hero-list").replaceChildren(fragment);
  updateRoster();
 }
 function updateRoster(){
@@ -237,6 +256,7 @@ function updateRoster(){
   ref.action.setAttribute("aria-label",sourceName(h)+"，真实"+v+"票，"+(state.hero===id?"已投":"投票"));
   ref.meter.style.width=Math.round(v/max*100)+"%";
  });
+ sortRoster();
  searchRoster();
 }
 function searchRoster(){
