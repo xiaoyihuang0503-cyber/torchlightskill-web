@@ -1,4 +1,5 @@
 import { drawCouncilPoster, SITE_QR_URL } from "./qr-poster.js";
+import { BOMB_ISSUES } from "../bomb-issues.js?v=20261013-issues20";
 /* Torchlight Council v2 share landing: deep links to real polls and chairs. */
 (function(){
 "use strict";
@@ -168,7 +169,9 @@ async function setupSeat(){
  }
  let title="",body="";
  const official=seat.startsWith("topic:")?focus.find(t=>"topic:"+t.id===seat):null;
- if(official){title=official.title;body=official.followup;}
+ const seed=BOMB_ISSUES.find(t=>seat==="topic:"+t.id);
+ if(seed){title=seed.title;body="预置问题 · 每次点击都增加这道问题的热度";}
+ else if(official){title=official.title;body=official.followup;}
  else if(seat.startsWith("question:")){
   const question=await LIVE?.getApprovedQuestion?.(seat.slice(9));
   if(question){title=question.text;body="这是一位玩家提交并通过审核的问题。";}
