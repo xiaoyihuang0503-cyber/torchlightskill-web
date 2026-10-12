@@ -15,7 +15,8 @@
   <link rel="stylesheet" href="./v04.css?v=20261012-1">
   <link rel="stylesheet" href="./share-layout.css?v=20261012-1">
   <link rel="stylesheet" href="./roundtable.css?v=20261012-1">
-  <script defer src="./app.js?v=20261012-6"></script>
+  <link rel="stylesheet" href="./v2.css?v=20261012-1">
+  <script type="module" src="./live-bootstrap.js?v=20261012-2"></script>
 </head>
 <body>
 <div class="council-shell">
@@ -27,8 +28,9 @@
       <span class="logo-copy"><strong>火炬议会</strong><small>TORCHLIGHT COUNCIL</small></span>
     </a>
     <nav class="header-actions" aria-label="导航">
-      <a class="sticker-nav" href="#all-heroes">全部英雄</a>
-      <a class="sticker-nav" href="#topics">玩家投票</a>
+      <a class="sticker-nav" href="#hero-board">🔥 开荒榜</a>
+      <a class="sticker-nav" href="#topics">🗳️ 焦点投票</a>
+      <a class="sticker-nav" href="#roundtable">🪑 策划圆桌</a>
     </nav>
   </header>
 
@@ -46,44 +48,44 @@
       </aside>
     </section>
 
-    <section class="arena-section" aria-labelledby="arena-title">
+    <section class="arena-section" id="hero-board" aria-labelledby="arena-title">
       <div class="section-heading">
-        <div><span class="section-index">01 / 英雄投票</span><h2 id="arena-title">现在谁排前面？</h2>
-        <p>这里先看前六名。28 个英雄都在下面，直接点头像就能投。</p></div>
-        <span class="sample-label">模拟票数</span>
+        <div><span class="section-index">01 / 英雄投票</span><h2 id="arena-title">英雄实时榜 👑</h2>
+        <p>真实票数决定排名，随时可能反超。</p></div>
+        <span class="sample-label" id="vote-source-label">真实票数 · 连接中</span>
       </div>
       <div class="arena-panel">
         <div class="arena-toolbar">
           <div class="arena-toolbar-label"><span class="live-indicator">●</span><strong>开荒排行榜</strong><span>TOP <span id="ranking-label">6</span></span></div>
-          <span class="arena-meta"><strong id="hero-total">28</strong> 个特性 · <strong id="demo-vote-total">—</strong> 张模拟票</span>
+          <span class="arena-meta"><strong id="hero-total">28</strong> 个特性 · <strong id="demo-vote-total">—</strong> 张票</span>
         </div>
         <div class="arena-stage" id="arena-stage">
           <span class="stage-stamp">SS14 / 2026</span>
           <div class="chart-guides" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-          <div class="chart" id="chart" aria-label="当前演示排行"><p class="loading-note">正在加载英雄头像…</p></div>
+          <div class="chart" id="chart" aria-label="当前真实排行"><p class="loading-note">正在加载英雄头像…</p></div>
           <div class="bubble-layer" id="bubble-layer" aria-hidden="true"></div>
         </div>
         <div class="activity-row">
           <div class="activity-main">
             <span class="activity-dot" aria-hidden="true"></span>
-            <span class="activity-heading">投票动态演示</span>
-            <span id="activity-line" class="activity-line" role="status" aria-live="polite">模拟有人投票时的效果，暂未连接真实玩家。</span>
+            <span class="activity-heading">真实投票动态</span>
+            <span id="activity-line" class="activity-line" role="status" aria-live="polite">正在连接投票服务…</span>
           </div>
-          <button type="button" class="inline-control" id="motion-toggle" aria-pressed="true">暂停演示</button>
+          <button type="button" class="inline-control" id="motion-toggle" aria-pressed="true">隐藏气泡</button>
         </div>
         <div class="arena-below">
           <div id="my-camp" aria-live="polite">还没投票，往下选一个英雄。</div>
-          <div class="mini-actions"><button type="button" class="inline-control" id="simulate-btn">模拟 +1</button><button type="button" class="inline-control" id="share-arena">分享投票 ↗</button></div>
+          <div class="mini-actions"><button type="button" class="inline-control" id="share-arena">分享投票 ↗</button></div>
         </div>
         <div class="arena-actions">
-          <a href="#all-heroes" class="button primary">选我的开荒英雄 <span aria-hidden="true">↓</span></a>
-          <div class="lottery-main-action"><button type="button" id="open-lottery" class="button secondary" disabled>随机抽个开荒英雄 <span aria-hidden="true">↗</span></button><button type="button" class="minor-share" id="share-lottery-game">分享随机开荒玩法 ↗</button></div>
+          <button id="open-hero-pool" type="button" class="button primary">查看全部 28 个英雄 <span aria-hidden="true">↓</span></button>
+          <div class="lottery-main-action"><button type="button" id="open-lottery" class="button secondary" disabled>🎰 不知道选谁？抽一个 <span aria-hidden="true">↗</span></button><button type="button" class="minor-share" id="share-lottery-game">分享随机开荒玩法 ↗</button></div>
         </div>
-        <p class="demo-disclosure">当前是演示版：排行榜数字和自动出现的动态都是模拟的。你投的票仅保存在本机，其他玩家暂时看不到。</p>
+        <p class="demo-disclosure">排行榜显示数据库中的真实票数。点击投票会匿名创建账号，不需要填写手机号。每个匿名账号每题保留一票，改选会撤回旧票。</p>
       </div>
     </section>
 
-    <section class="roster-section" id="all-heroes" aria-labelledby="roster-title">
+    <details class="roster-drawer" id="all-heroes"><summary id="roster-toggle"><strong>展开全部 28 个英雄</strong><span id="roster-summary-right">⌄</span></summary><div class="roster-drawer-content" aria-labelledby="roster-title">
       <div class="section-heading">
         <div><span class="section-index">02 / 选择英雄</span><h2 id="roster-title">全部 28 个英雄特性</h2>
         <p>每张卡片都能投票。已经投过的英雄可以改选。</p></div>
@@ -93,72 +95,84 @@
         <input type="search" id="hero-search" placeholder="搜名字、特性或简称，比如宾2" autocomplete="off">
         <span>搜索</span>
       </label>
+      <label class="roster-sort-wrap" for="hero-sort">排序 <select id="hero-sort"><option value="votes">按实时票数</option><option value="name">按英雄名字</option></select></label>
       <div id="hero-list" class="roster-grid" aria-label="全部英雄投票选项"><p class="loading-note">正在核对头像和英雄特性…</p></div>
       <p id="roster-empty" class="roster-empty" hidden>没找到这个英雄，换个名字试试。</p>
       <p class="roster-hint">点卡片投票，点右下角「分享」就能邀请朋友支持那个英雄。</p>
-    </section>
+    </div></details>
 
-    <section class="topics-section" id="topics" aria-labelledby="topics-title">
-      <div class="section-heading">
-        <div><span class="section-index">03 / 玩法投票</span><h2 id="topics-title">迷城燃料这次改动，你怎么看？</h2>
-          <p>你觉得调整合理，还是砍得太狠？</p></div>
+    <section class="focus-section" id="topics" aria-labelledby="topics-title">
+      <div class="section-heading v2-heading">
+        <div><span class="section-index">02 / 本周焦点投票</span><h2 id="topics-title">这四件事，你站哪边？ 🗳️</h2><p>每道题单独投票，想改随时改。</p></div>
+        <span class="focus-meta">4 个议题 · 真实票数</span>
       </div>
-      <article class="topic-card pink maze-compact" aria-labelledby="maze-title">
-        <div class="maze-brief">
-          <span class="maze-category">玩法调整 · SS14</span>
-          <h3 id="maze-title">迷城燃料下调，你能接受吗？</h3>
-          <p>新赛季迷城燃料产量减少了。选一个你认同的看法。</p>
-          <a href="https://torchlight.xd.com/ss14pn" target="_blank" rel="noopener noreferrer">查看更新公告 ↗</a>
-        </div>
-        <div class="maze-vote-area">
-          <div id="maze-options" class="poll-options" aria-label="迷城调整投票"></div>
-          <div class="maze-bottom">
-            <span id="maze-summary">演示票数</span>
-            <button type="button" class="module-share" id="share-maze">分享这道投票 ↗</button>
+      <div class="focus-board">
+        <nav class="focus-tabs" id="topic-tabs" aria-label="选择焦点议题"></nav>
+        <article class="focus-current">
+          <div class="focus-current-head"><span class="focus-step" id="focus-step">议题 01</span><span class="focus-live-count" id="focus-live-count">0 票</span></div>
+          <h3 id="focus-title">正在加载议题…</h3>
+          <p class="focus-question" id="focus-prompt"></p>
+          <div id="focus-options" class="focus-votes" role="group" aria-label="当前议题的四个选项"></div>
+          <p id="focus-activity" class="focus-activity" role="status" aria-live="polite">票数来自所有玩家的真实投票。</p>
+          <details class="focus-followup" id="focus-followup"><summary>💬 圆桌追问 <span aria-hidden="true">⌄</span></summary><p id="focus-followup-body"></p>
+            <button type="button" id="focus-ask" class="focus-ask">🪑 去圆桌支持这个问题 ↗</button></details>
+          <div class="focus-actions">
+            <button type="button" id="focus-share" class="button primary">📣 分享这道题 ↗</button>
+            <button type="button" id="focus-next" class="button secondary">看看下一题 →</button>
           </div>
-        </div>
-      </article>
+        </article>
+      </div>
     </section>
 
-    <section class="roundtable-section" id="roundtable" aria-labelledby="roundtable-title">
-      <div class="section-heading">
-        <div><span class="section-index">04 / 玩家提问</span><h2 id="roundtable-title">策划圆桌，你想问什么？</h2>
-          <p>10 月 14 日 20:00。把你最想问的写下来，也能看看问题集中在哪些方面。</p></div>
-        <button type="button" class="roundtable-top-share" id="share-roundtable">分享圆桌提问 ↗</button>
+    <section class="roundtable-section v2-roundtable" id="roundtable" aria-labelledby="roundtable-title">
+      <div class="section-heading v2-heading">
+        <div><span class="section-index">03 / 策划圆桌</span><h2 id="roundtable-title">来圆桌给问题占个座 🪑</h2>
+          <p>每把椅子代表一道问题。点一下，看详情、投支持票。</p></div>
+        <button type="button" class="roundtable-top-share" id="share-roundtable">📣 分享圆桌 ↗</button>
       </div>
-      <div class="roundtable-layout">
-        <div class="roundtable-compose">
-          <span class="roundtable-kicker">写给策划的问题</span>
-          <h3>你最想让策划回答哪件事？</h3>
-          <form id="roundtable-question-form">
-            <label class="question-label" for="roundtable-question-input">写下具体问题</label>
-            <textarea id="roundtable-question-input" rows="4" minlength="8" maxlength="160" placeholder="例如：迷城燃料下调之后，前期刷图收益要怎么平衡？" required></textarea>
-            <div class="compose-bottom">
-              <span id="question-length">0 / 160 字</span>
-              <button type="submit" class="submit-question" id="submit-roundtable-question">提交问题 ↗</button>
+      <div class="roundtable-v2-layout">
+        <div class="roundtable-stage">
+          <div class="seat-map" id="seat-map" role="group" aria-label="策划圆桌的八个问题席位">
+            <div class="table-center">
+              <span class="table-symbol" aria-hidden="true">✳</span>
+              <strong>策划圆桌</strong>
+              <small>点椅子 · 看问题</small>
+              <span id="table-total" class="table-total">等待玩家参与</span>
             </div>
-          </form>
-          <p class="question-notice" id="roundtable-submit-feedback" role="status" aria-live="polite">当前为本机预览。正式公开提交与全站统计将在接入 Supabase 后开启。</p>
-        </div>
-        <div class="roundtable-trends">
-          <div class="trends-heading">
-            <div><span class="roundtable-kicker">问题热词</span><h3>大家都在关心什么？</h3></div>
-            <span class="trends-local" id="keyword-status">本机预览</span>
           </div>
-          <p>提交问题后，这里的关键词会立即更新。全站统计上线前只显示本机内容。</p>
-          <div id="keyword-cloud" class="keyword-cloud" aria-live="polite"><span class="keyword-empty">还没有提交的问题</span></div>
-          <div class="recent-questions">
-            <div class="recent-heading"><strong>最近提交</strong><span id="question-total">0 条（本机）</span></div>
-            <ul id="roundtable-question-list"><li class="question-empty">等你提交第一个问题</li></ul>
+          <div class="seat-strip" id="seat-strip" aria-label="滑动查看更多问题席位"></div>
+          <p class="seat-hint">🔥 每人每把椅子可支持一次。空椅子可以提交问题。</p>
+        </div>
+        <div class="seat-panel" id="seat-panel">
+          <div id="seat-detail" class="seat-detail">
+            <span class="seat-detail-kicker" id="seat-detail-tag">点一把椅子</span>
+            <h3 id="seat-detail-title">看看大家最想问什么</h3>
+            <p id="seat-detail-body">四道焦点追问固定上桌，玩家审核通过的问题也会进入席位。</p>
+            <span id="seat-detail-count" class="seat-detail-count"></span>
+            <div class="seat-detail-actions">
+              <button type="button" class="button primary" id="seat-support" disabled>🔥 我也想问这个</button>
+              <button type="button" class="button secondary" id="seat-share" disabled>📣 分享席位</button>
+            </div>
+          </div>
+          <div id="seat-ask-panel" class="seat-ask-panel" hidden>
+            <span class="seat-detail-kicker">➕ 空椅子 · 我来提问</span>
+            <h3>你想问策划什么？</h3>
+            <form id="roundtable-question-form">
+              <label for="roundtable-question-input">写一个具体问题（8～160 字）</label>
+              <textarea id="roundtable-question-input" rows="4" minlength="8" maxlength="160" required placeholder="例如：迷城调整后，相同配置一小时收益少了多少？"></textarea>
+              <div class="compose-bottom"><span id="question-length">0 / 160 字</span><button class="submit-question" type="submit" id="submit-roundtable-question">提交问题 ↗</button></div>
+            </form>
+            <p id="roundtable-submit-feedback" class="question-notice" role="status" aria-live="polite">提交后先审核，审核通过就有机会进入圆桌席位。</p>
+            <button id="seat-ask-back" type="button" class="focus-ask">← 返回圆桌</button>
+          </div>
+          <div class="table-trends">
+            <div class="table-trends-title"><strong>📈 玩家提问热词</strong><span id="keyword-status">正在同步</span></div>
+            <p>包含待审核投稿的关键词统计，不公开未审核原文。</p>
+            <div id="keyword-cloud" class="keyword-cloud" aria-live="polite"><span class="keyword-empty">等待第一条提问</span></div>
+            <div class="table-recent"><strong>已审核的问题</strong><span id="question-total">0 条</span></div>
+            <ul id="roundtable-question-list"><li class="question-empty">目前还没有已审核的问题</li></ul>
           </div>
         </div>
-      </div>
-      <div class="roundtable-quick">
-        <div class="roundtable-quick-head">
-          <div><strong>不想打字？也可以直接选一个方向。</strong><small>当前仍为演示投票，选择可以修改。</small></div>
-          <span id="roundtable-summary">演示票数</span>
-        </div>
-        <div id="roundtable-options" class="poll-options roundtable-poll-options" aria-label="圆桌关注方向投票"></div>
       </div>
     </section>
 
@@ -176,7 +190,7 @@
 
   <footer class="site-footer">
     <div class="footer-logo">✳ <strong>火炬议会</strong> <small>TORCHLIGHT COUNCIL</small></div>
-    <p>玩家制作的免费投票页面，与《火炬之光：无限》官方没有隶属关系。当前是演示数据，尚未开放跨玩家计票。</p>
+    <p>玩家制作的免费投票页面，与《火炬之光：无限》官方没有隶属关系。投票数字来自独立数据库；玩家提问须审核后公开。</p>
     <div><span>© 2026 Torchlight Council</span><a href="https://torchlightskill.com/" target="_blank" rel="noopener noreferrer">刷宝游戏工具箱 ↗</a></div>
   </footer>
 </div>

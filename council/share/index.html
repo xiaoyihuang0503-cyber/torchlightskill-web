@@ -15,8 +15,9 @@
 <link rel="stylesheet" href="../v04.css?v=20261012-1">
 <link rel="stylesheet" href="../share-layout.css?v=20261012-1">
 <link rel="stylesheet" href="./style.css?v=20261012-1">
+<link rel="stylesheet" href="./v2-share.css?v=20261012-1">
 <link rel="stylesheet" href="../roundtable.css?v=20261012-1">
-<script defer src="./app.js?v=20261012-1"></script>
+<script type="module" src="./live-bootstrap.js?v=20261012-1"></script>
 </head>
 <body>
 <div class="council-shell">
@@ -33,7 +34,7 @@
         <p>看看朋友的选择，也投上你的一票。想抽签的话也能直接去抽。</p>
       </section>
       <article class="invite-card" id="invite-card" aria-labelledby="invite-title">
-        <div class="invite-top"><span id="invite-kind">SS14 · 开荒英雄</span><span class="preview-pill">互动演示版</span></div>
+        <div class="invite-top"><span id="invite-kind">SS14 · 开荒英雄</span><span class="preview-pill">真实投票</span></div>
         <div class="invite-content">
           <div class="invite-copy">
             <span id="invite-overline">开荒选择</span>
@@ -52,7 +53,7 @@
           <a id="secondary-action" href="../#all-heroes" class="button secondary">我选别的 ↗</a>
         </div>
         <p id="join-feedback" class="join-feedback" role="status" aria-live="polite"></p>
-        <div class="invite-footer"><span>投票目前只记录在各自的浏览器里，暂未开放全站实时统计。</span><a href="../#all-heroes">查看开荒排行榜 ↗</a></div>
+        <div class="invite-footer"><span>投票计入全站真实票数。匿名账号每题保留一票，改选会撤回旧票。</span><a href="../#all-heroes">查看开荒排行榜 ↗</a></div>
       </article>
       <section class="share-export" aria-labelledby="send-title">
         <div class="share-export-heading"><div><span class="section-index">发给更多朋友</span><h2 id="send-title">让朋友也来选</h2><p>复制链接发群里，或者保存图片发到社交平台。</p></div></div>
@@ -61,7 +62,7 @@
           <button type="button" id="share-system" class="export-button export-system"><span aria-hidden="true">↗</span><strong>系统分享</strong><small>手机可直接选 App</small></button>
           <button type="button" id="save-poster" class="export-button export-poster"><span aria-hidden="true">▧</span><strong>保存分享图片</strong><small>竖版 3:4 海报</small></button>
         </div>
-        <p id="export-feedback" class="export-feedback" role="status" aria-live="polite">不同邀请链接会打开对应的英雄或投票题目。图片里的数字仅作演示。</p>
+        <p id="export-feedback" class="export-feedback" role="status" aria-live="polite">不同邀请链接会直接打开对应英雄或话题，投票会计入全站统计。</p>
       </section>
       <section class="share-more">
         <div><h2>其他英雄也能选</h2><p>完整的 28 个英雄特性都在投票页。犹豫不决就抽一个。</p></div>
@@ -70,7 +71,7 @@
     </main>
     <footer class="site-footer">
       <div class="footer-logo">✳ <strong>火炬议会</strong> <small>TORCHLIGHT COUNCIL</small></div>
-      <p>玩家制作的非官方互动页面。当前投票和分享数据为本地预览，尚未接入跨玩家实时统计。</p>
+      <p>玩家制作的非官方互动页面。投票结果来自独立数据库；问题经审核后公开。</p>
       <div><span>© 2026 Torchlight Council</span><a href="../">进入火炬议会 ↗</a></div>
     </footer>
   </div>
