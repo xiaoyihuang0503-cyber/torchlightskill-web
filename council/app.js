@@ -1,12 +1,11 @@
 (function(){
 "use strict";
 const $=id=>document.getElementById(id);
-const OPEN_AT=Date.parse("2026-10-16T10:00:00+08:00");
-const ROUND_END=Date.parse("2026-10-14T20:00:00+08:00");
-const KEY="torchlight-council-preview-choice-v1";
-const AVATAR_MANIFEST_URL="/assets/torchlight-mentor-avatars/manifest.json";
-const VERSION_TRAIT_NOTE="当前官方英雄模块参考，不代表已确认 SS14 新版角色立绘";
-const HERO_ALIASES={
+const SS14_OPEN=Date.parse("2026-10-16T10:00:00+08:00");
+const ROUNDTABLE_END=Date.parse("2026-10-14T20:00:00+08:00");
+const STORAGE_KEY="torchlight-council-preview-choice-v1";
+const MANIFEST_URL="/assets/torchlight-mentor-avatars/manifest.json";
+const ALIASES={
   youga_1:"时空1",youga_2:"时空2",youga_3:"时空3",
   bing_1:"宾1",bing_2:"宾2",selena_1:"人鱼1",selena_2:"人鱼2",
   carino_1:"枪1",carino_2:"枪2",carino_3:"枪3",
@@ -16,16 +15,16 @@ const HERO_ALIASES={
   rosa_1:"罗莎1",rosa_2:"罗莎2",thea_1:"希雅1",thea_2:"希雅2",thea_3:"希雅3",
   moto_1:"莫托1",moto_2:"莫托2",sage_1:"药娘"
 };
-const DEMO_VOTES={
-  youga_3:218,bing_2:215,selena_2:211,carino_2:207,
-  erika_2:205,gemma_2:201,iris_2:154,rehan_2:148,
-  carino_1:137,carino_3:133,erika_1:129,erika_3:122,
-  bing_1:116,gemma_1:112,gemma_4:108,thea_1:104,
-  thea_2:100,thea_3:96,youga_1:93,youga_2:88,
-  moto_1:84,moto_2:80,rosa_1:77,rosa_2:74,
-  iris_1:70,selena_1:67,rehan_1:63,sage_1:60
+const PREVIEW_COUNTS={
+  youga_3:202,bing_2:184,selena_2:163,carino_2:149,
+  erika_2:133,gemma_2:115,iris_2:103,rehan_2:100,
+  carino_1:96,carino_3:91,erika_1:88,erika_3:83,
+  bing_1:79,gemma_1:76,gemma_4:73,thea_1:70,
+  thea_2:67,thea_3:64,youga_1:61,youga_2:59,
+  moto_1:57,moto_2:54,rosa_1:51,rosa_2:49,
+  iris_1:47,selena_1:45,rehan_1:42,sage_1:40
 };
-const LEGACY_IDS={
+const LEGACY={
   yuga3:"youga_3",yuga1:"youga_1",yuga2:"youga_2",
   bin2:"bing_2",bin1:"bing_1",selena2:"selena_2",selena1:"selena_1",
   carino2:"carino_2",carino1:"carino_1",carino3:"carino_3",
@@ -35,348 +34,471 @@ const LEGACY_IDS={
   moto1:"moto_1",moto2:"moto_2",moto3:"rosa_1",rosa1:"rosa_2",
   iris1:"iris_1",iris2:"iris_2",sechi1:"sage_1"
 };
+const COLORS=["#a5dcff","#b8e3a4","#ffd84d","#ffceab","#ffb9cc","#d5c4f9"];
+const heroMap=new Map();
 const heroes=[];
-const heroIds=new Map();
-let manifestLoaded=false;
-
-function assetImg(asset,alt,cssClass){
-  const img=document.createElement("img");
-  img.className=cssClass||"";
-  img.alt=alt;
-  img.loading="lazy";
-  img.decoding="async";
-  img.referrerPolicy="no-referrer";
-  // Use the manifest's own published site URL. Never borrow another trait's portrait.
-  return img;
-}
-function setHeroPortrait(host,hero){
-  host.classList.add("has-portrait");
-  const initial=document.createElement("span");
-  initial.className="portrait-initial";
-  initial.textContent=hero.mark;
-  initial.setAttribute("aria-hidden","true");
-  const img=assetImg(hero.asset,name(hero)+" · 英雄特性头像","portrait-image");
-  img.addEventListener("load",()=>{initial.hidden=true;});
-  img.addEventListener("error",()=>{img.hidden=true;initial.hidden=false;host.classList.add("image-error");});
-  img.src=hero.asset.site_url;
-  host.replaceChildren(initial,img);
-}
-function validPortraitAsset(a,type){
-  if(!a || a.type!==type || typeof a.id!=="string" || !a.id || typeof a.site_url!=="string" || typeof a.repository_path!=="string")return false;
-  try{
-    const u=new URL(a.site_url);
-    if(u.protocol!=="https:"||u.hostname!=="torchlightskill.com")return false;
-    if(u.pathname!=="/"+a.repository_path)return false;
-    if(!a.repository_path.startsWith("assets/torchlight-mentor-avatars/"+(type==="hero"?"heroes/":"mentors/")))return false;
-  }catch(error){return false;}
-  if(type==="hero")return a.trait===a.id && typeof a.name==="string" && !!a.name.trim() && typeof a.trait_name==="string" && !!a.trait_name.trim() && !!a.source_url && !!a.source_snapshot_date && !!a.source_freshness;
-  return ["mia","shiyu","reina"].includes(a.id);
-}
-function addPortraitSources(manifest,entries){
-  const ul=$("avatar-source-list");
-  const fragment=document.createDocumentFragment();
-  entries.forEach(a=>{
-    const li=document.createElement("li");
-    const strong=document.createElement("strong");
-    strong.textContent=a.type==="hero"?a.name+" · "+a.trait_name+" ("+a.id+")":a.name+" · 导师 ("+a.id+")";
-    li.append(strong,document.createTextNode("　"));
-    if(a.source_url){
-      const link=document.createElement("a");
-      link.href=a.source_url;link.target="_blank";link.rel="noopener noreferrer";link.textContent="原始图片 ↗";
-      li.append(link,document.createTextNode("　"));
-    }
-    const details=document.createElement("span");
-    details.textContent=a.type==="hero"
-      ?(a.source_snapshot_date+" · "+a.source_freshness+(a.covered_face?" · 遮面角色":""))
-      :(a.source||"来源待确认");
-    li.append(details);
-    fragment.append(li);
-  });
-  ul.replaceChildren(fragment);
-  $("avatar-source-status").textContent="清单 v"+manifest.schema_version+" · 发布 "+manifest.published_date+" · "+entries.filter(a=>a.type==="hero").length+" 个特性头像与 "+entries.filter(a=>a.type==="mentor").length+" 位导师 · SS14 最新立绘未作权威核验。图片权利说明："+(manifest.rights||"未提供额外使用授权说明");
-}
-function hydrateMentors(entries){
-  ["mia","shiyu","reina"].forEach(id=>{
-    const a=entries.find(asset=>asset.type==="mentor"&&asset.id===id);
-    const img=document.querySelector('[data-mentor-image="'+id+'"]');
-    const holder=img?.closest(".mentor-art");
-    if(!a||!img||!holder) return;
-    const placeholder=holder.querySelector(".portrait-placeholder");
-    img.addEventListener("load",()=>{if(placeholder)placeholder.hidden=true;});
-    img.addEventListener("error",()=>{img.hidden=true;if(placeholder)placeholder.hidden=false;});
-    img.src=a.site_url;
-    img.hidden=false;
-  });
-}
-async function loadAvatarManifest(){
-  const response=await fetch(AVATAR_MANIFEST_URL,{cache:"no-cache"});
-  if(!response.ok)throw new Error("头像清单 HTTP "+response.status);
-  const m=await response.json();
-  if(m.schema_version!==1||!Array.isArray(m.assets))throw new Error("头像清单格式不兼容");
-  const filtered=m.assets.filter(a=>a.type==="hero"||a.type==="mentor");
-  const ids=new Set();
-  for(const a of filtered){
-    if(!validPortraitAsset(a,a.type))throw new Error("头像条目缺少来源、类型或特性字段："+String(a.id));
-    const key=a.type+":"+a.id;
-    if(ids.has(key))throw new Error("头像清单含重复 id："+key);
-    ids.add(key);
-  }
-  const heroAssets=filtered.filter(a=>a.type==="hero");
-  const mentorAssets=filtered.filter(a=>a.type==="mentor");
-  if(!heroAssets.length || !["mia","shiyu","reina"].every(id=>mentorAssets.some(a=>a.id===id)))throw new Error("头像清单缺少英雄或导师条目");
-  const built=heroAssets.map((a,i)=>({
-    id:a.id,name:a.name,trait:a.trait_name,alias:HERO_ALIASES[a.id]||a.name,
-    mark:(a.trait_name||a.name).charAt(0),
-    color:["#ffb9cc","#a5dcff","#ffd84d","#b8e3a4","#ffcda0","#cebcff"][i%6],
-    base:DEMO_VOTES[a.id]??Math.max(15,58-i),asset:a
-  }));
-  heroes.splice(0,heroes.length,...built);
-  heroIds.clear();heroes.forEach(h=>heroIds.set(h.id,h));
-  hydrateMentors(mentorAssets);
-  addPortraitSources(m,filtered);
-  manifestLoaded=true;
-}
-const topics=[
-{id:"maze",host:"maze-options",summary:"maze-summary",deadline:0,options:[["agree","调整合理",67],["disagree","砍过头了",66]]},
-{id:"roundtable",host:"roundtable-options",summary:"roundtable-summary",deadline:ROUND_END,options:[["drops","开荒掉落与收益",47],["balance","英雄与技能平衡",45],["pets","契灵与氪金体验",44],["season","赛季玩法节奏",43]]}
+const rosterCards=new Map();
+const chartCards=new Map();
+const state={hero:null,maze:null,roundtable:null,simulated:{},motion:true,slotResult:null,spinning:false};
+const polling=[
+ {id:"maze",host:"maze-options",summary:"maze-summary",closedAt:null,choices:[["support","可以接受",78],["oppose","改得太狠了",71]]},
+ {id:"roundtable",host:"roundtable-options",summary:"roundtable-summary",closedAt:ROUNDTABLE_END,choices:[["drops","掉落和刷图收益",47],["balance","英雄和技能平衡",45],["pets","契灵氪金体验",43],["season","赛季玩法节奏",41]]}
 ];
-const choices={hero:null,maze:null,roundtable:null};
-const fake={};
-const nodes=new Map();
-const reduceMotion=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-let lastMobile=window.innerWidth<=700,draw=null,spinTimer=null,spinning=false,toastTimer=null;
-const closedHero=()=>Date.now()>=OPEN_AT;
-const closedTopic=t=>!!t.deadline&&Date.now()>=t.deadline;
-const name=h=>h.name+" · "+h.trait;
-const heroVotes=h=>h.base+(choices.hero===h.id?1:0)+(fake[h.id]||0);
-const rank=()=>heroes.slice().sort((a,b)=>heroVotes(b)-heroVotes(a)||a.id.localeCompare(b.id));
-const topicVotes=(t,o)=>o[2]+(choices[t.id]===o[0]?1:0);
-const fmt=n=>new Intl.NumberFormat("zh-CN").format(n);
-function read(){
-  try{const saved=JSON.parse(localStorage.getItem(KEY)||"{}");
-    const savedId=LEGACY_IDS[saved.hero]||saved.hero;
-    if(heroIds.has(savedId))choices.hero=savedId;
-    for(const t of topics)if(t.options.some(o=>o[0]===saved[t.id]))choices[t.id]=saved[t.id];
-  }catch(e){}
-}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(choices));}catch(e){notice("当前浏览器未开放本地存储，刷新后可能丢失选择");}}
+const reducedMotion=!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+let loaded=false;
+let mobile=window.innerWidth<=700;
+let lastToastTimer=0;
+let slotTimer=0;
+let lastActivity="";
+let activityClock=0;
+const sourceName=hero=>hero.name+" · "+hero.trait;
+const isHeroClosed=()=>Date.now()>=SS14_OPEN;
+const isTopicClosed=topic=>topic.closedAt!==null&&Date.now()>=topic.closedAt;
+const fmt=value=>new Intl.NumberFormat("zh-CN").format(value);
+const count=hero=>hero.initial+(state.hero===hero.id?1:0)+(state.simulated[hero.id]||0);
+const sorted=()=>heroes.slice().sort((a,b)=>count(b)-count(a)||a.id.localeCompare(b.id));
 function random(n){
-  if(n<=1)return 0;
-  if(!window.crypto||!crypto.getRandomValues)throw Error("当前浏览器不支持安全随机抽签");
-  const limit=Math.floor(4294967296/n)*n,array=new Uint32Array(1);
-  do{crypto.getRandomValues(array);}while(array[0]>=limit);
-  return array[0]%n;
+ if(!Number.isInteger(n)||n<1)throw new Error("没有可选英雄");
+ if(!window.crypto||!window.crypto.getRandomValues)throw new Error("当前浏览器无法安全随机抽签");
+ const data=new Uint32Array(1),cutoff=Math.floor(4294967296/n)*n;
+ do {window.crypto.getRandomValues(data);} while(data[0]>=cutoff);
+ return data[0]%n;
 }
-function notice(text){
-  let x=$("tc-toast");
-  if(!x){x=document.createElement("div");x.id="tc-toast";x.setAttribute("role","status");x.setAttribute("aria-live","polite");x.style.cssText="position:fixed;z-index:200;bottom:23px;left:50%;transform:translateX(-50%);max-width:calc(100% - 32px);padding:11px 18px;border:1px solid #f0f6cb;background:#deefa7;color:#192119;font:600 13px/1.55 sans-serif;text-align:center;box-shadow:0 12px 36px #0008;";document.body.append(x);}
-  x.textContent=text;x.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>x.hidden=true,3000);
+function sampleOne(items){return items[random(items.length)];}
+function safeChoice(id){return LEGACY[id]||id;}
+function readChoice(){
+ try{
+  const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}");
+  if(heroMap.has(safeChoice(data.hero)))state.hero=safeChoice(data.hero);
+  polling.forEach(topic=>{
+   // Compatibility with the previous preview options, preserving meaningful choices.
+   const previous={maze:{agree:"support",disagree:"oppose"},roundtable:{}};
+   const opt=previous[topic.id]?.[data[topic.id]]||data[topic.id];
+   if(topic.choices.some(choice=>choice[0]===opt))state[topic.id]=opt;
+  });
+ }catch(error){ /* Storage may be denied in privacy mode. */ }
 }
-function makeNode(h){
-  const btn=document.createElement("button");btn.type="button";btn.className="contender";btn.dataset.hero=h.id;btn.style.setProperty("--hero-color",h.color);
-  btn.innerHTML='<span class="contender-rank"></span><span class="contender-top"><span class="contender-votes"></span><span class="contender-avatar"></span></span><span class="contender-bar"></span><span class="contender-ground"><span class="contender-name"></span><span class="contender-trait"></span><span class="contender-cta"></span></span>';
-  setHeroPortrait(btn.querySelector(".contender-avatar"),h);
-  btn.querySelector(".contender-name").textContent=h.name;
-  btn.querySelector(".contender-trait").textContent=h.trait;
-  btn.addEventListener("click",()=>voteHero(h.id,false));
-  nodes.set(h.id,btn);return btn;
+function saveChoice(){
+ try{localStorage.setItem(STORAGE_KEY,JSON.stringify({hero:state.hero,maze:state.maze,roundtable:state.roundtable}));}
+ catch(error){toast("浏览器未允许保存选择，刷新后可能丢失");}
+}
+function toast(text){
+ let node=$("tc-toast");
+ if(!node){node=document.createElement("div");node.id="tc-toast";node.className="toast";node.setAttribute("role","status");document.body.appendChild(node);}
+ node.textContent=text;node.hidden=false;
+ clearTimeout(lastToastTimer);lastToastTimer=setTimeout(()=>{node.hidden=true;},3100);
+}
+function newPortrait(asset,alt,className){
+ const img=document.createElement("img");
+ img.className=className||"";
+ img.alt=alt;img.loading="lazy";img.decoding="async";img.referrerPolicy="no-referrer";
+ return img;
+}
+function portrait(hero,small){
+ const holder=document.createElement("span");holder.className=small?"portrait small":"portrait";
+ const fallback=document.createElement("span");fallback.className="portrait-fallback";fallback.textContent=hero.trait.slice(0,1);fallback.setAttribute("aria-hidden","true");
+ const img=newPortrait(hero.asset,sourceName(hero)+"头像","");
+ img.addEventListener("load",()=>{fallback.hidden=true;});
+ img.addEventListener("error",()=>{img.hidden=true;fallback.hidden=false;holder.classList.add("portrait-error");});
+ img.src=hero.asset.site_url;
+ holder.append(fallback,img);
+ return holder;
+}
+function validAsset(asset,type){
+ if(!asset||asset.type!==type||typeof asset.id!=="string"||!asset.id||typeof asset.repository_path!=="string"||typeof asset.site_url!=="string")return false;
+ try{
+  const uri=new URL(asset.site_url);
+  if(uri.protocol!=="https:"||uri.hostname!=="torchlightskill.com"||uri.pathname!=="/"+asset.repository_path)return false;
+ }catch(error){return false;}
+ if(type==="hero")return asset.id===asset.trait&&!!asset.name&&!!asset.trait_name&&!!asset.source_url&&!!asset.source_snapshot_date&&!!asset.source_freshness;
+ if(type==="mentor")return ["mia","shiyu","reina"].includes(asset.id);
+ return false;
+}
+async function getManifest(){
+ const response=await fetch(MANIFEST_URL,{cache:"no-cache"});
+ if(!response.ok)throw new Error("HTTP "+response.status);
+ const m=await response.json();
+ if(!m||m.schema_version!==1||!Array.isArray(m.assets))throw new Error("头像清单格式有变化");
+ const relevant=m.assets.filter(a=>a.type==="hero"||a.type==="mentor");
+ const seen=new Set();
+ relevant.forEach(a=>{
+  if(!validAsset(a,a.type))throw new Error("头像资料有误："+String(a.id));
+  const key=a.type+":"+a.id;
+  if(seen.has(key))throw new Error("重复头像："+key);
+  seen.add(key);
+ });
+ const h=relevant.filter(a=>a.type==="hero"),mentors=relevant.filter(a=>a.type==="mentor");
+ if(h.length!==28||mentors.length!==3||!["mia","shiyu","reina"].every(id=>mentors.some(a=>a.id===id)))throw new Error("英雄或导师头像数量有变化");
+ h.forEach((a,i)=>{
+  const hero={id:a.id,name:a.name,trait:a.trait_name,alias:ALIASES[a.id]||a.name,asset:a,color:COLORS[i%COLORS.length],initial:PREVIEW_COUNTS[a.id]??30};
+  heroes.push(hero);heroMap.set(hero.id,hero);
+ });
+ // Hidden mentor section deliberately retains its implementation and source mapping.
+ mentors.forEach(a=>{
+  const node=document.querySelector('[data-mentor-image="'+a.id+'"]');
+  if(node){node.dataset.siteUrl=a.site_url;node.dataset.assetId=a.id;}
+ });
+ renderSources(m,relevant);
+ return m;
+}
+function renderSources(m,assets){
+ $("avatar-source-status").textContent="头像清单 v"+m.schema_version+"（"+m.published_date+"）。共 "+assets.filter(a=>a.type==="hero").length+" 个英雄特性与 3 位导师。素材说明："+m.rights;
+ const group=document.createDocumentFragment();
+ assets.forEach(a=>{
+  const li=document.createElement("li");
+  const title=document.createElement("strong");title.textContent=a.type==="hero"?a.name+" · "+a.trait_name+"（"+a.id+"）":a.name+"（导师 "+a.id+"）";
+  li.appendChild(title);
+  const detail=document.createElement("small");
+  detail.textContent=a.type==="hero"?(a.source_snapshot_date+" · "+a.source_freshness+(a.covered_face?" · 有遮面":"")):(a.source||"素材授权待核");
+  li.appendChild(detail);
+  if(a.source_url){
+   const link=document.createElement("a");link.href=a.source_url;link.target="_blank";link.rel="noopener noreferrer";link.textContent="原始图片 ↗";li.appendChild(link);
+  }
+  group.appendChild(li);
+ });
+ $("avatar-source-list").replaceChildren(group);
+}
+function makeChartHero(hero){
+ const b=document.createElement("button");b.type="button";b.className="contender";b.dataset.hero=hero.id;
+ b.style.setProperty("--hero-color",hero.color);
+ const head=document.createElement("span");head.className="contender-head";
+ const rank=document.createElement("span");rank.className="contender-rank";
+ const number=document.createElement("span");number.className="contender-number";
+ const avatar=portrait(hero,true);
+ head.append(rank,number,avatar);
+ const bar=document.createElement("span");bar.className="contender-bar";
+ const meta=document.createElement("span");meta.className="contender-meta";
+ const heroName=document.createElement("strong");heroName.textContent=hero.name;
+ const heroTrait=document.createElement("small");heroTrait.textContent=hero.trait;
+ meta.append(heroName,heroTrait);
+ b.append(head,bar,meta);
+ b.addEventListener("click",()=>voteHero(hero.id,b));
+ chartCards.set(hero.id,{button:b,rank,number,avatar,bar});
+ return b;
 }
 function chart(){
-  const ranked=rank(),top=window.innerWidth<=700?4:6,highest=heroVotes(ranked[0]);
-  const host=$("chart"),rects=new Map();
-  Array.from(host.children).forEach(n=>{if(n.dataset&&n.dataset.hero)rects.set(n.dataset.hero,n.getBoundingClientRect());});
-  const fragment=document.createDocumentFragment();
-  ranked.slice(0,top).forEach((h,i)=>{
-    const b=nodes.get(h.id)||makeNode(h),c=heroVotes(h);
-    b.querySelector(".contender-rank").textContent=i===0&&highest?"#01  LEADER":"#"+String(i+1).padStart(2,"0");
-    b.querySelector(".contender-votes").innerHTML=fmt(c)+"<small> 票</small>";
-    b.querySelector(".contender-bar").style.height=(highest?Math.round(c/highest*(window.innerWidth<=700?205:247)):0)+"px";
-    b.querySelector(".contender-cta").textContent=closedHero()?"已封榜":choices.hero===h.id?"已站队":"点击站队 ↗";
-    b.classList.toggle("is-mine",choices.hero===h.id);b.classList.toggle("is-leader",i===0&&highest>0);
-    b.setAttribute("aria-pressed",String(choices.hero===h.id));b.disabled=closedHero();
-    b.setAttribute("aria-label",name(h)+"，模拟"+c+"票，排名第"+(i+1)+(choices.hero===h.id?"，你的阵营":"，点击站队"));
-    fragment.append(b);
+ if(!loaded)return;
+ const r=sorted(),take=mobile?4:6,max=Number(count(r[0]))||1;
+ const stage=$("chart"),oldRects=new Map();
+ Array.from(stage.querySelectorAll(".contender")).forEach(b=>oldRects.set(b.dataset.hero,b.getBoundingClientRect()));
+ const frag=document.createDocumentFragment();
+ r.slice(0,take).forEach((hero,index)=>{
+  if(!chartCards.has(hero.id))makeChartHero(hero);
+  const refs=chartCards.get(hero.id);
+  const b=refs.button;
+  refs.rank.textContent=String(index+1).padStart(2,"0");
+  refs.number.textContent=fmt(count(hero));
+  // Use consistent zero baseline and a fixed chart height: no label overlap.
+  const maxPixels=mobile?172:188;
+  refs.bar.style.height=Math.max(4,Math.round(count(hero)/max*maxPixels))+"px";
+  b.classList.toggle("leader",index===0);
+  b.classList.toggle("mine",state.hero===hero.id);
+  b.disabled=isHeroClosed();
+  b.setAttribute("aria-pressed",String(state.hero===hero.id));
+  b.setAttribute("aria-label",sourceName(hero)+"，"+count(hero)+"张模拟票，排第"+(index+1)+"，"+(state.hero===hero.id?"已选":"点击投票"));
+  frag.appendChild(b);
+ });
+ stage.replaceChildren(frag);
+ if(!reducedMotion)stage.querySelectorAll(".contender").forEach(b=>{
+  const old=oldRects.get(b.dataset.hero);
+  if(!old||!b.animate)return;
+  const delta=old.left-b.getBoundingClientRect().left;
+  if(Math.abs(delta)>2)b.animate([{transform:"translateX("+delta+"px)"},{transform:"translateX(0px)"}],{duration:460,easing:"cubic-bezier(.2,.8,.2,1)"});
+ });
+ $("ranking-label").textContent=take;
+ $("demo-vote-total").textContent=fmt(heroes.reduce((sum,h)=>sum+count(h),0));
+ $("hero-total").textContent=heroes.length;
+ const mine=heroMap.get(state.hero);
+ if(mine){
+  const place=r.findIndex(h=>h.id===mine.id)+1;
+  $("my-camp").textContent="我选了 "+sourceName(mine)+" · 当前演示榜第 "+place+" 名";
+ }else{
+  const requested=new URLSearchParams(location.search).get("hero");
+  const linked=heroMap.get(safeChoice(requested));
+  $("my-camp").textContent=linked?"朋友推荐你看看 "+sourceName(linked)+"，可以在下面投票。":"还没投票，往下选一个英雄。";
+ }
+}
+function makeRosterHero(hero){
+ const b=document.createElement("button");b.type="button";b.className="roster-card";b.dataset.hero=hero.id;
+ b.style.setProperty("--hero-color",hero.color);
+ const face=portrait(hero,false);
+ const info=document.createElement("span");info.className="roster-info";
+ const heroName=document.createElement("strong");heroName.textContent=hero.name;
+ const trait=document.createElement("span");trait.textContent=hero.trait;
+ const alias=document.createElement("small");alias.textContent=hero.alias;
+ info.append(heroName,trait,alias);
+ const right=document.createElement("span");right.className="roster-count";
+ const votes=document.createElement("strong");const tick=document.createElement("span");tick.className="roster-check";tick.textContent="投票";
+ right.append(votes,tick);
+ const meter=document.createElement("span");meter.className="roster-meter";const meterValue=document.createElement("span");meter.append(meterValue);
+ b.append(face,info,right,meter);
+ b.addEventListener("click",()=>voteHero(hero.id,b));
+ rosterCards.set(hero.id,{button:b,votes,check:tick,meter:meterValue});
+ return b;
+}
+function buildRoster(){
+ const frag=document.createDocumentFragment();
+ const order=heroes.slice().sort((a,b)=>b.initial-a.initial||a.id.localeCompare(b.id));
+ order.forEach(h=>frag.appendChild(makeRosterHero(h)));
+ $("hero-list").replaceChildren(frag);
+ updateRoster();
+}
+function updateRoster(){
+ if(!loaded)return;
+ const max=Math.max(...heroes.map(h=>count(h)),1);
+ rosterCards.forEach((ref,id)=>{
+  const h=heroMap.get(id),v=count(h);
+  ref.votes.textContent=fmt(v);
+  ref.check.textContent=state.hero===id?"已投":"投票";
+  ref.button.classList.toggle("selected",state.hero===id);
+  ref.button.disabled=isHeroClosed();
+  ref.button.setAttribute("aria-pressed",String(state.hero===id));
+  ref.button.setAttribute("aria-label",sourceName(h)+"，模拟"+v+"票，"+(state.hero===id?"已投":"投票"));
+  ref.meter.style.width=Math.round(v/max*100)+"%";
+ });
+ searchRoster();
+}
+function searchRoster(){
+ if(!loaded)return;
+ const query=$("hero-search").value.trim().toLowerCase();
+ let shown=0;
+ rosterCards.forEach((ref,id)=>{
+  const h=heroMap.get(id);
+  const matches=!query||[h.name,h.trait,h.alias,sourceName(h)].join(" ").toLowerCase().includes(query);
+  ref.button.hidden=!matches;
+  if(matches)shown++;
+ });
+ $("hero-search-summary").textContent=shown+" / "+heroes.length+" 个";
+ $("roster-empty").hidden=shown>0;
+}
+function animateTap(target){
+ if(!target||reducedMotion)return;
+ const plus=document.createElement("span");plus.className="tap-plus";plus.textContent="+1";
+ target.appendChild(plus);
+ setTimeout(()=>plus.remove(),760);
+}
+function voteHero(id,clicked){
+ if(!loaded)return;
+ const h=heroMap.get(id);if(!h)return;
+ if(isHeroClosed()){toast("这期开荒投票已经结束");return;}
+ if(state.hero===id){toast("已经投给 "+sourceName(h)+" 了");return;}
+ const was=heroMap.get(state.hero);
+ state.hero=id;saveChoice();chart();updateRoster();
+ if(clicked&&clicked.classList.contains("roster-card"))animateTap(clicked);
+ const newNode=chartCards.get(id)?.button;
+ if(newNode&&newNode.isConnected)bubble(h,"你投了 +1",false);
+ showActivity("你投给了 "+sourceName(h)+" · "+(was?"已从 "+sourceName(was)+" 改选":"投票成功"),false);
+ toast("已投给 "+sourceName(h)+(was?" · 可以继续改选":""));
+}
+function showActivity(value,simulated){
+ lastActivity=value;
+ const now=new Date();
+ const stamp=new Intl.DateTimeFormat("zh-CN",{timeZone:"Asia/Shanghai",hour:"2-digit",minute:"2-digit",hour12:false}).format(now);
+ $("activity-line").textContent=stamp+" · "+(simulated?"模拟：":"")+value;
+}
+function bubble(hero,label,simulation){
+ const item=chartCards.get(hero.id);
+ const b=item?.button;
+ if(!b||!b.isConnected||reducedMotion)return;
+ const root=$("arena-stage");
+ if(document.hidden)return;
+ const target=item.avatar.getBoundingClientRect(),area=root.getBoundingClientRect();
+ const x=Math.max(74,Math.min(area.width-74,target.left+target.width/2-area.left));
+ const y=Math.max(63,target.top-area.top-4);
+ const bubble=document.createElement("div");bubble.className="vote-bubble";
+ bubble.style.left=x+"px";bubble.style.top=y+"px";
+ const image=newPortrait(hero.asset,"","bubble-avatar");image.src=hero.asset.site_url;
+ const line=document.createElement("span");line.className="bubble-copy";
+ const lineTop=document.createElement("strong");lineTop.textContent=simulation?"演示 +1":label;
+ const lineBottom=document.createElement("small");lineBottom.textContent=sourceName(hero);
+ line.append(lineTop,lineBottom);
+ bubble.append(image,line);
+ $("bubble-layer").appendChild(bubble);
+ setTimeout(()=>bubble.remove(),1900);
+}
+function tickDemo(){
+ if(!loaded||!state.motion||isHeroClosed()||document.hidden)return;
+ const top=sorted().slice(0,Math.min(mobile?4:6,heroes.length));
+ const candidate=top[random(top.length)];
+ state.simulated[candidate.id]=(state.simulated[candidate.id]||0)+1;
+ chart();updateRoster();bubble(candidate,"",true);
+ showActivity("有人投给了 "+sourceName(candidate)+" +1",true);
+}
+function toggleMotion(){
+ state.motion=!state.motion;
+ $("motion-toggle").textContent=state.motion?"暂停演示":"继续演示";
+ $("motion-toggle").setAttribute("aria-pressed",String(state.motion));
+ showActivity(state.motion?"已继续播放模拟投票":"模拟动态已暂停",false);
+}
+function renderTopic(topic){
+ const host=$(topic.host);
+ if(host.children.length!==topic.choices.length){
+  const frag=document.createDocumentFragment();
+  topic.choices.forEach((option,index)=>{
+   const b=document.createElement("button");b.type="button";b.className="poll-button";b.dataset.option=option[0];
+   b.innerHTML='<span class="poll-meter" aria-hidden="true"></span><span class="poll-option-index"></span><span class="poll-name"></span><span class="poll-pct"></span>';
+   b.querySelector(".poll-name").textContent=option[1];
+   b.addEventListener("click",()=>voteTopic(topic,option[0]));
+   frag.appendChild(b);
   });
-  host.replaceChildren(fragment);
-  if(!reduceMotion)Array.from(host.children).forEach(b=>{
-    const old=rects.get(b.dataset.hero);if(!old||!b.animate)return;
-    const delta=old.left-b.getBoundingClientRect().left;
-    if(Math.abs(delta)>2)b.animate([{transform:"translateX("+delta+"px)"},{transform:"translateX(0)"}],{duration:470,easing:"cubic-bezier(.2,.8,.2,1)"});
-  });
-  $("ranking-label").textContent="前 "+top+" 位";
-  $("hero-total").textContent=fmt(heroes.length);
-  $("demo-vote-total").textContent=fmt(heroes.reduce((s,h)=>s+heroVotes(h),0));
-  const mine=heroIds.get(choices.hero),camp=$("my-camp");
-  if(!mine){
-    const linkedId=new URLSearchParams(location.search).get("hero");
-    const from=heroIds.get(LEGACY_IDS[linkedId]||linkedId);
-    camp.textContent=from?"好友邀请你关注「"+name(from)+"」阵营":"尚未站队 · 点击英雄加入阵营";return;
-  }
-  const i=ranked.findIndex(h=>h.id===mine.id);
-  const gap=i===0?0:heroVotes(ranked[0])-heroVotes(mine)+1;
-  const strong=document.createElement("strong");strong.textContent="我的阵营："+name(mine);
-  const tail=document.createTextNode(i===0?" · 当前模拟榜领跑":" · 第 "+(i+1)+" 名，距榜首还差 "+gap+" 票");
-  camp.replaceChildren(strong,tail);
+  host.replaceChildren(frag);
+ }
+ const totals=topic.choices.map(c=>c[2]+(state[topic.id]===c[0]?1:0));
+ const sum=totals.reduce((a,b)=>a+b,0)||1;
+ Array.from(host.children).forEach((b,i)=>{
+  const option=topic.choices[i],amount=totals[i],pct=Math.round(amount/sum*100);
+  b.querySelector(".poll-meter").style.width=pct+"%";
+  b.querySelector(".poll-option-index").textContent=state[topic.id]===option[0]?"✓":String(i+1).padStart(2,"0");
+  b.querySelector(".poll-pct").textContent=pct+"%";
+  b.classList.toggle("selected",state[topic.id]===option[0]);
+  b.setAttribute("aria-pressed",String(state[topic.id]===option[0]));
+  b.disabled=isTopicClosed(topic);
+ });
+ $(topic.summary).textContent= (isTopicClosed(topic)?"已结束 · ":"") + fmt(totals.reduce((a,b)=>a+b,0))+" 张模拟票";
 }
-function voteHero(id,viaSlot){
-  const h=heroIds.get(id);if(!h)return;
-  if(closedHero()){notice("赛季已开服，阵营战已封榜");return;}
-  if(choices.hero===id)notice("你已经站在「"+name(h)+"」阵营");
-  else{
-    const changed=!!choices.hero;choices.hero=id;save();chart();notice((changed?"已改选：":"已加入：")+name(h)+"（本地演示）");
-  }
-  if($("hero-dialog").open)closeDialog($("hero-dialog"));
-  if(viaSlot&&$("lottery-dialog").open)closeDialog($("lottery-dialog"));
+function voteTopic(topic,id){
+ if(isTopicClosed(topic)){toast("这道题投票已结束");return;}
+ if(state[topic.id]===id){toast("你已经选了这项");return;}
+ state[topic.id]=id;saveChoice();renderTopic(topic);
+ toast("已选择「"+topic.choices.find(x=>x[0]===id)[1]+"」");
 }
-function picker(){
-  const q=$("hero-search").value.trim().toLowerCase();
-  const found=rank().filter(h=>!q||[h.name,h.trait,h.alias,name(h)].join(" ").toLowerCase().includes(q));
-  $("hero-search-summary").textContent=found.length+" / "+heroes.length+" 个英雄特性";
-  const fragment=document.createDocumentFragment();
-  found.forEach(h=>{
-    const btn=document.createElement("button");btn.type="button";btn.className="hero-choice";btn.classList.toggle("is-selected",choices.hero===h.id);btn.style.setProperty("--hero-color",h.color);
-    const ava=document.createElement("span");ava.className="hero-choice-avatar";setHeroPortrait(ava,h);
-    const copy=document.createElement("span");copy.className="hero-choice-body";
-    const title=document.createElement("strong");title.textContent=name(h);
-    const alias=document.createElement("span");alias.textContent=h.alias;copy.append(title,alias);
-    const number=document.createElement("span");number.className="hero-choice-count";number.textContent=fmt(heroVotes(h))+" 票";
-    btn.append(ava,copy,number);btn.disabled=closedHero();btn.setAttribute("aria-pressed",String(choices.hero===h.id));
-    btn.addEventListener("click",()=>voteHero(h.id,false));fragment.append(btn);
-  });
-  if(!found.length){const p=document.createElement("p");p.className="hero-empty";p.textContent="找不到对应特性，试试别的关键词。";fragment.append(p);}
-  $("hero-list").replaceChildren(fragment);
+function updateCountdown(){
+ const el=$("countdown");const gap=Math.max(0,SS14_OPEN-Date.now());
+ if(!gap){el.textContent="新赛季已开服";return;}
+ const minutes=Math.floor(gap/60000),days=Math.floor(minutes/1440),hours=Math.floor(minutes%1440/60);
+ el.textContent=String(days).padStart(2,"0")+" 天 "+String(hours).padStart(2,"0")+" 小时";
 }
-function renderTopic(t){
-  const host=$(t.host),total=t.options.reduce((s,o)=>s+topicVotes(t,o),0);
-  if(host.children.length!==t.options.length){
-    const fragment=document.createDocumentFragment();
-    t.options.forEach((o,i)=>{
-      const b=document.createElement("button");b.type="button";b.className="poll-option";b.dataset.option=o[0];
-      b.innerHTML='<span class="poll-meter" aria-hidden="true"></span><span class="poll-choice-icon"></span><span class="poll-choice-text"></span><span class="poll-choice-data"></span>';
-      b.querySelector(".poll-choice-text").textContent=o[1];
-      b.addEventListener("click",()=>voteTopic(t,o[0]));fragment.append(b);
-    });host.replaceChildren(fragment);
-  }
-  Array.from(host.children).forEach((b,i)=>{
-    const o=t.options[i],c=topicVotes(t,o),pct=total?Math.round(c/total*100):0;
-    b.classList.toggle("is-selected",choices[t.id]===o[0]);
-    b.querySelector(".poll-choice-icon").textContent=choices[t.id]===o[0]?"✓":String(i+1).padStart(2,"0");
-    b.querySelector(".poll-choice-data").textContent=pct+"%";
-    b.querySelector(".poll-meter").style.width=pct+"%";
-    b.setAttribute("aria-pressed",String(choices[t.id]===o[0]));b.disabled=closedTopic(t);
-    b.setAttribute("aria-label",o[1]+"，模拟"+c+"票，占"+pct+"%");
-  });
-  $(t.summary).textContent=closedTopic(t)?"本期已封榜 · "+fmt(total)+" 张演示票":fmt(total)+" 张演示票 · "+(choices[t.id]?"已站队，可改选":"点击选择立场");
+function openModal(modal){
+ if(!modal.open){if(modal.showModal)modal.showModal();else modal.setAttribute("open","");}
+ document.body.classList.add("modal-open");
 }
-function voteTopic(t,id){
-  if(closedTopic(t)){notice("该轮投票已经封榜");return;}
-  if(choices[t.id]===id){notice("当前已经选择这个立场");return;}
-  choices[t.id]=id;save();renderTopic(t);
-  notice("已站队："+t.options.find(o=>o[0]===id)[1]+"（本地演示）");
+function closeModal(modal){
+ if(modal.id==="lottery-dialog")stopSpin();
+ if(modal.open){if(modal.close)modal.close();else modal.removeAttribute("open");}
+ if(!document.querySelector(".modal[open]"))document.body.classList.remove("modal-open");
 }
-function countdown(){
-  const delta=Math.max(0,OPEN_AT-Date.now()),time=$("countdown");
-  if(delta===0){time.textContent="新赛季已开启";time.style.fontSize="25px";return;}
-  const s=Math.floor(delta/1000),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);
-  time.innerHTML=String(d).padStart(2,"0")+"<span>天</span>"+String(h).padStart(2,"0")+"<span>时</span>"+String(m).padStart(2,"0")+"<span>分</span>";
+function slotRow(hero,row){
+ const node=$(row);node.replaceChildren();
+ if(!hero){node.textContent=row==="slot-current"?"点击下面的按钮开始":"—";return;}
+ const picture=portrait(hero,row!=="slot-current");
+ const copy=document.createElement("span");copy.className="slot-name";
+ const title=document.createElement("strong");title.textContent=hero.name;
+ const detail=document.createElement("small");detail.textContent=hero.trait;
+ copy.append(title,detail);node.append(picture,copy);
 }
-function showDialog(d){if(!d.open){if(typeof d.showModal==="function")d.showModal();else d.setAttribute("open","");}document.body.classList.add("dialog-active");}
-function closeDialog(d){if(d.id==="lottery-dialog")cancelSpin();if(d.open){if(typeof d.close==="function")d.close();else d.removeAttribute("open");}if(!document.querySelector(".tc-dialog[open]"))document.body.classList.remove("dialog-active");}
-function openPicker(){if(!manifestLoaded){notice("英雄清单尚未加载");return;}$("hero-search").value="";picker();showDialog($("hero-dialog"));setTimeout(()=>$("hero-search").focus(),50);}
-function slotRows(a,b,c){$("slot-prev").textContent=a;$("slot-current").textContent=b;$("slot-next").textContent=c;}
-function cancelSpin(){clearTimeout(spinTimer);spinTimer=null;spinning=false;$("lottery-spin").disabled=closedHero();}
-function settle(h){
-  draw=h;spinning=false;spinTimer=null;
-  const pos=heroes.findIndex(x=>x.id===h.id);
-  slotRows(heroes[(pos+heroes.length-1)%heroes.length].trait,name(h),heroes[(pos+1)%heroes.length].trait);
-  $("lottery-result-label").textContent="命运选中了";
-  $("lottery-result-name").textContent=name(h);
-  $("lottery-result-sub").textContent="模拟榜第 "+(rank().findIndex(x=>x.id===h.id)+1)+" 名 · "+fmt(heroVotes(h))+" 票";
-  $("lottery-announce").textContent="已揭晓结果，点击「接受天命」后才会记录你的本地选择。";
-  $("lottery-spin").disabled=closedHero();$("lottery-accept").disabled=closedHero();
-  $("lottery-share").disabled=false;$("spin-label").textContent="再抽一次";
-}
-function spin(){
-  if(spinning||closedHero()||!heroes.length)return;
-  let h;try{h=heroes[random(heroes.length)];}catch(err){notice(err.message);return;}
-  draw=null;spinning=true;$("lottery-spin").disabled=true;$("lottery-accept").disabled=true;$("lottery-share").disabled=true;
-  $("lottery-result-label").textContent="命运旋转中…";$("lottery-result-name").textContent="???";$("lottery-result-sub").textContent="所有特性等概率抽取";$("lottery-announce").textContent="";
-  if(reduceMotion){settle(h);return;}
-  let step=0;
-  const tick=()=>{
-    if(!$("lottery-dialog").open){cancelSpin();return;}
-    const a=heroes[random(heroes.length)],b=heroes[random(heroes.length)],c=heroes[random(heroes.length)];
-    slotRows(a.trait,name(b),c.trait);
-    step++;if(step>=21){settle(h);return;}
-    spinTimer=setTimeout(tick,42+step*5);
-  };tick();
+function showSlot(pre,current,next){slotRow(pre,"slot-prev");slotRow(current,"slot-current");slotRow(next,"slot-next");}
+function stopSpin(){
+ clearTimeout(slotTimer);slotTimer=0;state.spinning=false;
+ $("lottery-spin").disabled=!loaded||isHeroClosed();
 }
 function openSlot(){
-  if(!manifestLoaded){notice("英雄清单尚未加载");return;}
-  cancelSpin();draw=null;slotRows("—","✳  点击开始抽签","—");
-  $("lottery-result-label").textContent="SS14 · 全部可选英雄特性等概率随机";
-  $("lottery-result-name").textContent="命运尚未揭晓";
-  $("lottery-result-sub").textContent="不影响当前投票 · 完全免费";$("lottery-announce").textContent="";
-  $("spin-label").textContent="开始抽签";$("lottery-accept").disabled=true;$("lottery-share").disabled=true;
-  $("lottery-spin").disabled=closedHero();showDialog($("lottery-dialog"));
+ if(!loaded){toast("英雄清单还在加载");return;}
+ stopSpin();state.slotResult=null;showSlot(null,null,null);
+ $("lottery-result-label").textContent="还没抽签";
+ $("lottery-result-name").textContent="看看会抽到谁？";
+ $("lottery-result-sub").textContent="抽签不会自动投票";
+ $("spin-label").textContent="开始抽签";
+ $("lottery-accept").disabled=true;
+ $("lottery-share").disabled=true;
+ openModal($("lottery-dialog"));
 }
-function simulate(){
-  if(closedHero()||!heroes.length){notice("本期尚不能参与演示追赶");return;}
-  const list=rank().slice(0,6);let h;
-  try{h=list[1+random(list.length-1)];}catch(e){h=list[1];}
-  const bonus=2+Math.floor(Math.random()*3);fake[h.id]=(fake[h.id]||0)+bonus;
-  chart();notice("演出模拟："+name(h)+" +"+bonus+" 张模拟票");
+function finishSpin(hero){
+ state.spinning=false;state.slotResult=hero;slotTimer=0;
+ const i=heroes.findIndex(h=>h.id===hero.id);
+ showSlot(heroes[(i+heroes.length-1)%heroes.length],hero,heroes[(i+1)%heroes.length]);
+ $("lottery-result-label").textContent="抽到了";
+ $("lottery-result-name").textContent=sourceName(hero);
+ $("lottery-result-sub").textContent="当前模拟榜第 "+(sorted().findIndex(h=>h.id===hero.id)+1)+" 名，喜欢就投一票";
+ $("spin-label").textContent="再抽一次";
+ $("lottery-spin").disabled=isHeroClosed();
+ $("lottery-accept").disabled=isHeroClosed();
+ $("lottery-share").disabled=false;
 }
-function shareUrl(h){
-  const u=new URL("https://torchlightskill.com/council/");
-  if(h)u.searchParams.set("hero",h.id);
-  return u.toString();
+function spin(){
+ if(!loaded||state.spinning||isHeroClosed())return;
+ let chosen;try{chosen=sampleOne(heroes);}catch(error){toast("当前浏览器不支持随机抽签");return;}
+ state.spinning=true;state.slotResult=null;
+ $("lottery-spin").disabled=true;$("lottery-accept").disabled=true;$("lottery-share").disabled=true;
+ $("lottery-result-label").textContent="正在抽…";$("lottery-result-name").textContent="";$("lottery-result-sub").textContent="每个特性抽中的机会相同";
+ if(reducedMotion){finishSpin(chosen);return;}
+ let step=0;
+ const tick=()=>{
+  if(!$("lottery-dialog").open){stopSpin();return;}
+  try{showSlot(sampleOne(heroes),sampleOne(heroes),sampleOne(heroes));}
+  catch(error){stopSpin();toast("抽签出错，请重试");return;}
+  step++;
+  if(step>=15){finishSpin(chosen);return;}
+  slotTimer=setTimeout(tick,53+step*6);
+ };
+ tick();
+}
+function shareUrl(hero){
+ const url=new URL("https://torchlightskill.com/council/");
+ if(hero)url.searchParams.set("hero",hero.id);
+ return url.toString();
 }
 async function share(kind){
-  const h=kind==="lottery"?draw:heroIds.get(choices.hero);
-  const link=shareUrl(h);
-  const text=!h?"火炬议会 SS14 开荒阵营战，来选你的开荒英雄！":kind==="lottery"?"我在火炬议会开荒命运机抽到「"+name(h)+"」，你会抽到谁？":"我在火炬议会交互预览中选了「"+name(h)+"」开荒，你会选谁？";
-  if(navigator.share){try{await navigator.share({title:"火炬议会 Torchlight Council",text,url:link});return;}catch(e){if(e&&e.name==="AbortError")return;}}
-  $("share-link").value=link;$("share-tip").textContent=text+" 复制链接后发给朋友即可。";showDialog($("share-dialog"));
+ const hero=kind==="slot"?state.slotResult:heroMap.get(state.hero);
+ const url=shareUrl(hero);
+ const text=hero?(kind==="slot"?"我随机抽到了 "+sourceName(hero)+"，你也来抽个开荒英雄。":"我开荒准备玩 "+sourceName(hero)+"，你选谁？"):"SS14 你准备玩哪个英雄？来火炬议会投票。";
+ if(navigator.share){try{await navigator.share({title:"火炬议会",text,url});return;}catch(e){if(e.name==="AbortError")return;}}
+ $("share-link").value=url;$("share-tip").textContent=text;openModal($("share-dialog"));
 }
-async function copyShare(){
-  const input=$("share-link");
-  try{if(!navigator.clipboard||!navigator.clipboard.writeText)throw Error();await navigator.clipboard.writeText(input.value);$("share-tip").textContent="链接已复制，可以发给朋友。";}
-  catch(e){input.focus();input.select();$("share-tip").textContent="复制未成功。链接已选中，请使用系统复制。";}
+async function copyLink(){
+ const inp=$("share-link");
+ try{if(!navigator.clipboard)throw Error();await navigator.clipboard.writeText(inp.value);$("share-tip").textContent="链接已复制。";}
+ catch(error){inp.focus();inp.select();$("share-tip").textContent="链接已选中，请用系统复制。";}
 }
-function init(){
-  topics.forEach(renderTopic);countdown();
-  ["pick-hero","open-lottery","simulate-btn"].forEach(id=>{$(id).disabled=true;});
-  loadAvatarManifest().then(()=>{
-    read();chart();
-    ["pick-hero","open-lottery","simulate-btn"].forEach(id=>{$(id).disabled=closedHero();});
-  }).catch(error=>{
-    $("chart").textContent="头像或特性清单加载失败，请刷新重试。"+error.message;
-    $("avatar-source-status").textContent="清单暂时无法加载："+error.message+"。为避免错配头像，已经暂停英雄投票与抽签。";
-    $("hero-total").textContent="—";$("demo-vote-total").textContent="—";
-  });
-  setInterval(countdown,1000);
-  setInterval(()=>{
-    if(manifestLoaded&&closedHero()&&$("chart").querySelector("button:not(:disabled)")){chart();if($("hero-dialog").open)picker();}
-    if(closedTopic(topics[1]))renderTopic(topics[1]);
-  },15000);
-  $("pick-hero").addEventListener("click",openPicker);
-  $("open-lottery").addEventListener("click",openSlot);
-  $("simulate-btn").addEventListener("click",simulate);
-  $("share-arena").addEventListener("click",()=>share("arena"));
-  $("hero-search").addEventListener("input",picker);
-  $("lottery-spin").addEventListener("click",spin);
-  $("lottery-accept").addEventListener("click",()=>{if(draw)voteHero(draw.id,true);});
-  $("lottery-choose").addEventListener("click",()=>{closeDialog($("lottery-dialog"));openPicker();});
-  $("lottery-share").addEventListener("click",()=>share("lottery"));
-  $("copy-share").addEventListener("click",copyShare);
-  document.querySelectorAll("[data-close]").forEach(b=>b.addEventListener("click",()=>closeDialog($(b.dataset.close))));
-  document.querySelectorAll(".tc-dialog").forEach(d=>{
-    d.addEventListener("click",e=>{if(e.target===d)closeDialog(d);});
-    d.addEventListener("close",()=>{if(d.id==="lottery-dialog")cancelSpin();if(!document.querySelector(".tc-dialog[open]"))document.body.classList.remove("dialog-active");});
-    d.addEventListener("cancel",()=>{if(d.id==="lottery-dialog")cancelSpin();});
-  });
-  window.addEventListener("resize",()=>{const m=window.innerWidth<=700;if(m!==lastMobile){lastMobile=m;if(manifestLoaded)chart();}},{passive:true});
+function setUp(){
+ $("hero-search").addEventListener("input",searchRoster);
+ $("open-lottery").addEventListener("click",openSlot);
+ $("lottery-spin").addEventListener("click",spin);
+ $("lottery-accept").addEventListener("click",()=>{
+  if(!state.slotResult)return;
+  voteHero(state.slotResult.id,null);
+  closeModal($("lottery-dialog"));
+  document.getElementById("all-heroes").scrollIntoView({behavior:reducedMotion?"auto":"smooth"});
+ });
+ $("lottery-share").addEventListener("click",()=>share("slot"));
+ $("lottery-choose").addEventListener("click",()=>closeModal($("lottery-dialog")));
+ $("copy-share").addEventListener("click",copyLink);
+ $("share-arena").addEventListener("click",()=>share("vote"));
+ $("simulate-btn").addEventListener("click",()=>{
+  if(!loaded||isHeroClosed())return;
+  const prev=state.motion;state.motion=true;tickDemo();state.motion=prev;
+ });
+ $("motion-toggle").addEventListener("click",toggleMotion);
+ document.querySelectorAll("[data-close]").forEach(button=>button.addEventListener("click",()=>closeModal($(button.dataset.close))));
+ document.querySelectorAll(".modal").forEach(modal=>{
+  modal.addEventListener("click",e=>{if(e.target===modal)closeModal(modal);});
+  modal.addEventListener("close",()=>{if(modal.id==="lottery-dialog")stopSpin();document.body.classList.remove("modal-open");});
+  modal.addEventListener("cancel",()=>{if(modal.id==="lottery-dialog")stopSpin();});
+ });
+ window.addEventListener("resize",()=>{
+  const now=window.innerWidth<=700;if(now!==mobile){mobile=now;if(loaded)chart();}
+ },{passive:true});
+ updateCountdown();setInterval(updateCountdown,1000);
+ polling.forEach(renderTopic);
+ setInterval(()=>{if(isTopicClosed(polling[1]))renderTopic(polling[1]);},30000);
+}
+async function init(){
+ setUp();
+ try{
+  await getManifest();
+  readChoice();loaded=true;
+  buildRoster();chart();
+  $("open-lottery").disabled=isHeroClosed();
+  $("simulate-btn").disabled=isHeroClosed();
+  showActivity("模拟有人投票时，会冒出 +1 气泡",true);
+  setInterval(tickDemo,5100);
+  setTimeout(tickDemo,2100);
+ }catch(error){
+  $("hero-list").textContent="头像清单加载失败，请刷新重试。";
+  $("chart").textContent="暂时无法读取英雄资料。";
+  $("hero-search-summary").textContent="加载失败";
+  $("avatar-source-status").textContent="读取失败："+error.message;
+  state.motion=false;$("motion-toggle").disabled=true;
+ }
 }
 init();
 })();
