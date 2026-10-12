@@ -268,14 +268,12 @@ function showActivity(value,simulated){
  $("activity-line").textContent=stamp+" · "+value;
 }
 function bubble(hero,label,simulation){
- const item=chartCards.get(hero.id);
- const b=item?.button;
- if(!b||!b.isConnected||reducedMotion)return;
- const root=$("arena-stage");
- if(document.hidden)return;
- const target=item.avatar.getBoundingClientRect(),area=root.getBoundingClientRect();
- const x=Math.max(74,Math.min(area.width-74,target.left+target.width/2-area.left));
- const y=Math.max(63,target.top-area.top-4);
+ if(reducedMotion||document.hidden)return;
+ const root=$("arena-stage"),item=chartCards.get(hero.id),area=root.getBoundingClientRect();
+ const visible=!!(item?.button?.isConnected);
+ const target=visible?item.avatar.getBoundingClientRect():null;
+ const x=visible?Math.max(74,Math.min(area.width-74,target.left+target.width/2-area.left)):area.width/2;
+ const y=visible?Math.max(63,target.top-area.top-4):86;
  const bubble=document.createElement("div");bubble.className="vote-bubble";
  bubble.style.left=x+"px";bubble.style.top=y+"px";
  const image=newPortrait(hero.asset,"","bubble-avatar");image.src=hero.asset.site_url;
