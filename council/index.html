@@ -43,10 +43,29 @@
         <h1 id="site-title">SS14 开荒，<br><em>你玩谁？</em></h1>
         <p class="intro-description">28 个英雄特性都能选。点一下投票，想换随时换。</p>
       </div>
-      <aside class="countdown-card" aria-label="新赛季开服时间">
-        <span class="countdown-label">距离新赛季开服</span>
-        <strong class="countdown-time" id="countdown">--</strong>
-        <p class="countdown-caption">10 月 16 日 10:00（北京时间）</p>
+      <aside class="countdown-card petition-card" aria-label="求策划给个说法，连续点击互动">
+        <div class="petition-kicker">🙏 议会求回应 · 随便点</div>
+        <div class="petition-play-area">
+          <button id="petition-orb" class="petition-orb" type="button" aria-label="求策划给个说法，可以反复点击" aria-describedby="petition-hint">
+            <span class="petition-orb-emoji" aria-hidden="true">🔥</span>
+            <strong>求个说法</strong>
+            <span class="petition-orb-mini" aria-hidden="true">点我 +1</span>
+          </button>
+          <div class="petition-stats">
+            <strong id="petition-total">0</strong>
+            <span>我已经求了多少次</span>
+            <strong id="petition-combo">0 连击</strong>
+            <small>可一直点，试试连击</small>
+          </div>
+        </div>
+        <div id="petition-effects" class="petition-effects" aria-hidden="true"></div>
+        <p class="petition-hint" id="petition-hint">👆 点击火球。求多少次都可以，和正式投票分开。</p>
+        <p class="petition-feedback" id="petition-feedback" role="status" aria-live="polite">🔥 准备好了吗？</p>
+        <div class="petition-countdown">
+          <span class="countdown-label">距离 SS14 开服</span>
+          <strong class="countdown-time" id="countdown">--</strong>
+          <small>10 月 16 日 10:00（北京）</small>
+        </div>
       </aside>
     </section>
 
