@@ -282,3 +282,6 @@ body.modal-open{overflow:hidden}
  *,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}
  .bubble-layer{display:none}
 }
+
+.mini-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+@media(max-width:700px){.mini-actions{gap:8px}.arena-below{flex-wrap:wrap}}
