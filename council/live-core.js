@@ -8,14 +8,16 @@ export function createCouncilLive(createClient) {
     auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false},
     realtime:{params:{eventsPerSecond:5}}
   });
-  const counts={hero:{},maze:{},roundtable:{}};
+  const counts={hero:{},maze:{},roundtable:{},mode_reduction:{},ember_drop_data:{},reward_access:{},legacy_friction:{}};
   const ownVotes={};
   let keywordRows=[];
   let questions=[];
+  let seatStats={};
+  let mySeats=[];
   let channel=null,started=false,ready=false,refreshTimer=null,refreshing=false,lastEvent=0;
   const hooks={
     onCounts:null,onKeywordStats:null,onQuestions:null,onVoteEvent:null,
-    onOwnVotes:null,onStatus:null
+    onOwnVotes:null,onStatus:null,onSeatStats:null,onMySeats:null,onSeatEvent:null
   };
   function call(kind,payload){if(typeof hooks[kind]==="function")try{hooks[kind](payload);}catch(error){console.warn("council update handler",error);}}
   function errText(error,action){
@@ -82,7 +84,7 @@ export function createCouncilLive(createClient) {
     return true;
   }
   async function vote(topic,choice){
-    if(!["hero","maze","roundtable"].includes(topic)||!/^[a-z0-9_]{2,40}$/.test(choice))throw Error("投票选项不正确");
+    if(!["hero","maze","roundtable","mode_reduction","ember_drop_data","reward_access","legacy_friction"].includes(topic)||!/^[a-z0-9_]{2,40}$/.test(choice))throw Error("投票选项不正确");
     await ensureAnonymousAuth();
     const {data,error}=await client.rpc("council_cast_vote",{p_topic:topic,p_choice:choice});
     if(error)throw Error(errText(error,"提交投票"));
@@ -103,11 +105,51 @@ export function createCouncilLive(createClient) {
     await Promise.allSettled([refreshKeywordStats(),refreshQuestions()]);
     return data;
   }
+
+  async function refreshSeatStats(){
+    const {data,error}=await client.from("council_seat_stats")
+      .select("seat_key,support_count");
+    if(error)throw Error(errText(error,"读取圆桌支持数"));
+    seatStats={};
+    for(const row of data||[])seatStats[row.seat_key]=Math.max(0,Number(row.support_count)||0);
+    call("onSeatStats",seatStats);
+    return seatStats;
+  }
+  async function refreshMySeats(){
+    const {data:{session},error:authError}=await client.auth.getSession();
+    if(authError)throw authError;
+    if(!session?.access_token){mySeats=[];call("onMySeats",mySeats);return mySeats;}
+    const {data,error}=await client.rpc("council_my_supported_seats");
+    if(error)throw Error(errText(error,"读取已支持的问题"));
+    mySeats=Array.isArray(data)?data:[];
+    call("onMySeats",mySeats);
+    return mySeats;
+  }
+  async function supportSeat(seat){
+    if(typeof seat!=="string"||!/^topic:[a-z_]+$|^question:[0-9a-f-]{36}$/.test(seat))throw Error("席位不正确");
+    await ensureAnonymousAuth();
+    const {data,error}=await client.rpc("council_support_seat",{p_seat:seat});
+    if(error)throw Error(errText(error,"支持这个问题"));
+    if(data?.seat===seat){
+      seatStats={...seatStats,[seat]:Math.max(0,Number(data.count)||0)};
+      call("onSeatStats",seatStats);
+    }
+    if(!mySeats.includes(seat))mySeats.push(seat);
+    call("onMySeats",mySeats);
+    return data||{seat,changed:false};
+  }
+  async function getApprovedQuestion(id){
+    if(!/^[0-9a-f-]{36}$/.test(String(id||"")))return null;
+    const {data,error}=await client.from("council_questions").select("id,body,status,created_at")
+      .eq("id",id).eq("status","approved").maybeSingle();
+    if(error)return null;
+    return data&&data.status==="approved"?{id:data.id,text:data.body,status:data.status,at:Date.parse(data.created_at)||Date.now()}:null;
+  }
   async function refreshAll(){
     if(refreshing)return;
     refreshing=true;
     try{
-      const results=await Promise.allSettled([refreshChoices(),refreshKeywordStats(),refreshQuestions()]);
+      const results=await Promise.allSettled([refreshChoices(),refreshKeywordStats(),refreshQuestions(),refreshSeatStats()]);
       if(results[0].status==="rejected")throw results[0].reason;
       if(!ready)throw Error("统计还未加载");
       call("onStatus",{state:"ready",message:"已连接真实投票"});
@@ -125,7 +167,7 @@ export function createCouncilLive(createClient) {
       })
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"council_vote_events"},payload=>{
         const row=payload?.new;
-        if(!row||!["hero","maze","roundtable"].includes(row.topic_id))return;
+        if(!row||!Object.prototype.hasOwnProperty.call(counts,row.topic_id))return;
         const id=Number(row.id)||0;
         if(id>0&&id<=lastEvent)return;
         if(id>0)lastEvent=id;
@@ -135,6 +177,18 @@ export function createCouncilLive(createClient) {
       .on("postgres_changes",{event:"*",schema:"public",table:"council_keyword_stats"},()=>{
         // Re-fetch all categories so inserts and updates share a consistent ordering.
         refreshKeywordStats().catch(()=>{});
+      })
+
+      .on("postgres_changes",{event:"*",schema:"public",table:"council_seat_stats"},payload=>{
+        const row=payload?.new;
+        if(row?.seat_key){
+          seatStats={...seatStats,[row.seat_key]:Math.max(0,Number(row.support_count)||0)};
+          call("onSeatStats",seatStats);
+        }
+      })
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"council_seat_events"},payload=>{
+        const row=payload?.new;
+        if(row?.seat_key)call("onSeatEvent",{seat:row.seat_key,id:Number(row.id)||0});
       })
       .subscribe(status=>{
         if(status==="SUBSCRIBED")call("onStatus",{state:"ready",message:"实时更新已连接"});
@@ -147,9 +201,9 @@ export function createCouncilLive(createClient) {
     started=true;
     call("onStatus",{state:"loading",message:"正在读取真实票数…"});
     await refreshAll();
-    try{await refreshOwnVotes();}catch(error){call("onStatus",{state:"polling",message:"投票记录读取失败，刷新可重试"});}
+    try{await Promise.all([refreshOwnVotes(),refreshMySeats()]);}catch(error){call("onStatus",{state:"polling",message:"我的投票记录读取失败"});}
     subscribe();
-    refreshTimer=window.setInterval(refreshAll,12000);
+    refreshTimer=window.setInterval(()=>{if(!document.hidden)refreshAll();},30000);
   }
   function stop(){
     if(refreshTimer)window.clearInterval(refreshTimer);
@@ -157,10 +211,13 @@ export function createCouncilLive(createClient) {
     started=false;
   }
   return {
-    available:true,hooks,counts,ownVotes,start,stop,vote,submitQuestion,
+    available:true,hooks,counts,ownVotes,start,stop,vote,submitQuestion,supportSeat,getApprovedQuestion,refreshSeatStats,refreshMySeats,
     refreshAll,refreshChoices,refreshQuestions,refreshKeywordStats,refreshOwnVotes,
     getCount:(topic,choice)=>Number(counts[topic]?.[choice]||0),
     isReady:()=>ready,
+    getSeatCount:(seat)=>Number(seatStats[seat]||0),
+    hasSupported:(seat)=>mySeats.includes(seat),
+    getSeatStats:()=>({...seatStats}),
     getKeywords:()=>keywordRows.slice(),
     getQuestions:()=>questions.slice()
   };
