@@ -16,7 +16,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
     selected:"topic:mode_reduction",questions:[],pending:[],
     ranked:[],localClicks:0,pendingClicks:0,combo:0,lastClick:0,lastSave:0,
     timer:0,flushTimer:0,busy:false,dailyLimit:false,totalKnown:false,
-    activeBombs:0,lastRemoteBomb:0,submitBusy:false,submitting:false,reactionTimer:0
+    activeBombs:0,lastRemoteBomb:0,submitBusy:false,submitting:false,reactionTimer:0,expanded:false,ambientTimer:0
   };
   const STORAGE="torchlight-council-petition-local-v1";
   const fmt=n=>new Intl.NumberFormat("zh-CN").format(Math.max(0,Number(n)||0));
@@ -66,7 +66,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
   }
   function syncRows(){
     const host=$("planner-issue-grid");if(!host)return;
-    const order=candidates().slice(0,8),before=new Map();
+    const all=candidates(),order=all.slice(0,state.expanded?40:8),before=new Map();
     host.querySelectorAll("[data-planner-seat]").forEach(b=>{
       before.set(b.dataset.plannerSeat,b.getBoundingClientRect());
     });
@@ -106,6 +106,9 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
         ],{duration:440,easing:"cubic-bezier(.2,.8,.3,1)"});
       });
     }
+    const countEl=$("planner-pool-count"),more=$("planner-more");
+    if(countEl)countEl.textContent=all.length+" 道已审核/预置问题 · 按真实支持数排序";
+    if(more){more.hidden=all.length<=8;more.textContent=state.expanded?"↑ 收起，仅看前 8":"↓ 查看更多 "+(all.length-8)+" 道问题";}
     if(!order.some(row=>row.key===state.selected))state.selected=order[0]?.key||"topic:mode_reduction";
     refreshSelected();
     const pending=$("planner-pending-count");
@@ -369,11 +372,18 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
   }
   function notifyReady(){refreshSelected();if(state.pendingClicks>0)queueFlush(900);}
   function mount(){
+    try{
+      const seat=new URLSearchParams(location.search).get("seat");
+      if(seat && /^(topic:[a-z_]+|question:[0-9a-f-]{36})$/.test(seat)){
+        state.selected=seat;state.expanded=true;
+      }
+    }catch(error){/* A malformed link must not block the game. */}
     readClicks();
     syncRows();
     $("petition-orb").addEventListener("click",tap);
     $("planner-target").addEventListener("click",tap);
     $("planner-vote").addEventListener("click",supportCurrent);
+    $("planner-more").addEventListener("click",()=>{state.expanded=!state.expanded;syncRows();});
     $("planner-write").addEventListener("click",()=>openForm($("planner-question-form").hidden));
     $("planner-question-cancel").addEventListener("click",()=>openForm(false));
     $("planner-question-input").addEventListener("input",e=>{
