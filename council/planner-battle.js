@@ -385,7 +385,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
       if(document.hidden)saveClicks();
       else if(state.pendingClicks>0)queueFlush(1000);
     });
-    onGlobalCount({total:LIVE?.getPetitionTotal?.()||0});
+    // Wait for a verified public database read before claiming a real global count.
   }
   return{
     mount,tap,select,refreshSeats,updateQuestions,onGlobalCount,
