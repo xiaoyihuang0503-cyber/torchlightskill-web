@@ -1,3 +1,4 @@
+import { drawCouncilPoster, SITE_QR_URL } from "./qr-poster.js";
 /* Torchlight Council v2 share landing: deep links to real polls and chairs. */
 (function(){
 "use strict";
@@ -228,63 +229,74 @@ async function systemShare(){
  if(navigator.share){try{await navigator.share({title:"火炬议会",text:state.title,url:location.href});return;}catch(error){if(error?.name==="AbortError")return;}}
  await copyLink();
 }
-function wrap(c,str,x,y,maxWidth,height,maxLines){
- const lines=[];let current="";
- for(const char of String(str||"")){
-  if(current&&c.measureText(current+char).width>maxWidth){lines.push(current);current=char;}
-  else current+=char;
+let previousPosterUrl=null;
+function posterText(){
+ const heading=String(state.title||"这道题，你站哪边？");
+ if(kind==="hero")return {
+   category:"🔥 开荒英雄 · SS14",
+   title:heading,
+   detail:"扫描二维码，进入火炬议会选择你的英雄"
+ };
+ if(kind==="lottery")return {
+   category:"🎰 随机开荒 · 28 个特性",
+   title:heading,
+   detail:"扫描二维码，自己来抽一个开荒英雄"
+ };
+ if(kind==="topic"){
+   const picked=state.topic?.choices?.find(c=>c[0]===choiceId);
+   return {
+     category:"🗳️ 本周焦点投票",
+     title:state.topic?.title||heading,
+     detail:picked?"我选择："+picked[1]:"扫码参与投票，你更支持哪一项？"
+   };
  }
- if(current)lines.push(current);
- lines.slice(0,maxLines).forEach((line,i)=>c.fillText(line,x,y+i*height,maxWidth));
- return Math.min(maxLines,lines.length);
+ if(kind==="seat")return {
+   category:"🪑 策划圆桌 · 问题席位",
+   title:heading,
+   detail:"扫码查看圆桌问题，支持你最想让策划回答的"
+ };
+ if(kind==="ranking")return {
+   category:"👑 SS14 开荒实时榜",
+   title:heading,
+   detail:"扫码看完整的英雄榜，为你的英雄投一票"
+ };
+ return {
+   category:"🗳️ 火炬议会 · 玩家话题",
+   title:heading,
+   detail:"扫描二维码，进入火炬议会一起讨论"
+ };
 }
 async function poster(){
- const btn=$("save-poster");btn.disabled=true;
- const canvas=$("poster-canvas");const c=canvas.getContext("2d");
- $("export-feedback").textContent="正在生成 3:4 分享图片…";
+ const button=$("save-poster"),feedback=$("export-feedback");
+ if(button.disabled)return;
+ button.disabled=true;
+ feedback.textContent="正在绘制二维码海报…";
  try{
-  if(!c)throw Error();
-  if(document.fonts?.ready)await document.fonts.ready;
-  c.clearRect(0,0,1080,1440);
-  c.fillStyle="#fff4dd";c.fillRect(0,0,1080,1440);
-  c.strokeStyle="#26201a";c.lineWidth=6;c.strokeRect(42,42,996,1356);
-  c.fillStyle="#ffd84d";c.fillRect(45,45,990,181);
-  c.beginPath();c.moveTo(45,226);c.lineTo(1035,226);c.stroke();
-  c.fillStyle="#26201a";c.font="800 61px sans-serif";c.fillText("✳ 火炬议会",94,151);
-  c.font="700 24px monospace";c.fillText("TORCHLIGHT COUNCIL / SS14",94,193);
-  c.fillStyle="#a33a1d";c.font="800 27px sans-serif";c.fillText("朋友邀请你投一票",94,307);
-  c.fillStyle="#26201a";c.font="800 64px sans-serif";
-  const lines=wrap(c,state.title,94,402,888,83,5);
-  const bottom=Math.min(900,433+(Math.max(1,lines)-1)*83);
-  if(state.hero){
-   const hero=state.hero,ring=150,centerX=540,centerY=Math.min(1050,bottom+170);
-   c.save();c.beginPath();c.arc(centerX,centerY,ring,0,Math.PI*2);c.clip();
-   c.fillStyle="#ffb9cc";c.fillRect(centerX-ring,centerY-ring,ring*2,ring*2);
-   const img=await new Promise(resolve=>{const im=new Image();im.crossOrigin="anonymous";im.onload=()=>resolve(im);im.onerror=()=>resolve(null);im.src=hero.site_url;});
-   if(img){
-    const ratio=Math.max((ring*2)/img.width,(ring*2)/img.height),w=img.width*ratio,h=img.height*ratio;
-    c.drawImage(img,centerX-w/2,centerY-h/2,w,h);
+   // The QR matrix is embedded locally: rendering requires no network, fonts or images.
+   const canvas=$("poster-canvas");
+   const copy=posterText();
+   drawCouncilPoster(canvas,copy);
+   let url;
+   if(typeof canvas.toBlob==="function"){
+     const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+     if(blob)url=URL.createObjectURL(blob);
    }
-   c.restore();c.beginPath();c.arc(centerX,centerY,ring,0,Math.PI*2);c.lineWidth=8;c.stroke();
-  }else{
-   c.fillStyle="#a5dcff";c.fillRect(95,bottom+40,890,240);
-   c.strokeStyle="#26201a";c.lineWidth=4;c.strokeRect(95,bottom+40,890,240);
-   c.fillStyle="#26201a";c.font="800 39px sans-serif";
-   wrap(c,state.description,126,bottom+126,822,58,3);
-  }
-  c.fillStyle="#ffd84d";c.fillRect(45,1200,990,194);
-  c.beginPath();c.moveTo(45,1200);c.lineTo(1035,1200);c.lineWidth=5;c.stroke();
-  c.fillStyle="#26201a";c.font="800 42px sans-serif";c.fillText("🗳️ 你会怎么选？",94,1281);
-  c.font="700 26px sans-serif";c.fillText("torchlightskill.com/council/share/",94,1327);
-  c.font="600 19px sans-serif";c.fillText("图片分享时请附上专属链接，朋友才能直接参与",94,1362);
-  const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
-  if(!blob)throw Error("PNG 生成失败");
-  const url=URL.createObjectURL(blob),link=document.createElement("a");
-  link.href=url;link.download="火炬议会-分享.png";document.body.appendChild(link);link.click();link.remove();
-  window.setTimeout(()=>URL.revokeObjectURL(url),4000);
-  $("export-feedback").textContent="✅ 图片已保存。把专属链接一起发给朋友更方便参与。";
- }catch(error){$("export-feedback").textContent="生成图片失败，可先复制专属链接。";}
- finally{btn.disabled=false;}
+   if(!url)url=canvas.toDataURL("image/png");
+   if(previousPosterUrl?.startsWith("blob:"))URL.revokeObjectURL(previousPosterUrl);
+   previousPosterUrl=url;
+   const preview=$("poster-preview-image"),download=$("poster-preview-download");
+   preview.src=url;
+   preview.alt=copy.category+" · "+copy.title+" · 二维码跳转 "+SITE_QR_URL;
+   download.href=url;
+   const filenameMap={hero:"英雄",lottery:"随机英雄",topic:"焦点投票",seat:"策划圆桌",ranking:"英雄排行榜"};
+   download.download="火炬议会-"+(filenameMap[kind]||"玩家话题")+"-二维码海报.png";
+   $("poster-preview-panel").hidden=false;
+   feedback.textContent="✅ 二维码海报已生成！手机可长按下方图片保存，也可以点下载 PNG。";
+   // An explicit download link remains as fallback for iOS browsers that ignore download().
+ }catch(error){
+   console.warn("QR poster creation failed",error);
+   feedback.textContent="海报生成失败，请刷新后重试，或先复制链接。";
+ }finally{button.disabled=false;}
 }
 function init(){
  $("copy-link").addEventListener("click",copyLink);
