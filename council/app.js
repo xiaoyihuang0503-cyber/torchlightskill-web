@@ -290,7 +290,7 @@ function bubble(hero,label,simulation){
  bubble.style.left=x+"px";bubble.style.top=y+"px";
  const image=newPortrait(hero.asset,"","bubble-avatar");image.src=hero.asset.site_url;
  const line=document.createElement("span");line.className="bubble-copy";
- const lineTop=document.createElement("strong");lineTop.textContent=simulation?"演示 +1":label;
+ const lineTop=document.createElement("strong");lineTop.textContent=label||"真实 +1";
  const lineBottom=document.createElement("small");lineBottom.textContent=sourceName(hero);
  line.append(lineTop,lineBottom);
  bubble.append(image,line);
@@ -461,7 +461,7 @@ function renderTopic(topic){
   });
   host.replaceChildren(frag);
  }
- const totals=topic.choices.map(c=>c[2]+(state[topic.id]===c[0]?1:0));
+ const totals=topic.choices.map(c=>c[2]);
  const sum=totals.reduce((a,b)=>a+b,0)||1;
  Array.from(host.children).forEach((b,i)=>{
   const option=topic.choices[i],amount=totals[i],pct=Math.round(amount/sum*100);
@@ -470,17 +470,22 @@ function renderTopic(topic){
   b.querySelector(".poll-pct").textContent=pct+"%";
   b.classList.toggle("selected",state[topic.id]===option[0]);
   b.setAttribute("aria-pressed",String(state[topic.id]===option[0]));
-  b.disabled=isTopicClosed(topic);
+  b.disabled=isTopicClosed(topic)||!remoteReady;
  });
- $(topic.summary).textContent= (isTopicClosed(topic)?"已结束 · ":"") + fmt(totals.reduce((a,b)=>a+b,0))+" 张模拟票";
+ $(topic.summary).textContent= (isTopicClosed(topic)?"已结束 · ":"") + fmt(totals.reduce((a,b)=>a+b,0))+" 张投票";
  const shareButton=$(topic.id==="maze"?"share-maze":"share-roundtable");
  if(shareButton)shareButton.textContent=state[topic.id]?"分享我的选择 ↗":"分享这道投票 ↗";
 }
-function voteTopic(topic,id){
+async function voteTopic(topic,id){
+ if(!remoteReady){toast("正在连接真实投票，请稍后再试");return;}
  if(isTopicClosed(topic)){toast("这道题投票已结束");return;}
  if(state[topic.id]===id){toast("你已经选了这项");return;}
- state[topic.id]=id;saveChoice();renderTopic(topic);
- toast("已选择「"+topic.choices.find(x=>x[0]===id)[1]+"」");
+ try {
+   await LIVE.vote(topic.id,id);
+   state[topic.id]=id;
+   renderTopic(topic);
+   toast("已选择「"+topic.choices.find(c=>c[0]===id)[1]+"」，票数已同步");
+ }catch(error){toast(String(error?.message||error));}
 }
 function updateCountdown(){
  const el=$("countdown");const gap=Math.max(0,SS14_OPEN-Date.now());
