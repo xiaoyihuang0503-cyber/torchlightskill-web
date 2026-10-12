@@ -690,22 +690,55 @@ async function copyLink(){
 function setUp(){
  setupRoundtable();
  $("hero-search").addEventListener("input",searchRoster);
+ $("hero-sort").addEventListener("change",event=>{
+   rosterSort=event.target.value==="name"?"name":"votes";sortRoster();
+ });
+ $("all-heroes").addEventListener("toggle",()=>sortRoster());
+ $("hero-list").addEventListener("focusout",()=>window.setTimeout(sortRoster,20));
+ document.querySelectorAll('a[href="#all-heroes"]').forEach(link=>{
+   link.addEventListener("click",()=>{$("all-heroes").open=true;});
+ });
+ // Tab semantics: four chairs are one roving keyboard focus group.
+ const chairs=Array.from(document.querySelectorAll(".topic-chair"));
+ chairs.forEach((chair,index)=>{
+   chair.addEventListener("click",()=>setActiveTopic(chair.dataset.topic));
+   chair.addEventListener("keydown",event=>{
+     let next=null;
+     if(event.key==="ArrowRight"||event.key==="ArrowDown")next=(index+1)%chairs.length;
+     if(event.key==="ArrowLeft"||event.key==="ArrowUp")next=(index+chairs.length-1)%chairs.length;
+     if(event.key==="Home")next=0;
+     if(event.key==="End")next=chairs.length-1;
+     if(next!==null){event.preventDefault();setActiveTopic(chairs[next].dataset.topic,true);}
+   });
+ });
+ $("share-active-topic").addEventListener("click",()=>share("topic",activeTopicId));
+ $("followup-to-question").addEventListener("click",()=>{
+   const topic=topicById(activeTopicId);
+   if(topic)$("roundtable-question-input").placeholder="关于「"+topic.short+"」，你还想问什么？";
+ });
+ setActiveTopic(activeTopicId);
  $("open-lottery").addEventListener("click",openSlot);
  $("lottery-spin").addEventListener("click",spin);
  $("lottery-accept").addEventListener("click",async()=>{
   if(!state.slotResult)return;
   const ok=await voteHero(state.slotResult.id,null);
-  if(ok){closeModal($("lottery-dialog"));document.getElementById("all-heroes").scrollIntoView({behavior:reducedMotion?"auto":"smooth"});}
+  if(ok){
+    closeModal($("lottery-dialog"));
+    $("all-heroes").open=true;
+    sortRoster();
+    $("all-heroes").scrollIntoView({behavior:reducedMotion?"auto":"smooth"});
+  }
  });
  $("lottery-share").addEventListener("click",()=>share("slot"));
  $("share-lottery-game").addEventListener("click",()=>share("lottery"));
- $("lottery-choose").addEventListener("click",()=>closeModal($("lottery-dialog")));
+ $("lottery-choose").addEventListener("click",()=>{
+   closeModal($("lottery-dialog"));
+   $("all-heroes").open=true;
+ });
  $("copy-share").addEventListener("click",copyLink);
  $("share-arena").addEventListener("click",()=>share("vote"));
- $("share-maze").addEventListener("click",()=>share("maze"));
  $("share-roundtable").addEventListener("click",()=>share("roundtable"));
  $("native-share").addEventListener("click",nativeShare);
- /* The former fake-vote button remains hidden; no listener can generate artificial votes. */
  $("motion-toggle").addEventListener("click",toggleMotion);
  document.querySelectorAll("[data-close]").forEach(button=>button.addEventListener("click",()=>closeModal($(button.dataset.close))));
  document.querySelectorAll(".modal").forEach(modal=>{
@@ -714,16 +747,15 @@ function setUp(){
   modal.addEventListener("cancel",()=>{if(modal.id==="lottery-dialog")stopSpin();});
  });
  window.addEventListener("resize",()=>{
-  const now=window.innerWidth<=700;if(now!==mobile){mobile=now;if(loaded)chart();}
+   const now=window.innerWidth<=700;
+   if(now!==mobile){mobile=now;if(loaded)chart();}
  },{passive:true});
  updateCountdown();setInterval(updateCountdown,1000);
- polling.forEach(renderTopic);
  setInterval(()=>{
-  if(isTopicClosed(polling[1]))renderTopic(polling[1]);
-  if(Date.now()>=ROUNDTABLE_END){
-   $("submit-roundtable-question").disabled=true;
-   $("roundtable-question-input").disabled=true;
-  }
+   if(Date.now()>=ROUNDTABLE_END){
+     $("submit-roundtable-question").disabled=true;
+     $("roundtable-question-input").disabled=true;
+   }
  },30000);
 }
 async function init(){
