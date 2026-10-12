@@ -47,7 +47,7 @@ const state={
 let heroLoadPromise=null;
 /* Infinite local petition: repeated clicks are NOT votes and never reach Supabase. */
 const PETITION_KEY="torchlight-council-petition-local-v1";
-const petition={total:0,combo:0,lastTap:0,lastPersist:0,comboTimer:0,partyTimer:0};
+const petition={total:0,combo:0,lastTap:0,lastPersist:0,comboTimer:0,partyTimer:0,pending:0,syncTimer:0,syncing:false,limited:false,globalSeen:false};
 function persistPetition(){
  try{localStorage.setItem(PETITION_KEY,String(petition.total));petition.lastPersist=Date.now();}
  catch(error){/* Some private browsers disable localStorage; tapping still works. */}
@@ -59,6 +59,42 @@ function loadPetition(){
  }catch(error){petition.total=0;}
  $("petition-total").textContent=fmt(petition.total);
  $("petition-combo").textContent="0 连击";
+}
+function showGlobalPetition(data){
+ const value=Number(data?.total);
+ if(!Number.isFinite(value)||value<0)return;
+ petition.globalSeen=true;
+ $("petition-global").textContent="🌍 全站真实累计 "+fmt(value)+" 次";
+}
+function queuePetitionFlush(wait=3600){
+ if(petition.limited||petition.syncing||petition.pending<=0||petition.syncTimer)return;
+ petition.syncTimer=window.setTimeout(()=>{
+  petition.syncTimer=0;
+  flushPetition().catch(error=>console.warn("Petition batch not synced",error));
+ },wait);
+}
+async function flushPetition(){
+ if(petition.syncing||petition.limited||petition.pending<=0)return;
+ if(!LIVE?.isReady?.()||document.hidden){queuePetitionFlush(6000);return;}
+ const batch=Math.min(25,petition.pending);
+ petition.syncing=true;
+ try{
+  const result=await LIVE.addPetition(batch);
+  const accepted=Math.max(0,Math.min(batch,Number(result?.accepted)||0));
+  petition.pending=Math.max(0,petition.pending-accepted);
+  showGlobalPetition(result);
+  if(result?.reason==="daily_limit"||Number(result?.remaining)===0){
+    petition.limited=true;petition.pending=0;
+    $("petition-global").textContent+=" · 今日计数已满";
+  }
+ }catch(error){
+  // The local button stays playable even when Supabase is offline.
+  if(!petition.globalSeen)$("petition-global").textContent="🌍 全站真实累计 · 暂时无法同步";
+  console.warn("Petition network batch delayed",error);
+ }finally{
+  petition.syncing=false;
+  if(petition.pending>0&&!petition.limited)queuePetitionFlush(4000);
+ }
 }
 function petitionSpark(text,isMilestone=false){
  if(reduced||document.hidden)return;
@@ -108,6 +144,8 @@ function petitionTap(){
   for(let i=0;i<5;i++)petitionSpark(["🎉","🔥","✨","🙏","⚡"][i],true);
  }
  if(petition.total%5===0||now-petition.lastPersist>1100)persistPetition();
+ petition.pending=Math.min(10000,petition.pending+1);
+ queuePetitionFlush(3600);
  window.clearTimeout(petition.comboTimer);
  petition.comboTimer=window.setTimeout(()=>{
   petition.combo=0;
@@ -120,6 +158,7 @@ function initPetition(){
  window.addEventListener("pagehide",persistPetition);
  document.addEventListener("visibilitychange",()=>{
   if(document.hidden)persistPetition();
+  else if(petition.pending>0)queuePetitionFlush(1200);
  });
 }
 const labelHero=hero=>hero.name+" · "+hero.trait;
@@ -922,6 +961,7 @@ function bind(){
 function wireLive(){
  LIVE.hooks.onCounts=()=>{
   state.ready=true;
+  if(petition.pending>0)queuePetitionFlush(1200);
   syncSlotVoteAction();
   if(state.slotResult&&!isClosed())$("lottery-result-sub").textContent="可以将抽签结果投进实时榜单，也可以分享";
   updateHeroChart();updateCards();updateFocusCounts();
@@ -954,6 +994,7 @@ function wireLive(){
  };
  LIVE.hooks.onQuestions=()=>renderRoundQuestions();
  LIVE.hooks.onKeywordStats=()=>renderRoundQuestions();
+ LIVE.hooks.onPetition=showGlobalPetition;
  LIVE.hooks.onStatus=message=>{
   refreshHeatLabels(message?.state);
   if(message?.message){
