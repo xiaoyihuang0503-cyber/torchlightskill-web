@@ -1,0 +1,94 @@
+@charset "UTF-8";
+/* Mobile bomb dock: viewport-fixed controls OUTSIDE the arena's overflow/stacking context.
+ * iPhone safe-area, in-app browsers, compact viewport and keyboard handled by JS state.
+ * Desktop and official hero voting layout are unchanged. */
+.mobile-bomb-dock,.mobile-bomb-fx{display:none}
+@media (max-width:700px){
+ body.bomb-dock-visible .bomb-game-body .planner-action-row{display:none}
+ .mobile-bomb-dock:not([hidden]){
+  position:fixed;bottom:0;left:0;right:0;z-index:990;
+  display:flex;flex-direction:column;gap:6px;
+  box-sizing:border-box;width:100%;
+  padding:9px max(12px,env(safe-area-inset-right)) calc(9px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+  background:rgba(255,246,218,.98);
+  border-top:3px solid var(--ink);
+  box-shadow:0 -5px 16px rgba(61,41,28,.2);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+ }
+ /* Native <dialog> is in the top layer; hide dock behind its backdrop immediately. */
+ body:has(dialog[open]) .mobile-bomb-dock{display:none!important}
+ body:has(dialog[open]) .mobile-bomb-fx{display:none!important}
+ .mobile-bomb-dock-summary{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;min-height:17px;
+  font:800 11px/1.35 var(--sans);color:#7e4123;
+ }
+ .mobile-bomb-dock-summary #mobile-bomb-title{
+  min-width:0;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+ }
+ .mobile-bomb-dock-summary #mobile-bomb-combo{
+  white-space:nowrap;flex:0 0 auto;color:#ab4022;
+  font-size:11px;font-variant-numeric:tabular-nums;
+ }
+ .mobile-bomb-dock-actions{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px;width:100%;
+ }
+ .mobile-bomb-dock-actions button{
+  width:100%;min-width:0;min-height:52px;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px 6px;touch-action:manipulation;
+  border:2px solid var(--ink);border-radius:12px;
+  color:var(--ink);font:850 13px/1.25 var(--sans);
+  white-space:nowrap;user-select:none;-webkit-user-select:none;
+  cursor:pointer;
+ }
+ .mobile-bomb-dock-actions button strong{font-size:14px;font-weight:900}
+ .mobile-bomb-fire{
+  background:linear-gradient(125deg,#ffca62 0%,#ff7a43 78%);
+  box-shadow:2px 3px 0 #ab532d,3px 4px 0 var(--ink);
+ }
+ .mobile-bomb-repeat{
+  background:#fffdf7;
+  box-shadow:3px 4px 0 var(--ink);
+ }
+ .mobile-bomb-dock-actions button:active{
+  transform:translateY(2px) scale(.985);
+  box-shadow:1px 1px 0 var(--ink);
+ }
+ .mobile-bomb-dock-actions button:focus-visible{
+  outline:3px solid var(--orange);outline-offset:3px;
+ }
+ .mobile-bomb-fx.active{
+  position:fixed;inset:0;z-index:989;display:block;
+  pointer-events:none;overflow:hidden;
+ }
+ /* Portaled projectiles keep the whole arc visible even when the real question
+    card lives below the screen and the arena wrapper has overflow:hidden. */
+ .mobile-bomb-fx .planner-projectile-2{font-size:32px}
+ .mobile-bomb-fx .planner-projectile-3{font-size:38px;filter:drop-shadow(0 0 7px #ffa633) drop-shadow(2px 3px 0 #9c3921)}
+ .mobile-bomb-fx .planner-impact-2{font-size:72px}
+ .mobile-bomb-fx .planner-impact-3{font-size:94px}
+ .mobile-bomb-fx .planner-debris{font-size:17px}
+ #planner-stage{scroll-margin-top:13px}
+ body.bomb-dock-visible .bomb-game-body .planner-action-row{display:none}
+ body.bomb-dock-ready .bomb-game-body .planner-battle-board{
+  padding-bottom:calc(var(--bomb-dock-height,106px) + 9px);
+ }
+ body.bomb-dock-ready .bomb-game-section{
+  padding-bottom:calc(var(--bomb-dock-height,106px) + 8px);
+ }
+ body.bomb-dock-visible .toast{
+  bottom:calc(var(--bomb-dock-height,106px) + 12px);
+ }
+}
+@media (max-width:360px){
+ .mobile-bomb-dock:not([hidden]){gap:4px;padding-top:7px}
+ .mobile-bomb-dock-actions{gap:7px}
+ .mobile-bomb-dock-actions button{min-height:48px;font-size:12px;gap:3px}
+ .mobile-bomb-dock-actions button strong{font-size:12px}
+ .mobile-bomb-dock-summary{font-size:10px}
+}
+@media (prefers-reduced-motion:reduce){
+ .mobile-bomb-dock-actions button{transition:none!important}
+ .mobile-bomb-fx.active{display:none!important}
+}
