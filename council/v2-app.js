@@ -1,3 +1,4 @@
+import { createHeatEngine } from "./heat-engine.js";
 /* Torchlight Council v2 — browser UI. All public counts and events come from Supabase. */
 (function(){
 "use strict";
@@ -40,7 +41,8 @@ const state={
  heroSort:"votes",search:"",motion:!reduced,loaded:false,ready:false,
  slotResult:null,spinning:false,slotTimer:null,toastTimer:null,eventIds:new Set(),
  recentRank:[],rankInitialized:false,lastEmoji:0,lastActivity:0,
- incomingHero:null
+ incomingHero:null,
+ demoOn:true,heat:null
 };
 let heroLoadPromise=null;
 const labelHero=hero=>hero.name+" · "+hero.trait;
@@ -58,8 +60,17 @@ function statusText(msg){
  const el=$("activity-line");if(el)el.textContent=msg;
 }
 function realCount(hero){return getCount("hero",hero.id);}
+function shownHeroCount(hero){
+ return state.demoOn&&state.heat?state.heat.hero(hero.id):realCount(hero);
+}
+function shownTopicCount(topic,choice){
+ return state.demoOn&&state.heat?state.heat.poll(topic,choice):getCount(topic,choice);
+}
+function shownSeatCount(seat){
+ return state.demoOn&&state.heat?state.heat.seat(seat):Number(LIVE?.getSeatCount?.(seat)||0);
+}
 function orderedHeroes(){
- return state.heroes.slice().sort((a,b)=>realCount(b)-realCount(a)||a.position-b.position);
+ return state.heroes.slice().sort((a,b)=>shownHeroCount(b)-shownHeroCount(a)||a.position-b.position);
 }
 function makeImage(asset,alt,className){
  const img=document.createElement("img");img.className=className||"";img.alt=alt;
@@ -186,11 +197,11 @@ function updateHeroChart(){
  const host=$("chart"),ranked=orderedHeroes(),limit=window.innerWidth<=700?4:6;
  const previous=new Map();
  host.querySelectorAll(".contender").forEach(node=>previous.set(node.dataset.hero,node.getBoundingClientRect()));
- const max=Math.max(0,realCount(ranked[0]));
+ const max=Math.max(0,shownHeroCount(ranked[0]));
  const fragment=document.createDocumentFragment();
  ranked.slice(0,limit).forEach((hero,i)=>{
   if(!state.rankNodes.has(hero.id))makeHeroColumn(hero);
-  const ref=state.rankNodes.get(hero.id),n=realCount(hero);
+  const ref=state.rankNodes.get(hero.id),n=shownHeroCount(hero);
   ref.rank.textContent=max>0&&i===0?"👑 01":String(i+1).padStart(2,"0");
   ref.num.textContent=fmt(n);
   const barRange=window.innerWidth<=380?130:window.innerWidth<=700?140:188;
@@ -199,7 +210,7 @@ function updateHeroChart(){
   ref.b.classList.toggle("mine",state.selected.hero===hero.id);
   ref.b.disabled=!state.ready||isClosed();
   ref.b.setAttribute("aria-pressed",String(state.selected.hero===hero.id));
-  ref.b.setAttribute("aria-label",labelHero(hero)+", "+fmt(n)+"票，第"+(i+1)+"名");
+  ref.b.setAttribute("aria-label",labelHero(hero)+", "+fmt(n)+(state.demoOn?" 点演示热度":" 张真实票")+",第"+(i+1)+"名");
   fragment.appendChild(ref.b);
  });
  host.replaceChildren(fragment);
@@ -213,16 +224,17 @@ function updateHeroChart(){
  }
  $("ranking-label").textContent=String(limit);
  $("hero-total").textContent=String(state.heroes.length);
- $("demo-vote-total").textContent=fmt(state.heroes.reduce((n,h)=>n+realCount(h),0));
+ $("demo-vote-total").textContent=fmt(state.heroes.reduce((n,h)=>n+shownHeroCount(h),0));
+ $("board-count-unit").textContent=state.demoOn?" 演示热度":" 张真实票";
  const mine=state.heroById.get(state.selected.hero);
  if(mine){
-  const rank=ranked.findIndex(h=>h.id===mine.id)+1;
-  $("my-camp").textContent="✅ 我的英雄："+labelHero(mine)+" · 当前第 "+rank+" 名";
+  const realRank=state.heroes.slice().sort((a,b)=>realCount(b)-realCount(a)||a.position-b.position).findIndex(h=>h.id===mine.id)+1;
+  $("my-camp").textContent="✅ 我的英雄："+labelHero(mine)+" · 真实榜第 "+realRank+" 名";
  }else if(state.incomingHero){
   $("my-camp").textContent="📣 朋友邀请你支持："+labelHero(state.incomingHero);
  }else{$("my-camp").textContent="还没投票？展开全部英雄选一个。";}
  const newRank=ranked.map(h=>h.id);
- if(state.rankInitialized&&max>0){
+ if(!state.demoOn&&state.rankInitialized&&max>0){
   const oldTop=state.recentRank[0],newTop=newRank[0];
   if(oldTop!==newTop&&Date.now()-state.lastEmoji>650){
    const hero=state.heroById.get(newTop);
@@ -274,7 +286,7 @@ function showCountdown(){
 }
 /* One compact switchable poll board; exact original copy and independent counters. */
 const currentTopic=()=>FOCUS[state.activeTopic];
-function topicVotes(topic){return topic.options.reduce((sum,c)=>sum+getCount(topic.id,c[0]),0);}
+function topicVotes(topic){return topic.options.reduce((sum,c)=>sum+shownTopicCount(topic.id,c[0]),0);}
 function renderTabs(){
  const host=$("topic-tabs"),fragment=document.createDocumentFragment();
  FOCUS.forEach((t,i)=>{
@@ -285,7 +297,7 @@ function renderTabs(){
   const num=document.createElement("span");num.className="focus-tab-num";num.textContent=String(i+1).padStart(2,"0");
   const name=document.createElement("span");name.className="focus-tab-name";
   const title=document.createElement("strong");title.textContent=t.emoji+" "+t.short;
-  const votes=document.createElement("small");votes.textContent=fmt(topicVotes(t))+" 票";
+  const votes=document.createElement("small");votes.textContent=fmt(topicVotes(t))+(state.demoOn?" 演示热度":" 票");
   name.append(title,votes);
   const mark=document.createElement("span");mark.className="focus-tab-mark";
   mark.textContent=state.selected[t.id]?"✅":i===state.activeTopic?"●":"→";
@@ -299,7 +311,7 @@ function updateTabCounts(){
  const nodes=$("topic-tabs").querySelectorAll(".focus-tab");
  nodes.forEach((b,i)=>{
   const t=FOCUS[i],el=b.querySelector(".focus-tab-name small");
-  if(el)el.textContent=fmt(topicVotes(t))+" 票";
+  if(el)el.textContent=fmt(topicVotes(t))+(state.demoOn?" 演示热度":" 票");
   b.querySelector(".focus-tab-mark").textContent=state.selected[t.id]?"✅":i===state.activeTopic?"●":"→";
  });
 }
@@ -330,10 +342,10 @@ function selectTopic(i){
 }
 function updateFocusCounts(){
  const topic=currentTopic(),total=topicVotes(topic);
- $("focus-live-count").textContent=fmt(total)+" 票";
+ $("focus-live-count").textContent=(state.demoOn?"🧪 演示热度 ":"")+fmt(total)+(state.demoOn?"":" 票");
  const buttons=$("focus-options").querySelectorAll(".focus-vote-option");
  buttons.forEach(button=>{
-  const id=button.dataset.choice,n=getCount(topic.id,id),pct=total?Math.round(n/total*100):0;
+  const id=button.dataset.choice,n=shownTopicCount(topic.id,id),pct=total?Math.round(n/total*100):0;
   button.querySelector(".focus-vote-percent").textContent=pct+"%";
   button.querySelector(".focus-vote-meter").style.width=pct+"%";
   const chosen=state.selected[topic.id]===id;
@@ -341,7 +353,7 @@ function updateFocusCounts(){
   button.setAttribute("aria-pressed",String(chosen));
   button.querySelector(".focus-vote-num").textContent=chosen?"✅":String(topic.options.findIndex(x=>x[0]===id)+1);
   button.disabled=!state.ready;
-  button.setAttribute("aria-label",topic.options.find(x=>x[0]===id)?.[1]+", "+fmt(n)+"票，占"+pct+"%");
+  button.setAttribute("aria-label",topic.options.find(x=>x[0]===id)?.[1]+", "+fmt(n)+(state.demoOn?" 点虚构演示热度":" 张真实票")+",占"+pct+"%");
  });
  const shareText=state.selected[topic.id]?"📣 分享我的选择 ↗":"📣 分享这道题 ↗";
  $("focus-share").textContent=shareText;
