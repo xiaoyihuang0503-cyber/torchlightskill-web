@@ -790,9 +790,10 @@ async function init(){
   if(seat)selectSeat(seat,false);
   if(query.get("open")==="ask")selectSeat("empty:main",false);
  }catch(error){
-  $("vote-source-label").textContent="加载失败";
-  statusText(String(error?.message||error));
-  toast("英雄或数据服务加载失败，请刷新页面再试");
+  console.warn("Council homepage initialization",error);
+  $("vote-source-label").textContent=state.loaded?"实时投票暂不可用":"英雄资料加载失败";
+  statusText(state.loaded?"🎰 抽英雄可继续玩，实时投票正在恢复":String(error?.message||error));
+  toast(state.loaded?"实时投票暂不可用，随机抽签仍可使用":"英雄资料加载失败，请刷新页面再试");
  }
 }
 init();
