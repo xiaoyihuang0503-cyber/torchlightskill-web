@@ -43,25 +43,40 @@
         <h1 id="site-title">SS14 开荒，<br><em>你玩谁？</em></h1>
         <p class="intro-description">28 个英雄特性都能选。点一下投票，想换随时换。</p>
       </div>
-      <aside class="countdown-card petition-card" aria-label="求策划给个说法，连续点击互动">
-        <div class="petition-kicker">🙏 议会求回应 · 随便点</div>
-        <div class="petition-play-area">
-          <button id="petition-orb" class="petition-orb" type="button" aria-label="求策划给个说法，可以反复点击" aria-describedby="petition-hint">
-            <span class="petition-orb-emoji" aria-hidden="true">🔥</span>
-            <strong>求个说法</strong>
-            <span class="petition-orb-mini" aria-hidden="true">点我 +1</span>
+      <aside class="countdown-card petition-card" aria-label="虚拟策划吐槽互动，反复点击不会增加正式投票">
+        <div class="petition-kicker">💣 火炬议会 · 炸策划小游戏 <span class="planner-fiction">卡通虚拟策划</span></div>
+        <div class="planner-stage" id="planner-stage">
+          <div id="planner-status" class="planner-status" aria-hidden="true">策划：正在听取意见…</div>
+          <button type="button" id="planner-target" class="planner-target" aria-label="轻点虚拟策划，投一颗吐槽炸弹，增加一次互动点击">
+            <span class="planner-hair" aria-hidden="true">〰️</span>
+            <span class="planner-head" aria-hidden="true">🧑‍💻</span>
+            <span class="planner-title" aria-hidden="true">策划</span>
           </button>
-          <div class="petition-stats">
-            <strong id="petition-total">0</strong>
-            <span>我已经求了多少次</span>
-            <strong id="petition-combo">0 连击</strong>
-            <small>可一直点，试试连击</small>
-            <span class="petition-global" id="petition-global">全站真实累计 · 连接中</span>
-          </div>
+          <div id="petition-effects" class="petition-effects" aria-hidden="true"></div>
         </div>
-        <div id="petition-effects" class="petition-effects" aria-hidden="true"></div>
-        <p class="petition-hint" id="petition-hint">👆 本机可以一直点击，每天最多 1,000 次计入全站真实累计；不会增加正式选票。</p>
-        <p class="petition-feedback" id="petition-feedback" role="status" aria-live="polite">🔥 准备好了吗？</p>
+        <p class="planner-issue-prompt">👇 你想让策划先回应哪件事？</p>
+        <div class="planner-issue-grid" id="planner-issue-grid" role="group" aria-label="选择本次炸策划对应的焦点议题">
+          <button type="button" class="planner-issue selected" data-petition-topic="mode_reduction" aria-pressed="true">🛠️ 老玩法减法</button>
+          <button type="button" class="planner-issue" data-petition-topic="ember_drop_data" aria-pressed="false">🔥 初火掉率</button>
+          <button type="button" class="planner-issue" data-petition-topic="reward_access" aria-pressed="false">🎒 自由刷图</button>
+          <button type="button" class="planner-issue" data-petition-topic="legacy_friction" aria-pressed="false">🧹 重复劳动</button>
+        </div>
+        <p id="planner-current" class="planner-current" aria-live="polite">老玩法到底改不改？</p>
+        <div class="planner-action-row">
+          <button id="petition-orb" class="petition-orb planner-bomb-button" type="button" aria-label="对选中的问题炸策划一下，可以重复点击" aria-describedby="petition-hint">
+            <span class="petition-orb-emoji" aria-hidden="true">💣</span>
+            <strong>炸一下策划</strong>
+            <span class="petition-orb-mini" aria-hidden="true">可以一直点 +1</span>
+          </button>
+          <button id="planner-vote" class="planner-vote-button" type="button">🗳️ 这问题，正式投一票 ↗</button>
+        </div>
+        <div class="petition-stats">
+          <span><strong id="petition-total">0</strong> 本机已炸次数</span>
+          <span id="petition-combo">0 连击</span>
+          <span class="petition-global" id="petition-global">🌍 全站真实累计 · 连接中</span>
+        </div>
+        <p class="petition-feedback" id="petition-feedback" role="status" aria-live="polite">💥 点策划或炸弹，连续炸更有意思！</p>
+        <p class="petition-hint" id="petition-hint">炸策划是卡通互动，本机可反复点；每天最多 1,000 次计入全站点击数。正式投票仍每题一票。</p>
         <div class="petition-countdown">
           <span class="countdown-label">距离 SS14 开服</span>
           <strong class="countdown-time" id="countdown">--</strong>
