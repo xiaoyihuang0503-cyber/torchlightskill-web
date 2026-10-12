@@ -83,6 +83,9 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
       node.extra.textContent=row.kind==="player"?"玩家提问 · 已审核":"本周焦点追问";
       node.votes.textContent="🔥 "+fmt(count)+" 支持";
       node.fill.style.width=(count>0?Math.max(6,Math.round(count/max*100)):0)+"%";
+      node.button.style.setProperty("--issue-grow",Math.min(24,Math.floor(Math.log2(count+1)*5))+"px");
+      node.button.classList.toggle("is-burning",count>=10);
+      node.button.classList.toggle("is-heavy",count>=30);
       node.button.classList.toggle("selected",row.key===state.selected);
       node.button.classList.toggle("is-leader",index===0&&count>0);
       node.button.classList.toggle("is-chaser",index>0&&index<3&&count>0);
