@@ -3,7 +3,7 @@
 const $=id=>document.getElementById(id);
 const BASE="https://torchlightskill.com/council/share/";
 const MANIFEST="/assets/torchlight-mentor-avatars/manifest.json";
-const KEY="torchlight-council-preview-choice-v1";
+const LIVE=window.TorchCouncilLive;
 const HERO_END=Date.parse("2026-10-16T10:00:00+08:00");
 const ROUNDTABLE_END=Date.parse("2026-10-14T20:00:00+08:00");
 const ALLOWED=new Set(["hero","lottery","ranking","maze","roundtable"]);
@@ -24,18 +24,18 @@ function navigation(target){location.href=target;}
 function pollEnd(){return kind==="roundtable" && Date.now()>=ROUNDTABLE_END;}
 function heroEnd(){return Date.now()>=HERO_END;}
 function snapshot(){
- try{
-  const v=JSON.parse(localStorage.getItem(KEY)||"{}");
-  return v&&typeof v==="object"?v:{};
- }catch(error){return {};}
+ return LIVE?.ownVotes||{};
 }
-function persist(key,value){
- try{
-  const local=snapshot();
-  local[key]=value;
-  localStorage.setItem(KEY,JSON.stringify(local));
-  return true;
- }catch(error){joinFeedback("无法保存到本机。请检查浏览器隐私设置。");return false;}
+async function persist(topic,choice){
+ if(!LIVE?.available||!LIVE.isReady()){
+   joinFeedback("实时投票暂时不可用，请稍后重试。");return false;
+ }
+ try {
+   await LIVE.vote(topic,choice);
+   return true;
+ }catch(error){
+   joinFeedback(String(error?.message||error));return false;
+ }
 }
 function setLink(id,href,label){
  const el=$(id);el.href=href;
@@ -74,14 +74,16 @@ function setupHero(hero){
  const primary=$("primary-action");
  primary.textContent="我也选这个英雄 ↗";primary.disabled=heroEnd();
  const current=snapshot().hero;
- if(current===hero.id)joinFeedback("你已经选过这个英雄了。");
+ if(current===hero.id)joinFeedback("你已经投给这个英雄。");
  else if(heroEnd())joinFeedback("这期赛前开荒投票已经结束，可以查看结果。");
- primary.onclick=()=>{
+ primary.onclick=async()=>{
   if(heroEnd()){joinFeedback("本期已结束，无法继续投票。");return;}
-  if(persist("hero",hero.id)){
-   joinFeedback("已在这台设备上投给 "+labelHero(hero)+"。去排行榜看看吧。");
+  primary.disabled=true;
+  const success=await persist("hero",hero.id);
+  if(success){
+   joinFeedback("投票成功，已计入全站真实票数。去排行榜看看吧。");
    primary.textContent="已投给这个英雄 ✓";
-  }
+  }else{primary.disabled=false;}
  };
  setLink("secondary-action","../?hero="+encodeURIComponent(hero.id)+"#all-heroes","看看其他英雄 ↗");
 }
@@ -137,15 +139,16 @@ function setupPoll(type){
   btn.classList.toggle("marked",own===choice[0]);
   btn.setAttribute("aria-pressed",String(own===choice[0]));
   btn.disabled=pollEnd();
-  btn.addEventListener("click",()=>{
+  btn.addEventListener("click",async()=>{
    if(pollEnd()){joinFeedback("这道题已经结束投票。");return;}
-   if(persist(type,choice[0])){
+   const success=await persist(type,choice[0]);
+   if(success){
     for(const sibling of answerHost.children){
      const yes=sibling.dataset.choice===choice[0];
      sibling.classList.toggle("marked",yes);
      sibling.setAttribute("aria-pressed",String(yes));
     }
-    joinFeedback("你选了「"+choice[1]+"」，仅记录在这台设备。");
+    joinFeedback("你选了「"+choice[1]+"」，已计入全站真实票数。");
     $("primary-action").textContent="去看这道题 ↗";
    }
   });
@@ -303,11 +306,20 @@ async function makePoster(){
   feedback("生成图片失败，请先使用「复制链接」分享。");
  }finally{btn.disabled=false;}
 }
-function init(){
+async function init(){
  $("copy-link").addEventListener("click",copyLink);
  $("share-system").addEventListener("click",systemShare);
  $("save-poster").addEventListener("click",makePoster);
- show();
+ if(LIVE?.available){
+   try{await LIVE.start();}
+   catch(error){joinFeedback("投票服务暂时不可用，请稍后再试。");}
+ }
+ await show();
+ if(!LIVE?.isReady()){
+   document.querySelectorAll(".share-answer").forEach(node=>node.disabled=true);
+   if(kind==="hero")$("primary-action").disabled=true;
+   joinFeedback("当前无法连接投票服务，分享链接仍然可以使用。");
+ }
 }
 init();
 })();
