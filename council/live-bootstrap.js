@@ -1,6 +1,6 @@
 /* Load local UI immediately. Supabase SDK is fetched in the background so slow
    mobile CDN connections cannot prevent the lottery from opening. */
-import { createCouncilLive } from "./live-core.js";
+import { createCouncilLive } from "./live-core.js?v=20261013-clicks1";
 
 let delegate=null;
 const blankVotes={};
