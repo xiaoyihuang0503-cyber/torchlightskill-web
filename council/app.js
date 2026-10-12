@@ -297,19 +297,12 @@ function bubble(hero,label,simulation){
  $("bubble-layer").appendChild(bubble);
  setTimeout(()=>bubble.remove(),1900);
 }
-function tickDemo(){
- if(!loaded||!state.motion||isHeroClosed()||document.hidden)return;
- const top=sorted().slice(0,Math.min(mobile?4:6,heroes.length));
- const candidate=top[random(top.length)];
- state.simulated[candidate.id]=(state.simulated[candidate.id]||0)+1;
- chart();updateRoster();bubble(candidate,"",true);
- showActivity("有人投给了 "+sourceName(candidate)+" +1",true);
-}
+function tickDemo(){ /* Artificial votes are forbidden after Supabase activation. */ }
 function toggleMotion(){
  state.motion=!state.motion;
- $("motion-toggle").textContent=state.motion?"暂停演示":"继续演示";
+ $("motion-toggle").textContent=state.motion?"隐藏气泡":"显示气泡";
  $("motion-toggle").setAttribute("aria-pressed",String(state.motion));
- showActivity(state.motion?"已继续播放模拟投票":"模拟动态已暂停",false);
+ showActivity(state.motion?"继续显示真实投票气泡":"气泡已隐藏，票数仍会实时刷新",false);
 }
 
 /* 策划圆桌：匿名问题与关键词本机即时预览。等 Supabase 连接后替换为后端聚合数据。 */
@@ -533,7 +526,7 @@ function finishSpin(hero){
  showSlot(heroes[(i+heroes.length-1)%heroes.length],hero,heroes[(i+1)%heroes.length]);
  $("lottery-result-label").textContent="抽到了";
  $("lottery-result-name").textContent=sourceName(hero);
- $("lottery-result-sub").textContent="当前模拟榜第 "+(sorted().findIndex(h=>h.id===hero.id)+1)+" 名，喜欢就投一票";
+ $("lottery-result-sub").textContent="真实榜第 "+(sorted().findIndex(h=>h.id===hero.id)+1)+" 名，喜欢就投一票";
  $("spin-label").textContent="再抽一次";
  $("lottery-spin").disabled=isHeroClosed();
  $("lottery-accept").disabled=isHeroClosed();
