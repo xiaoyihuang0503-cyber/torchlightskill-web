@@ -47,29 +47,42 @@
         <div class="petition-kicker">💣 火炬议会 · 炸策划小游戏 <span class="planner-fiction">卡通虚拟策划</span></div>
         <div class="planner-stage" id="planner-stage">
           <div id="planner-status" class="planner-status" aria-hidden="true">策划：正在听取意见…</div>
-          <button type="button" id="planner-target" class="planner-target" aria-label="轻点虚拟策划，投一颗吐槽炸弹，增加一次互动点击">
+          <button type="button" id="planner-target" class="planner-target" aria-label="轻点卡通策划，发射一颗吐槽炸弹，不增加正式票数">
             <span class="planner-hair" aria-hidden="true">〰️</span>
             <span class="planner-head" aria-hidden="true">🧑‍💻</span>
             <span class="planner-title" aria-hidden="true">策划</span>
           </button>
           <div id="petition-effects" class="petition-effects" aria-hidden="true"></div>
         </div>
-        <p class="planner-issue-prompt">👇 你想让策划先回应哪件事？</p>
-        <div class="planner-issue-grid" id="planner-issue-grid" role="group" aria-label="选择本次炸策划对应的焦点议题">
-          <button type="button" class="planner-issue selected" data-petition-topic="mode_reduction" aria-pressed="true">🛠️ 老玩法减法</button>
-          <button type="button" class="planner-issue" data-petition-topic="ember_drop_data" aria-pressed="false">🔥 初火掉率</button>
-          <button type="button" class="planner-issue" data-petition-topic="reward_access" aria-pressed="false">🎒 自由刷图</button>
-          <button type="button" class="planner-issue" data-petition-topic="legacy_friction" aria-pressed="false">🧹 重复劳动</button>
+        <div class="planner-board-heading">
+          <p class="planner-issue-prompt">🏆 问题攻防榜 · 真实支持数决定排名</p>
+          <button type="button" id="planner-write" class="planner-write">✍️ 我来写问题</button>
         </div>
-        <p id="planner-current" class="planner-current" aria-live="polite">老玩法到底改不改？</p>
+        <div class="planner-issue-grid planner-battle-board" id="planner-issue-grid" role="group" aria-label="按真实支持人数排序的问题攻防榜">
+          <span class="planner-board-loading">加载真实问题排行中…</span>
+        </div>
+        <form id="planner-question-form" class="planner-question-form" hidden>
+          <label for="planner-question-input">你最想让策划回答什么？（8～160 字）</label>
+          <textarea id="planner-question-input" maxlength="160" minlength="8" rows="3" placeholder="例如：老玩法的重复操作到底什么时候减少？" required></textarea>
+          <div class="planner-compose-actions">
+            <span id="planner-question-length">0 / 160 字</span>
+            <button type="submit" id="planner-question-submit">提交上桌 ↗</button>
+            <button type="button" id="planner-question-cancel">取消</button>
+          </div>
+          <p id="planner-question-status" class="planner-question-status" role="status">玩家问题先审核，通过后进入排行榜。</p>
+        </form>
+        <p id="planner-pending-count" class="planner-pending-count" hidden></p>
+        <p id="planner-current" class="planner-current" aria-live="polite">🛠️ 老玩法到底改不改？</p>
         <div class="planner-action-row">
-          <button id="petition-orb" class="petition-orb planner-bomb-button" type="button" aria-label="对选中的问题炸策划一下，可以重复点击" aria-describedby="petition-hint">
+          <button id="petition-orb" class="petition-orb planner-bomb-button" type="button" aria-label="对当前选中的问题发射卡通炸弹，可连续点击" aria-describedby="petition-hint">
             <span class="petition-orb-emoji" aria-hidden="true">💣</span>
-            <strong>炸一下策划</strong>
-            <span class="petition-orb-mini" aria-hidden="true">可以一直点 +1</span>
+            <strong>扔炸弹</strong>
+            <span class="petition-orb-mini" aria-hidden="true">无限连击 · 不刷票</span>
           </button>
-          <button id="planner-vote" class="planner-vote-button" type="button">🗳️ 这问题，正式投一票 ↗</button>
+          <button id="planner-vote" class="planner-vote-button" type="button">🗳️ 支持这道问题 +1</button>
         </div>
+        <p class="planner-battle-note">✅ 每个账号每题只能支持一次；点击投弹不限次数。真票更高的题，炸弹更强。</p>
+        <div class="planner-fx-layer" id="planner-fx-layer" aria-hidden="true"></div>
         <div class="petition-stats">
           <span><strong id="petition-total">0</strong> 本机已炸次数</span>
           <span id="petition-combo">0 连击</span>
