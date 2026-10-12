@@ -1,0 +1,181 @@
+@charset "UTF-8";
+
+/* v0.6 — hide ads and internal provenance; retain existing centered gutters. */
+.ad-rail[hidden],.source-details[hidden] { display:none !important; }
+.council-shell{justify-content:center}
+#topics,#roundtable{scroll-margin-top:24px}
+
+/* Maze takes one compact horizontal row rather than half a page. */
+.topics-section{padding-top:70px}
+.topics-section .section-heading{margin-bottom:17px}
+.topic-card.maze-compact{
+  min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.83fr);
+  align-items:center;gap:30px;
+  padding:24px 26px;background:var(--pink);
+  overflow:visible;
+}
+.maze-brief{min-width:0}
+.maze-category{
+  display:inline-block;font:750 10px/1.25 ui-monospace,monospace;
+  color:#73462a;letter-spacing:.04em;
+}
+.maze-brief h3{
+  font:800 clamp(23px,2.7vw,29px)/1.23 var(--display);letter-spacing:-.02em;
+  margin:8px 0 9px;
+}
+.maze-brief p{margin:0 0 10px;color:var(--muted);font-size:12px;line-height:1.75}
+.maze-brief a{font-size:11px;font-weight:760;text-decoration:underline;text-underline-offset:4px}
+.maze-vote-area{min-width:0}
+.maze-vote-area .poll-options{margin:0;display:grid;grid-template-columns:1fr;gap:9px}
+.maze-vote-area .poll-button{min-height:49px;padding:7px 11px}
+.maze-bottom{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-top:14px;color:var(--muted);font-size:11px;flex-wrap:wrap;
+}
+.maze-bottom .module-share,.roundtable-top-share{
+  display:inline-flex;align-items:center;justify-content:center;
+  border:1.5px solid var(--ink);border-radius:99px;background:var(--card);
+  box-shadow:2px 2px 0 var(--ink);padding:6px 12px;
+  font-size:11px;font-weight:800;white-space:nowrap;min-height:34px;
+}
+.maze-bottom .module-share:hover,.roundtable-top-share:hover{background:var(--yellow)}
+
+/* Roundtable: independent full-width content, compact live keyword dashboard. */
+.roundtable-section{padding-top:78px}
+.roundtable-section .section-heading{margin-bottom:19px}
+.roundtable-top-share{background:var(--yellow);font-size:12px;min-height:40px;align-self:flex-start}
+.roundtable-layout{display:grid;grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr);gap:17px}
+.roundtable-compose,.roundtable-trends{
+  min-width:0;min-height:375px;border:2px solid var(--ink);border-radius:15px;
+  box-shadow:4px 4px 0 var(--ink);padding:22px;
+}
+.roundtable-compose{background:#fff0bd}
+.roundtable-trends{background:var(--blue)}
+.roundtable-kicker{
+  display:block;font:800 11px/1.5 ui-monospace,monospace;color:#9b3619;
+  letter-spacing:.035em;
+}
+.roundtable-compose h3,.roundtable-trends h3{
+  font:800 clamp(23px,2.7vw,27px)/1.23 var(--display);
+  letter-spacing:-.025em;margin:6px 0 16px;
+}
+.question-label{display:block;font-size:12px;font-weight:750;margin:0 0 8px}
+.roundtable-compose textarea{
+  resize:vertical;display:block;min-height:118px;width:100%;max-width:100%;
+  padding:13px 14px;border:2px solid var(--ink);border-radius:10px;
+  box-shadow:2px 2px 0 var(--ink);background:var(--card);
+  color:var(--ink);font:15px/1.7 var(--sans);
+}
+.roundtable-compose textarea::placeholder{color:#887e6e}
+.roundtable-compose textarea:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.compose-bottom{
+  display:flex;align-items:center;justify-content:space-between;gap:9px;
+  margin-top:13px;
+}
+#question-length{font:700 11px ui-monospace,monospace;color:var(--muted);white-space:nowrap}
+.submit-question{
+  min-height:44px;border:2px solid var(--ink);border-radius:99px;
+  box-shadow:3px 3px 0 var(--ink);background:var(--orange);
+  padding:9px 17px;font:800 13px var(--sans);white-space:nowrap;
+  transition:transform .12s,box-shadow .12s;
+}
+.submit-question:hover:not(:disabled){transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.submit-question:active:not(:disabled){transform:translate(3px,3px);box-shadow:none}
+.question-notice{margin:18px 0 0;color:#6b5c48;font-size:11px;line-height:1.7}
+.trends-heading{display:flex;align-items:start;justify-content:space-between;gap:10px}
+.trends-heading h3{font-size:24px;margin:5px 0 8px}
+.trends-local{
+  flex:0 0 auto;display:inline-block;max-width:130px;padding:5px 9px;
+  border:1.5px solid var(--ink);border-radius:99px;background:var(--card);
+  font-size:10px;font-weight:760;white-space:nowrap;
+}
+.roundtable-trends>p{color:var(--muted);font-size:12px;line-height:1.7;margin:0 0 17px}
+.keyword-cloud{
+  display:flex;align-content:flex-start;align-items:center;flex-wrap:wrap;gap:9px;
+  min-height:92px;padding:14px;background:rgba(255,253,247,.55);
+  border:1.5px dashed rgba(38,32,26,.58);border-radius:12px;
+}
+.keyword-empty{font-size:12px;color:var(--muted)}
+.keyword-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:7px 10px;max-width:100%;
+  border:1.5px solid var(--ink);border-radius:99px;
+  box-shadow:2px 2px 0 var(--ink);background:var(--card);
+  color:var(--ink);font-size:12px;font-weight:750;
+}
+.keyword-pill.keyword-leading{background:var(--yellow)}
+.keyword-pill strong{white-space:nowrap}
+.keyword-pill small{
+  min-width:17px;min-height:17px;display:grid;place-items:center;
+  background:var(--pink);border:1px solid var(--ink);border-radius:50%;
+  color:var(--ink);font:750 10px/1 ui-monospace,monospace;
+}
+.recent-questions{margin-top:20px}
+.recent-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px}
+.recent-heading strong{font-weight:800}
+.recent-heading span{font-size:11px;color:var(--muted)}
+#roundtable-question-list{
+  list-style:none;margin:9px 0 0;padding:0;
+  max-height:160px;overflow-y:auto;
+}
+#roundtable-question-list li{
+  padding:9px 0;border-top:1px solid rgba(38,32,26,.22);
+  font-size:12px;line-height:1.55;
+}
+#roundtable-question-list .question-empty{color:var(--muted)}
+.question-text{display:block;overflow-wrap:anywhere;white-space:pre-wrap;color:var(--ink)}
+.question-meta{display:flex;justify-content:space-between;align-items:center;margin-top:5px;gap:10px}
+.question-meta time{font-size:10px;color:var(--muted)}
+.remove-local-question{background:transparent;border:0;text-decoration:underline;text-underline-offset:3px;font-size:10px;color:#8c452a;min-height:22px}
+.remove-local-question:hover{color:#b9391c}
+
+/* Keep the four existing "pick a topic" votes, but make them secondary. */
+.roundtable-quick{
+  background:var(--card);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);
+  border-radius:13px;padding:16px 17px;margin-top:18px;
+}
+.roundtable-quick-head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-bottom:11px;color:var(--ink);
+}
+.roundtable-quick-head strong{display:block;font-size:13px}
+.roundtable-quick-head small{display:block;font-size:11px;color:var(--muted);margin-top:3px}
+.roundtable-quick-head>#roundtable-summary{font-size:11px;color:var(--muted);flex:0 0 auto}
+.roundtable-poll-options{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;
+}
+.roundtable-poll-options .poll-button{min-width:0;min-height:48px;padding:7px 8px;gap:6px}
+.roundtable-poll-options .poll-option-index{flex:0 0 22px;width:22px;height:22px;font-size:10px}
+.roundtable-poll-options .poll-name{font-size:11px;line-height:1.4}
+.roundtable-poll-options .poll-pct{font-size:11px}
+@media(max-width:900px){
+  .topic-card.maze-compact{grid-template-columns:minmax(0,1fr) minmax(230px,.85fr);gap:19px}
+  .roundtable-layout{grid-template-columns:1fr 1fr;gap:12px}
+  .roundtable-compose,.roundtable-trends{padding:17px}
+  .roundtable-poll-options{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+ .topics-section{padding-top:63px}
+ .topic-card.maze-compact{display:block;padding:18px;min-height:0}
+ .maze-brief h3{font-size:25px}
+ .maze-brief p{margin-bottom:10px}
+ .maze-vote-area{margin-top:15px}
+ .maze-bottom{margin-top:10px}
+ .roundtable-section{padding-top:66px}
+ .roundtable-section .section-heading{flex-wrap:wrap}
+ .roundtable-top-share{align-self:flex-start}
+ .roundtable-layout{grid-template-columns:1fr;gap:14px}
+ .roundtable-compose,.roundtable-trends{min-height:0;padding:19px}
+ .roundtable-trends>p{font-size:11px}
+ .roundtable-quick{margin-top:15px;padding:15px}
+ .roundtable-poll-options{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:380px){
+ .roundtable-quick-head{flex-direction:column;align-items:flex-start}
+ .roundtable-poll-options{grid-template-columns:1fr}
+ .compose-bottom{flex-direction:column;align-items:stretch}
+ .submit-question{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+ .keyword-pill,.roundtable-compose,.roundtable-trends{transition:none}
+}
