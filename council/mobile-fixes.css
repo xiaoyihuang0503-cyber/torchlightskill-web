@@ -153,12 +153,11 @@
   .table-center .table-symbol { font-size:23px; }
   .table-center strong { font-size:17px; }
   .table-center small { font-size:8px; }
-  .focus-actions { grid-template-columns:1fr 1fr; }
 }
 @media (max-width:700px) and (max-height:620px) {
   #lottery-dialog .slot-machine { height:153px; }
-  #lottery-dialog .slot-window { grid-template-rows:36px 58px 36px; }
-  #lottery-dialog .slot-row.slot-active .portrait { width:51px; height:51px; flex-basis:51px; }
+  #lottery-dialog .slot-window { grid-template-rows:30px 60px 30px; }
+  #lottery-dialog .slot-row.slot-active .portrait { width:47px; height:47px; flex-basis:47px; }
   #lottery-dialog .modal-heading p { display:none; }
   #lottery-dialog .lottery-result { min-height:47px; }
 }
