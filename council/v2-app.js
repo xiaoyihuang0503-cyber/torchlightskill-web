@@ -574,6 +574,13 @@ async function openLottery(){
  $("lottery-dialog").showModal();
  document.body.classList.add("modal-open");
 }
+function syncSlotVoteAction(){
+ const button=$("lottery-accept");
+ if(!state.slotResult){button.disabled=true;button.textContent="就玩这个，投一票 ↗";return;}
+ const allowed=state.ready&&!isClosed();
+ button.disabled=!allowed;
+ button.textContent=isClosed()?"本期投票已结束":allowed?"就玩这个，投一票 ↗":"投票连接中 · 可先分享";
+}
 function finishSlot(hero){
  state.spinning=false;state.slotResult=hero;state.slotTimer=null;
  const i=state.heroes.findIndex(h=>h.id===hero.id);
@@ -584,7 +591,7 @@ function finishSlot(hero){
  $("lottery-result-sub").textContent=state.ready
   ?"真实榜第 "+(orderedHeroes().findIndex(h=>h.id===hero.id)+1)+" 名"
   :"🎰 抽签成功！实时投票服务连接后才能投票";
- $("lottery-accept").disabled=!state.ready||isClosed();
+ syncSlotVoteAction();
  $("lottery-share").disabled=false;$("lottery-spin").disabled=false;
  $("spin-label").textContent="再抽一次";
 }
@@ -718,6 +725,8 @@ function bind(){
 function wireLive(){
  LIVE.hooks.onCounts=()=>{
   state.ready=true;
+  syncSlotVoteAction();
+  if(state.slotResult&&!isClosed())$("lottery-result-sub").textContent="可以将抽签结果投进实时榜单，也可以分享";
   updateHeroChart();updateCards();updateFocusCounts();
   $("vote-source-label").textContent="真实票数 · 实时更新";
  };
