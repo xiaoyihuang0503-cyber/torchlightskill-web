@@ -1,6 +1,6 @@
 import { DEFAULT_CONFIG, SPECIES, RARITIES, TOOLS, GIFTS, FOOD_CHAIN_VERSION, validateConfig } from './rules.js?v=0.6.8-1';
-import {isReference,referenceCanEat,referenceTargets,referenceLegalActions,applyReferenceAction,editReferenceRoom,addReferenceMarker,validateReferenceState,recommendReference,createReferenceGame} from './reference-rules.js?v=0.6.13-1';
-export {createReferenceGame,referenceView,referenceVisibleState,addReferenceMarker,isReference} from './reference-rules.js?v=0.6.13-1';
+import {isReference,referenceCanEat,referenceTargets,referenceLegalActions,applyReferenceAction,editReferenceRoom,addReferenceMarker,validateReferenceState,recommendReference,createReferenceGame} from './reference-rules.js?v=0.6.14-1';
+export {createReferenceGame,referenceView,referenceVisibleState,addReferenceMarker,isReference,hasReferenceRewards} from './reference-rules.js?v=0.6.14-1';
 
 export function seedNumber(value) {
   let n = 2166136261;

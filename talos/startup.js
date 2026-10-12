@@ -1,5 +1,5 @@
 import {DEFAULT_CONFIG} from './rules.js?v=0.6.8-1';
-import {createChallenge,createReferenceGame,exportRun,importRun,isChallenge,isReference} from './session-engine.js?v=0.6.13-1';
+import {createChallenge,createReferenceGame,exportRun,importRun,isChallenge,isReference,hasReferenceRewards} from './session-engine.js?v=0.6.14-1';
 
 export const RUN_STORE='ss14-prison-lab-v1';
 
@@ -33,10 +33,11 @@ export function saveStartupRun(storage,run,{protectedSave=false}={}){
 export function startupRunSummary(state){
   const reference=isReference(state),complete=reference&&['riot','finished'].includes(state.phase);
   const mode=reference?'资料校准练习':isChallenge(state)?'挑战经营':state.config.initialPrisoners===0?'空监狱经营':'预设练习';
-  const phase=complete?'经营完成 · 待镇压交接':({patrol:'待巡监',manage:'经营中',event:'事件待处理',riot:'暴乱演算',finished:'已结束'})[state.phase];
+  const phase=state.pending.length?state.pending[0].kind==='tool'?'刑具待选择':'珍藏待选择':complete?'经营完成 · 待镇压交接':({patrol:'待巡监',manage:'经营中',event:'事件待处理',riot:'暴乱演算',finished:'已结束'})[state.phase];
+  const oldRewards=reference&&!hasReferenceRewards(state)?' · 此局保留旧奖励规则，新建一局可体验刑具和珍藏选择':'';
   return {mode,phase,day:state.day,days:state.config.days,finished:state.phase==='finished'||complete,
     label:complete?'查看经营交接':state.phase==='finished'?'查看上局结果':`继续第 ${state.day} 日`,
-    detail:`${mode} · 第 ${state.day} / ${state.config.days} 日 · ${phase}`};
+    detail:`${mode} · 第 ${state.day} / ${state.config.days} 日 · ${phase}${oldRewards}`};
 }
 
 export function startupConfigDraft(state){

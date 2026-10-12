@@ -1,3 +1,5 @@
+import {isReference} from './reference-rules.js?v=0.6.14-1';
+
 const STORAGE_KEY='ss14-prison-audio-v1';
 const DEFAULTS=Object.freeze({enabled:true,sfx:true,voice:true,ambience:true,music:true,volume:.65,musicVolume:.8});
 // New music is loudness-normalized, with .35 clip gain: the existing 2.8 bus
@@ -296,7 +298,7 @@ export class PrisonAudio {
     const upgraded=population(after).some(p=>oldById.has(p.id)&&p.tier>oldById.get(p.id));
     const goal=after.goalIndex>before.goalIndex;
     const day=after.day>before.day,enterRiot=after.phase==='riot'&&before.phase!=='riot',finished=after.phase==='finished'&&before.phase!=='finished';
-    const handoff=enterRiot&&['public-preview-v1','public-preview-v2'].includes(after.reference?.version),riot=enterRiot&&!handoff;
+    const handoff=enterRiot&&isReference(after),riot=enterRiot&&!handoff;
     if(after.stats.eaten>before.stats.eaten&&!token?.devourHandled){
       if(action.type==='eat')this.devour(before.rooms[action.room]?.prisoner?.code);else this.play('devour');
     }

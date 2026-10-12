@@ -1,19 +1,19 @@
 import { DEFAULT_CONFIG, SPECIES, RARITIES, TOOLS, GIFTS, ASSUMPTIONS, validateConfig } from './rules.js?v=0.6.8-1';
-import { applyAction, targets, onBoard, nameOf, editRoom, addTool, recommend, replay, exportRun, importRun, isChallenge, challengeView, upgradeFoodChain, undoUserAction, isReference, referenceView } from './session-engine.js?v=0.6.13-1';
-import {REFERENCE_PRESETS,referenceGoal,referencePairDecision,referenceRoomBadges,referenceRoomDescription,referenceMarkersMarkup,referenceSpecialEffectsMarkup,specialEventBadge,referenceHandoffMarkup,referenceJournalMarkup,referenceJournalDetailMarkup} from './reference-ui.js?v=0.6.13-1';
-import {preyCodes} from './engine.js?v=0.6.13-1';
-import {pairDecision} from './interaction.js?v=0.6.13-1';
-import {PrisonEffects} from './effects.js?v=0.6.13-1';
-import {goalGuide} from './goal-guide.js?v=0.6.13-1';
-import {LazyPrisonScene} from './scene-loader.js?v=0.6.13-1';
-import {PrisonAudio,musicTracks} from './audio.js?v=0.6.13-1';
-import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.6.13-1';
+import { applyAction, legalActions, targets, onBoard, nameOf, editRoom, addTool, recommend, replay, exportRun, importRun, isChallenge, challengeView, upgradeFoodChain, undoUserAction, isReference, hasReferenceRewards, referenceView } from './session-engine.js?v=0.6.14-1';
+import {REFERENCE_PRESETS,referenceGoal,referencePairDecision,referenceRoomBadges,referenceRoomDescription,referenceMarkersMarkup,referenceSpecialEffectsMarkup,referenceRewardEffectsMarkup,referenceRewardStatus,specialEventBadge,referenceHandoffMarkup,referenceJournalMarkup,referenceJournalDetailMarkup} from './reference-ui.js?v=0.6.14-1';
+import {preyCodes} from './engine.js?v=0.6.14-1';
+import {pairDecision} from './interaction.js?v=0.6.14-1';
+import {PrisonEffects} from './effects.js?v=0.6.14-1';
+import {goalGuide} from './goal-guide.js?v=0.6.14-1';
+import {LazyPrisonScene} from './scene-loader.js?v=0.6.14-1';
+import {PrisonAudio,musicTracks} from './audio.js?v=0.6.14-1';
+import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.6.14-1';
 import {rewardIcon,ruleText} from './reward-icons.js?v=0.6.2-1';
 import {rainbowMarkup,animateRainbowArrivals} from './rainbow-ui.js?v=0.6.8-1';
-import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.13-1';
-import {journalMarkup,effectsMarkup,journalDetailMarkup} from './run-journal.js?v=0.6.13-1';
+import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.14-1';
+import {journalMarkup,effectsMarkup,journalDetailMarkup} from './run-journal.js?v=0.6.14-1';
 import {ModalNavigation,initManualTabs} from './modal-ui.js?v=0.6.9-1';
-import {MobilePrisonUI,listenMediaChange} from './mobile-ui.js?v=0.6.13-1';
+import {MobilePrisonUI,listenMediaChange} from './mobile-ui.js?v=0.6.14-1';
 
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -174,7 +174,7 @@ function renderJournal(){
   const old=$('run-journal').querySelector('.run-journal-scroll');
   const follow=journalInitial!==initial||!old||old.scrollHeight-old.scrollTop-old.clientHeight<40,top=old?.scrollTop||0;
   $('run-journal').innerHTML=isReference(state)?referenceJournalMarkup(initial,state):journalMarkup(initial,state);
-  $('room-effects').innerHTML=isReference(state)?referenceSpecialEffectsMarkup(state)+referenceMarkersMarkup(state):effectsMarkup(initial,state);
+  $('room-effects').innerHTML=isReference(state)?referenceSpecialEffectsMarkup(state)+referenceRewardEffectsMarkup(state)+referenceMarkersMarkup(state):effectsMarkup(initial,state);
   const scroll=$('run-journal').querySelector('.run-journal-scroll');
   if(scroll)scroll.scrollTop=follow?scroll.scrollHeight:top;
   journalInitial=initial;journalRevision=state.revision;
@@ -229,7 +229,7 @@ function renderRunOverview(guide,challenge){
   if(challenge)return;
   if(isReference(state)){
     const o=guide.overall;
-    $('practice-overview').innerHTML=`<h3 class="run-objective">培养更多绮彩</h3><p class="run-condition">经营期间持续养成；沙盘与单独收容的囚犯分别保留，结束后交接。</p><div class="run-counts"><div><strong>${o.currentExquisite}</strong><span>当前至臻</span></div><div><strong>${o.totalRainbow}</strong><span>累计绮彩</span></div><div><strong>${o.remainingDays}</strong><span>剩余经营日</span></div></div><p class="run-next">${esc(o.nextTarget)}</p>`;
+    $('practice-overview').innerHTML=`<h3 class="run-objective">培养更多绮彩</h3><p class="run-condition">经营期间持续养成；沙盘与单独收容的囚犯分别保留，结束后交接。</p><div class="run-counts"><div><strong>${o.currentExquisite}</strong><span>当前至臻</span></div><div><strong>${o.totalRainbow}</strong><span>累计绮彩</span></div><div><strong>${o.remainingDays}</strong><span>剩余经营日</span></div></div><p class="run-next">${esc(o.nextTarget)}</p>${hasReferenceRewards(state)?`<div class="stage-goal"><div class="stage-heading"><span>阶段目标 · 困兽称王</span><span class="goal-status ${guide.completed?'complete':''}">${esc(guide.status)}</span></div><p>${esc(guide.condition)}</p><small>${esc(guide.reward)}</small></div>`:''}`;
     $('advice-objective').innerHTML='<p class="reference-uncertainty">只判断当前可见配对与标记。未知代号、权重与正式收益不作预判。</p>';return;
   }
   const o=guide.overall,stage=guide.completed?(state.pending.some(p=>p.kind==='tool')?'待领刑具':'已完成'):guide.status;
@@ -267,7 +267,7 @@ async function act(action){
   if(action.type==='scout')$('motion-status').textContent='侦察完成 · 可开门或改去已开牢房';
   if(action.type==='deliver')$('motion-status').textContent='押运完成 · 合约已兑现';
   if(isReference(state)){
-    const effects=state.log.slice(before.log.length).map(l=>l.text).filter(t=>/象牙|猎物|划痕|鼠巢|探查|单独收容/.test(t));
+    const effects=state.log.slice(before.log.length).map(l=>l.text).filter(t=>/象牙|猎物|划痕|鼠巢|探查|单独收容|刑具|珍藏|口枷|鼠头串|锈锯|复仇者|钥匙串|绞首绳|火刑柱|铁盒/.test(t));
     if(effects.length)$('motion-status').textContent=effects.slice(0,2).join(' ');
   }
 }
@@ -314,16 +314,17 @@ function render(deferDialogs=false){
   const active=onBoard(state),phase=state.phase;
   const challenge=isChallenge(state)?challengeView(state):null;
   const reference=isReference(state),ref=reference?referenceView(state):null,referenceDone=reference&&['riot','finished'].includes(phase);
-  const specialEvents=reference&&state.reference.version==='public-preview-v2'&&state.config.referenceParameters.specialEvents&&state.config.eventsChance>0;
+  const specialEvents=reference&&state.reference.version!=='public-preview-v1'&&state.config.referenceParameters.specialEvents&&state.config.eventsChance>0;
   const eventStatus=state.reference?.version==='public-preview-v1'?'此局沿用旧规则，没有特殊事件；新建一局可体验已恢复的样本。':specialEvents?'启用连锁反应与处刑效率；事件概率采用练习设置。':'本局未生成特殊事件，新局可在练习参数中启用并设置概率。';
   $('advice-section').querySelector('summary h2').textContent=reference?'配对参考':'收益辅助';
   const guide=challenge?null:reference?referenceGoal(state):goalGuide(state);
   document.querySelector('main.game-screen').classList.toggle('reference-run',reference);
   for(const id of ['reference-mode-note','reference-markers','reference-treasure-status'])$(id).hidden=!reference;
   if(reference){
-    $('reference-mode-note').innerHTML=`<strong>经营规则练习 · 测试预览</strong><br>${eventStatus}完整刑具、事变与珍藏卡池仍待补全。`;
+    $('reference-mode-note').innerHTML=`<strong>经营规则练习</strong><br>${eventStatus}${hasReferenceRewards(state)?'已接入8件刑具与4种珍藏样本；完整候选池、抽样权重和连续领奖次数采用练习口径。':'此局保留旧奖励规则；新建一局可选择刑具与珍藏。'}`;
     $('reference-markers').innerHTML=referenceMarkersMarkup(state);
-    $('reference-treasure-status').innerHTML=`<strong>珍藏获得记录 ${ref.treasures.length} 次</strong><br>绮彩已单独收容 ${state.rainbow.length} 名；珍藏完整候选池待补，不编造选择或已兑现奖励。`;
+    const rewards=referenceRewardStatus(state);
+    $('reference-treasure-status').innerHTML=`<strong>${rewards.enabled?`珍藏已生效 ${rewards.chosen} 次${rewards.pending?` · 待选 ${rewards.pending} 次`:''}`:`珍藏获得记录 ${ref.treasures.length} 次`}</strong><br>${esc(rewards.enabled?'绮彩收容后选择珍藏，立即生效；可在房间效果和经营记录中查看。':rewards.text)}`;
   }
   const route=patrolRoute(state,pendingAction?.type==='visit'?pendingAction.room:null);
   if(reference&&route&&!route.rooms.length){route.rooms=[pendingAction.room];route.closed=Number(state.rooms[pendingAction.room].status==='closed');route.nests=Number(!!state.rooms[pendingAction.room].nest);}
@@ -342,7 +343,7 @@ function render(deferDialogs=false){
   $('goal-name').textContent=reference?'经营目标 · 培养更多绮彩':'阶段目标 · 困兽称王';
   const target=state.config.goalTiers[state.goalIndex];
   $('scene-goal').innerHTML=challenge?'':`<span class="goal-heading">经营目标</span><span class="goal-main">培养更多绮彩</span><span class="goal-condition">至臻 ${guide.overall.currentExquisite} · 绮彩 ${guide.overall.totalRainbow}<br>经营结束后镇压暴乱</span>`;
-  if(reference)$('scene-goal').innerHTML=`<span class="goal-heading">典狱演习 · 经营目标</span><span class="goal-main">培养更多绮彩</span><span class="goal-condition">至臻 ${guide.overall.currentExquisite} · 绮彩 ${guide.overall.totalRainbow}<br>经营结束后交接囚犯</span>`;
+  if(reference)$('scene-goal').innerHTML=`<span class="goal-heading">经营目标</span><span class="goal-main">培养更多绮彩</span><span class="goal-condition">至臻 ${guide.overall.currentExquisite} · 绮彩 ${guide.overall.totalRainbow}<br>${hasReferenceRewards(state)?state.goalIndex?'阶段刑具已达成':'培养至臻可领取刑具':'经营结束后交接囚犯'}</span>`;
   if(challenge)$('scene-goal').innerHTML=`<span class="goal-heading">目标：押运合约</span><span class="goal-condition">完成至少 2 单，必须包含重囚<br><strong>${challenge.completed}/3 单</strong> · ${challenge.tickets} 张调度券</span>`;
   renderGoalGuide(guide);
   $('goal-description').textContent=reference?guide.condition:target===undefined?'已领完本轮设定目标。继续经营，培养绮彩囚犯。':`至少一名囚犯达到${RARITIES[target]}。${state.goalIndex?'后续目标采用实验配置。':''}`;
@@ -351,7 +352,7 @@ function render(deferDialogs=false){
   $('tool-count').textContent=state.tools.length;
   $('tools').innerHTML=state.tools.map(id=>{const t=TOOLS.find(x=>x.id===id);return `<div class="tool"><span class="tool-icon" aria-hidden="true">${rewardIcon(id)}</span><div><strong>${esc(t.name)}</strong><p>${ruleText(t.text)}</p></div></div>`;}).join('');
   $('tools-empty').hidden=!!state.tools.length;
-  $('tools-empty').textContent=reference?specialEvents?'刑具卡池尚未接全。特殊事件在开门后展示，可查看效果并确认或略过。':eventStatus:'尚未获得刑具';
+  $('tools-empty').textContent=reference?hasReferenceRewards(state)?state.pending.some(r=>r.kind==='tool')?'请选择一件刑具，领取后在本局持续生效。':'培养一名至臻后，可从候选中选择一件刑具。':'此局沿用旧规则，未接入刑具；新建一局可体验奖励选择。':'尚未获得刑具';
   renderJournal();
   $('rainbow-count').textContent=state.rainbow.length;
   $('rainbow').innerHTML=rainbowMarkup(state);
@@ -370,7 +371,11 @@ function render(deferDialogs=false){
   const labels={patrol:['PATROL','请选择目的地',startupPhaseHelp(state)],manage:['MANAGEMENT',uiMode==='eat'?'请选择要吃的囚犯':'请进行决策',uiMode==='eat'?'选主囚犯，再选同阶可吃目标，确认吞噬。':startupPhaseHelp(state)],event:['SPECIAL EVENT',state.event?.kind==='chain'?'连锁反应':'处刑效率',''],riot:['PRISON RIOT','囚犯暴乱',''],finished:['RUN COMPLETE','经营结束','']};
   const [label,title,help]=labels[phase];
   $('phase-label').textContent=label;$('phase-title').textContent=title;$('phase-help').textContent=help;
-  if(challenge?.deliveryPending){
+  if(state.pending.length){
+    $('phase-title').textContent=state.pending[0].kind==='tool'?'请选择刑具':'请选择典狱长的珍藏';
+    $('phase-help').textContent='选中一张奖励卡，再确认；全部奖励领取后继续经营，不额外消耗天数。';
+    $('center-actions').innerHTML='';
+  }else if(challenge?.deliveryPending){
     $('phase-title').textContent=`${challenge.contract.name} · ${challenge.earlyDelivery?'提前结算':'交付日'}`;
     $('phase-help').textContent=challenge.contract.description;
     $('center-actions').innerHTML='<button class="button gold" data-open-delivery>选择交付囚犯</button>'+(challenge.earlyDelivery?'<button class="button" data-cancel-early>继续经营</button>':'<button class="button" data-skip-delivery>放弃本次合约</button>');
@@ -382,7 +387,8 @@ function render(deferDialogs=false){
     $('event-description').textContent=state.event.kind==='chain'?'锁链将沿途的牢门牵连在一起。请典狱长决定是否开启这条巡监路线。':'囚犯已押送至中央广场。请典狱长决定处置方式。';
     $('event-art').innerHTML=rewardIcon(state.event.kind==='chain'?'keys':'saw');
     $('event-rule').innerHTML=ruleText(description);
-    $('event-options').innerHTML=buttonsFor({type:'event',accept:false},'略过')+' '+(state.event.kind==='chain'||state.rooms[state.event.room].prisoner?buttonsFor({type:'event',accept:true},'确认','gold'):'');
+    const canAccept=legalActions(state).some(a=>a.type==='event'&&a.accept===true);
+    $('event-options').innerHTML=buttonsFor({type:'event',accept:false},'略过')+' '+(canAccept?buttonsFor({type:'event',accept:true},'确认','gold'):'<p class="reference-uncertainty">原囚犯已离场，本次处刑不再生效。请选择略过，再继续经营。</p>');
   }else if(referenceDone){
     $('phase-title').textContent='经营完成 · 待镇压交接';$('phase-help').textContent='查看沙盘与单独收容名单；当前只练习经营，不模拟后续刷怪与掉落。';
     $('center-actions').innerHTML='<button class="button gold" data-show-results>查看交接名单</button>';
@@ -394,7 +400,7 @@ function render(deferDialogs=false){
   }else if(phase==='finished')$('center-actions').innerHTML='<button class="button gold" data-show-results>查看经营结果</button>';
   else if(phase==='manage'){
     const p=state.rooms[selected]?.prisoner;
-    $('center-actions').innerHTML=(p&&edible.length?decisionCard('eat','吃',eatIcon,uiMode==='eat'):'')+(p?decisionCard('reroll','换','↻',pendingAction?.type==='reroll',state.rerolls>=state.config.rerollsPerDay):'')+decisionCard('end','结束','◷',pendingAction?.type==='end');
+    $('center-actions').innerHTML=(p&&edible.length?decisionCard('eat','吃',eatIcon,uiMode==='eat'):'')+(p?decisionCard('reroll','换','↻',pendingAction?.type==='reroll',state.rerolls>=state.config.rerollsPerDay||!!ref?.rewardSummary?.rerollBlockReason):'')+decisionCard('end','结束','◷',pendingAction?.type==='end');
   }else $('center-actions').innerHTML='';
   $('destination-cards').innerHTML=phase==='patrol'?state.destinations.map(id=>{const p=state.rooms[id].prisoner;return `<button class="decision-card" data-destination="${id}" aria-pressed="${pendingAction?.type==='visit'&&pendingAction.room===id}" ${challenge?.intel&&challenge.intel.room!==id&&state.rooms[id].status==='closed'?'disabled':''}>${p?`<span class="portrait ${p.code} tier-${p.tier}"></span>`:'<span class="decision-icon">▥</span>'}${state.rooms[id].event?specialEventBadge('decision-event'):''}<span>去${id+1}号</span><small class="decision-detail">${esc(destinationDetail(state,id))}</small></button>`;}).join(''):'';
   if(reference&&phase==='patrol'){
@@ -410,6 +416,7 @@ function render(deferDialogs=false){
     if(!route)$('phase-help').textContent='点击右侧确认，前往这间牢房。';
   }
   if(pendingAction?.type==='reveal'){$('phase-title').textContent=`探查 ${pendingAction.room+1} 号牢房`;$('phase-help').textContent='只显示门后稀有度，不显示代号，也不开门；次数与耗天采用练习参数。';}
+  if(!pendingAction&&phase==='manage'&&ref?.rewardSummary?.rerollBlockReason)$('phase-help').textContent=ref.rewardSummary.rerollBlockReason;
   $('board-count').textContent=`场上 ${active.length} 名 · 已开 ${state.rooms.filter(r=>r.status==='open').length} 间`;
   $('confirm-action').disabled=!pendingAction||busy||!!state.pending.length;
   $('confirm-action').dataset.intent=pendingAction?.type||'';
@@ -443,6 +450,8 @@ function render(deferDialogs=false){
     $('reward-kind').textContent=restock?'合约奖励 · 原创挑战':reward.kind==='tool'?'OBJECTIVE COMPLETE':'RAINBOW PRISONER';
     $('reward-kind').hidden=!restock;
     $('reward-title').textContent=restock?'刑具整备':reward.kind==='tool'?'选择一件刑具':'典狱长的珍藏';
+    $('reward-sample-note').hidden=!hasReferenceRewards(state);
+    $('reward-sample-note').textContent=reward.kind==='tool'?'达成至臻阶段目标。选择一件刑具，在本局持续生效。':'绮彩囚犯已单独收容。选择一项珍藏，立即生效。';
     $('restock-controls').hidden=!restock;
     if(restock){
       $('refresh-restock').disabled=busy||!restock.canRefresh;
@@ -457,7 +466,7 @@ function render(deferDialogs=false){
   if(phase==='event'&&!state.pending.length){
     if(!deferDialogs&&!$('event-dialog').open)$('event-dialog').showModal();
   }else if($('event-dialog').open)$('event-dialog').close();
-  if(!deferDialogs&&(phase==='finished'||referenceDone)&&resultShown!==state.revision){resultShown=state.revision;showResults();}
+  if(!deferDialogs&&!state.pending.length&&(phase==='finished'||referenceDone)&&resultShown!==state.revision){resultShown=state.revision;showResults();}
   if(phase!=='finished'&&!referenceDone&&$('result-dialog').open)$('result-dialog').close();
 }
 function renderInspect(){
@@ -466,7 +475,7 @@ function renderInspect(){
     const markers=referenceView(state).markers.filter(m=>m.room===selected||m.linkedRoom===selected);
     if(!r.prisoner){$('inspect').innerHTML=`<div class="empty-inspect"><span class="door-icon">${r.status==='closed'?'▥':'◇'}</span><span>${esc(referenceRoomDescription(state,selected))}</span></div><p class="reference-uncertainty">关闭房的代号不会预判。探查仅显示稀有度，划痕允许同阶头狼选择吞噬。</p>`;return;}
     const p=r.prisoner,prey=targets(state,selected);
-    $('inspect').innerHTML=`<div class="inspect-portrait portrait ${p.code} tier-${p.tier}" role="img" aria-label="${nameOf(p)}"></div><div class="inspect-name"><strong>${speciesOf(p.code).name}</strong><span>${RARITIES[p.tier]}</span></div><p class="inspect-text">基础可吃同阶${preyCodes(state,p.code).map(code=>speciesOf(code).name).join('、')}。${p.code==='wolf'?'也可吃同阶划痕房。':''}吞噬后升阶并随机变号。</p><p>${markers.map(m=>esc(m.displayText)).join('<br>')}</p><p class="reference-uncertainty">可吃目标：${prey.length?prey.map(id=>`${id+1}号`).join('、'):'暂无'}<br>每日换次数与开/吃/换耗天属于练习参数。</p>`;return;
+    $('inspect').innerHTML=`<div class="inspect-portrait portrait ${p.code} tier-${p.tier}" role="img" aria-label="${nameOf(p)}"></div><div class="inspect-name"><strong>${speciesOf(p.code).name}</strong><span>${RARITIES[p.tier]}</span></div><p class="inspect-text">基础可吃同阶${preyCodes(state,p.code).map(code=>speciesOf(code).name).join('、')}。${p.code==='wolf'?'也可吃同阶划痕房。':''}${p.code==='rat'&&state.tools.includes('rathead')?'持有鼠头串，可额外吞噬同阶硕鼠并升阶。':''}吞噬后升阶并随机变号。</p><p>${markers.map(m=>esc(m.displayText)).join('<br>')}</p><p class="reference-uncertainty">可吃目标：${prey.length?prey.map(id=>`${id+1}号`).join('、'):'暂无'}<br>每日换次数与开/吃/换耗天属于练习参数。</p>`;return;
   }
   if(!r.prisoner){
     $('inspect').innerHTML=`<div class="empty-inspect"><span class="door-icon" aria-hidden="true">${r.status==='closed'?'▥':'◇'}</span><span>${r.nest?`鼠巢，第 ${r.nest.due} 日预计成熟`:r.status==='closed'?'尚未开启':'囚犯已离开'}</span></div>`;

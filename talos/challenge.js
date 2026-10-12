@@ -1,6 +1,6 @@
-import {createGame as createBaseGame,onBoard,nameOf,validateState} from './engine.js?v=0.6.13-1';
+import {createGame as createBaseGame,onBoard,nameOf,validateState} from './engine.js?v=0.6.14-1';
 import {DEFAULT_CONFIG,TOOLS,FOOD_CHAIN_VERSION} from './rules.js?v=0.6.8-1';
-import {CHALLENGE_V2,createContracts,qualifiesV2,cargoBonus,restockOptions,restockView} from './challenge-v2.js?v=0.6.8-1';
+import {CHALLENGE_V2,createContracts,qualifiesV2,cargoBonus,restockOptions,restockView} from './challenge-v2.js?v=0.6.14-1';
 
 export const LEGACY_CHALLENGE_VERSION='talos-original-contract-v1';
 export const CHALLENGE_VERSION=CHALLENGE_V2;

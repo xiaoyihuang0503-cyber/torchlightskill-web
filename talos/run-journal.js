@@ -1,4 +1,4 @@
-import {applyAction,editRoom,addTool} from './session-engine.js?v=0.6.13-1';
+import {applyAction,editRoom,addTool} from './session-engine.js?v=0.6.14-1';
 import {SPECIES,RARITIES,TOOLS,GIFTS} from './rules.js?v=0.6.8-1';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));

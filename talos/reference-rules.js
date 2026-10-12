@@ -1,11 +1,15 @@
-import {DEFAULT_CONFIG,SPECIES,RARITIES,FOOD_CHAIN_VERSION,validateConfig} from './rules.js?v=0.6.8-1';
+import {DEFAULT_CONFIG,SPECIES,RARITIES,TOOLS,GIFTS,FOOD_CHAIN_VERSION,validateConfig} from './rules.js?v=0.6.8-1';
+import {hasReferenceRewards,referenceRerollBlockReason,queueReferenceMilestone,queueReferenceTreasure,chooseReferenceReward,referenceEatToolPlan,referenceAfterEat,referencePrimaryOpen,referenceRerollInmate,referenceDayTools,validateReferenceRewards,referenceRewardsView} from './reference-rewards.js?v=0.6.14-1';
+export {hasReferenceRewards,referenceRerollBlockReason} from './reference-rewards.js?v=0.6.14-1';
 
 // Public test-preview text supports these effects, but does not supply their
 // spawn rates or all timing details. This profile never rewrites legacy runs.
 export const LEGACY_REFERENCE_VERSION='public-preview-v1';
-export const REFERENCE_VERSION='public-preview-v2';
-export const isReference=s=>[LEGACY_REFERENCE_VERSION,REFERENCE_VERSION].includes(s?.reference?.version);
-const hasSpecialEvents=s=>s.reference.version===REFERENCE_VERSION&&s.config.referenceParameters.specialEvents;
+export const SAMPLE_REFERENCE_VERSION='public-preview-v2';
+export const REFERENCE_VERSION='public-preview-v3';
+export const isReference=s=>[LEGACY_REFERENCE_VERSION,SAMPLE_REFERENCE_VERSION,REFERENCE_VERSION].includes(s?.reference?.version);
+const hasEventVersion=s=>[SAMPLE_REFERENCE_VERSION,REFERENCE_VERSION].includes(s.reference.version);
+const hasSpecialEvents=s=>hasEventVersion(s)&&s.config.referenceParameters.specialEvents;
 const eventKinds=['chain','execution'];
 const codes=SPECIES.map(p=>p.id), phases=['patrol','manage','event','riot','finished'];
 const exact=(a,keys)=>a&&typeof a==='object'&&!Array.isArray(a)&&Object.keys(a).length===keys.length&&keys.every(k=>Object.hasOwn(a,k));
@@ -33,11 +37,13 @@ function clearRoom(s,r,status=s.config.reusableRooms?'closed':'open'){
   r.prisoner=null;r.status=status;r.nest=null;r.event=null;r.reference=roomData();
 }
 function collect(s,r){
+  if(hasReferenceRewards(s)&&r.prisoner)queueReferenceMilestone(s,r.prisoner,rewardHooks());
   if(!r.prisoner||r.prisoner.tier<5)return;
   const p={...r.prisoner};s.rainbow.push(p);
-  s.reference.treasures.push({inmateId:p.id,day:s.day,status:'catalogue_unavailable'});
+  if(hasReferenceRewards(s))queueReferenceTreasure(s,p,rewardHooks());
+  else s.reference.treasures.push({inmateId:p.id,day:s.day,status:'catalogue_unavailable'});
   clearRoom(s,r);
-  log(s,`${label(p)}单独收容；记录一次典狱长的珍藏，完整候选池待补，不模拟抽取。`);
+  log(s,hasReferenceRewards(s)?`${label(p)}单独收容；珍藏选择已按顺序排队。`:`${label(p)}单独收容；记录一次典狱长的珍藏，完整候选池待补，不模拟抽取。`);
 }
 function promote(s,r,gain,changeCode=false){
   if(!r?.prisoner)return;
@@ -50,11 +56,12 @@ const specialRecords=s=>s.reference.specialEventRecords??[];
 function consumeChainRecord(s,status='used'){
   for(const entry of specialRecords(s).filter(e=>e.kind==='chain'&&e.status==='ready')){entry.status=status;entry.usedDay=s.day;}
 }
-function openRoom(s,r,forced=null){
+function openRoom(s,r,forced=null,opened=null){
   if(r.status!=='closed')return null;
   const event=r.event;r.event=null;
   const revealed=r.reference.revealedTier;
   r.prisoner=forced?inmate(s,forced.code,forced.tier):(r.reference.hidden??inmate(s));
+  if(opened)opened.actorId=r.prisoner.id;
   r.status='open';r.nest=null;r.reference.hidden=null;r.reference.revealedTier=null;r.reference.scratch=false;
   s.stats.opened++;log(s,`打开 ${r.id+1} 号牢房：${label(r.prisoner)}。${revealed!==null?'已清除探查/划痕显示。':''}`);
   collect(s,r);clearInvalidPrey(s);return event;
@@ -75,17 +82,20 @@ function beginDay(s){
   s.reference.prey=s.reference.prey.filter(m=>m.remaining>0);
   clearInvalidPrey(s);
   for(const r of s.rooms.filter(r=>r.nest&&r.nest.due<=s.day)){
-    log(s,`${r.id+1} 号鼠巢经过两次日切换，自动打开并生成稀有硕鼠。`);
-    const event=openRoom(s,r,{code:'rat',tier:2});
+    const fromTool=hasReferenceRewards(s)&&r.nest.source==='referenceTool';
+    log(s,fromTool?`${r.id+1} 号刑具鼠巢成熟，自动打开并生成${RARITIES[s.config.nestTier]}硕鼠（练习参数）。`:`${r.id+1} 号鼠巢经过两次日切换，自动打开并生成稀有硕鼠。`);
+    const event=openRoom(s,r,{code:'rat',tier:fromTool?s.config.nestTier:2});
     if(event)log(s,`${r.id+1} 号特殊事件随鼠巢自动开门消耗，本次额外开门不触发事变（练习处理）。`);
   }
+  if(hasReferenceRewards(s))referenceDayTools(s,rewardHooks());
   const closed=s.rooms.filter(r=>r.status==='closed');
-  s.destinations=shuffle(s,closed.length?closed:s.rooms).slice(0,s.config.destinations).map(r=>r.id);
+  const destinationCount=hasReferenceRewards(s)?Math.max(1,s.config.destinations-(s.tools.includes('fire')?1:0)):s.config.destinations;
+  s.destinations=shuffle(s,closed.length?closed:s.rooms).slice(0,destinationCount).map(r=>r.id);
 }
 
 export function referenceCanEat(s,a,b){
   if(!a||!b||a.id===b.id||a.tier!==b.tier||a.tier>=5)return false;
-  return SPECIES.find(p=>p.id===a.code)?.prey.includes(b.code)??false;
+  return (SPECIES.find(p=>p.id===a.code)?.prey.includes(b.code)??false)||(hasReferenceRewards(s)&&s.tools.includes('rathead')&&a.code==='rat'&&b.code==='rat');
 }
 export function referenceTargets(s,id){
   const p=s.rooms[id]?.prisoner;if(!p)return [];
@@ -112,13 +122,14 @@ function mark(s,kind,{room,prey}){
 }
 
 export function createReferenceGame(seed='reference',config=DEFAULT_CONFIG,preset='normal',version=REFERENCE_VERSION){
-  if(![LEGACY_REFERENCE_VERSION,REFERENCE_VERSION].includes(version))throw new Error('资料练习版本无效');
-  const p={scratchBaseGainIncluded:true,tuskIncludeReplaced:true,revealLimitPerDay:1,...(version===REFERENCE_VERSION?{specialEvents:true,executionChangesCode:false}:{}),...config.referenceParameters};
-  const c=validateConfig({...config,initialPrisoners:0,eventsChance:version===REFERENCE_VERSION&&p.specialEvents?(config.eventsChance??DEFAULT_CONFIG.eventsChance):0,goalTiers:[],referenceParameters:p});
+  if(![LEGACY_REFERENCE_VERSION,SAMPLE_REFERENCE_VERSION,REFERENCE_VERSION].includes(version))throw new Error('资料练习版本无效');
+  const events=version!==LEGACY_REFERENCE_VERSION,rewards=version===REFERENCE_VERSION;
+  const p={scratchBaseGainIncluded:true,tuskIncludeReplaced:true,revealLimitPerDay:1,...(events?{specialEvents:true,executionChangesCode:false}:{}),...config.referenceParameters};
+  const c=validateConfig({...config,initialPrisoners:0,eventsChance:events&&p.specialEvents?(config.eventsChance??DEFAULT_CONFIG.eventsChance):0,goalTiers:rewards?[4]:[],referenceParameters:p});
   const s={schema:'ss14.prison.run.v1',foodChain:FOOD_CHAIN_VERSION,seed:String(seed),rng:seedNumber(seed),config:c,
     day:1,phase:'patrol',position:0,rooms:[],tools:[],rainbow:[],pending:[],event:null,chain:false,destinations:[],rerolls:0,goalIndex:0,nextId:1,log:[],history:[],revision:0,
     stats:{opened:0,eaten:0,swaps:0,points:0},waves:[],combatIndex:-1,
-    reference:{version,preset,prey:[],reveals:0,treasures:[],endgameInmates:[],caches:[],combat:{entered:false,ended:false,endReason:null,revivalsRecorded:0},...(version===REFERENCE_VERSION?{specialEventRecords:[]}: {})}};
+    reference:{version,preset,prey:[],reveals:0,treasures:[],endgameInmates:[],caches:[],combat:{entered:false,ended:false,endReason:null,revivalsRecorded:0},...(events?{specialEventRecords:[]}: {}),...(rewards?{rewardRecords:[]}: {})}};
   for(let i=0;i<16;i++)s.rooms.push({id:i,status:'closed',prisoner:null,nest:null,event:hasSpecialEvents(s)&&random(s)<c.eventsChance?eventKinds[Math.floor(random(s)*eventKinds.length)]:null,reference:roomData()});
   const place=(id,code,tier)=>{const r=s.rooms[id];r.status='open';r.event=null;r.prisoner=inmate(s,code,tier);};
   if(preset==='tusk'){place(0,'elephant',0);place(1,'lion',1);place(4,'wolf',1);place(5,'rat',2);place(9,'elephant',2);mark(s,'tusk',{room:0});}
@@ -127,16 +138,23 @@ export function createReferenceGame(seed='reference',config=DEFAULT_CONFIG,prese
   else if(preset==='nest')mark(s,'nest',{room:1});
   else if(preset!=='normal')throw new Error('未知资料练习场面');
   log(s,'公开资料校准练习：文字规则依据测试预览；初始场面、随机权重、日切换与操作限制属于本地练习参数。');
+  if(rewards)log(s,'奖励练习启用：至臻目标一次刑具三选一，每名绮彩一次珍藏选择；使用8件刑具与4张珍藏已展示样本，完整卡池未知。候选等权、次数、顺序、概率及额外开门仍为练习策略。');
   beginDay(s);if(preset!=='normal')s.phase='manage';validateReferenceState(s);return s;
 }
 
 export function referenceLegalActions(s){
+  if(hasReferenceRewards(s)&&s.pending.length)return s.pending[0].options.map(id=>({type:'choose',id}));
   if(s.phase==='patrol')return [...s.destinations.map(room=>({type:'visit',room})),...(s.reference.reveals<params(s).revealLimitPerDay?s.rooms.filter(r=>r.status==='closed'&&r.reference.revealedTier===null).map(r=>({type:'reveal',room:r.id})):[])];
-  if(s.phase==='event')return [{type:'event',accept:false},...(s.event.kind==='chain'||s.rooms[s.event.room].prisoner?[{type:'event',accept:true}]:[])];
-  if(s.phase==='manage')return [...board(s).flatMap(p=>referenceTargets(s,p.room).map(prey=>({type:'eat',room:p.room,prey}))),...(s.rerolls<s.config.rerollsPerDay?board(s).map(p=>({type:'reroll',room:p.room})):[]),{type:'end'}];
+  if(s.phase==='event')return [{type:'event',accept:false},...(referenceEventCanAccept(s)?[{type:'event',accept:true}]:[])];
+  if(s.phase==='manage')return [...board(s).flatMap(p=>referenceTargets(s,p.room).map(prey=>({type:'eat',room:p.room,prey}))),...(s.rerolls<s.config.rerollsPerDay&&!referenceRerollBlockReason(s)?board(s).map(p=>({type:'reroll',room:p.room})):[]),{type:'end'}];
   if(s.phase==='riot')return ['defeated','revival','exhausted'].map(outcome=>({type:'resolveCombat',outcome}));
   if(s.phase==='finished')return s.reference.caches.filter(c=>c.status==='lit').map(c=>({type:'openCache',tier:c.tier}));
   return [];
+}
+export function referenceEventCanAccept(s){
+  if(s.phase!=='event'||!s.event)return false;
+  if(hasReferenceRewards(s))return !s.pending.length&&(s.event.kind==='chain'||s.rooms[s.event.room].prisoner?.id===s.event.actorId);
+  return s.event.kind==='chain'||!!s.rooms[s.event.room].prisoner;
 }
 function finalize(s){
   consumeChainRecord(s,'expired');
@@ -151,8 +169,27 @@ function finalize(s){
   if(s.combatIndex<0){s.phase='finished';s.reference.combat.ended=true;s.reference.combat.endReason='all_defeated';}
 }
 function record(s,state,action){s.revision=state.revision+1;s.history.push({...action,revision:s.revision,day:state.day});validateReferenceState(s);return s;}
+function rewardHooks(){
+  return {random,shuffle,weighted,inmate,log,board,targets:referenceTargets,canEat:referenceCanEat,promote,eat:eatReference,clearInvalidPrey,
+    extraOpen(s,id,forced=null){const kind=openRoom(s,s.rooms[id],forced);if(kind)log(s,`${id+1} 号特殊事件随奖励额外开门消耗，不触发事变。`);}};
+}
+function eatReference(s,eaterId,preyId){
+  const eater=s.rooms[eaterId],prey=s.rooms[preyId],scratch=prey.status==='closed';
+  const a={...eater.prisoner},b={...(scratch?prey.reference.hidden:prey.prisoner)};
+  let gain=scratch?2+(params(s).scratchBaseGainIncluded?1:0):1,revenge=false;
+  const beforeCount=board(s).length+(s.config.rainbowCountsForMuzzle?s.rainbow.length:0);
+  clearRoom(s,prey);s.stats.eaten++;
+  if(hasReferenceRewards(s)){
+    const afterCount=board(s).length+(s.config.rainbowCountsForMuzzle?s.rainbow.length:0);
+    ({gain,revenge}=referenceEatToolPlan(s,{code:a.code,beforeCount,afterCount,baseGain:gain},rewardHooks()));
+  }
+  log(s,`${label(a)}吃掉${scratch?'划痕房中同阶囚犯':label(b)}，升 ${gain} 阶${scratch?'（额外 2 阶；基础升阶叠加口径为练习参数）':''}，随后随机代号。`);
+  promote(s,eater,gain,true);clearInvalidPrey(s);
+  if(hasReferenceRewards(s))referenceAfterEat(s,a.id,revenge,rewardHooks());
+}
 export function applyReferenceAction(state,action){
   validateReferenceState(state);
+  if(action?.type==='reroll'&&referenceRerollBlockReason(state))throw new Error(referenceRerollBlockReason(state));
   if(!action||!referenceLegalActions(state).some(a=>exact(action,Object.keys(a))&&Object.keys(a).every(k=>a[k]===action[k])))throw new Error('场面已变化或资料练习操作当前不可用');
   const s=structuredClone(state);
   if(action.type==='visit'){
@@ -169,8 +206,11 @@ export function applyReferenceAction(state,action){
       }
       s.chain=false;consumeChainRecord(s);log(s,'连锁反应生效：沿顺时针练习路径开启未开牢房；划痕与鼠巢随开门清除，不触发沿途事变。');
     }else{
-      const kind=openRoom(s,s.rooms[action.room]);
-      if(kind){s.event={kind,room:action.room};s.phase='event';specialRecords(s).push({id:`e${specialRecords(s).length+1}`,kind,room:action.room,day:s.day,status:'pending',usedDay:null});log(s,`${action.room+1} 号牢房触发特殊事件：${kind==='chain'?'连锁反应':'处刑效率'}，等待决定。`);}
+      const wasClosed=s.rooms[action.room].status==='closed';
+      const opened=hasReferenceRewards(s)?{}:null;
+      const kind=openRoom(s,s.rooms[action.room],null,opened);
+      if(hasReferenceRewards(s)&&wasClosed)referencePrimaryOpen(s,action.room,rewardHooks());
+      if(kind){const actor=hasReferenceRewards(s)?{actorId:opened.actorId}:{};s.event={kind,room:action.room,...actor};s.phase='event';specialRecords(s).push({id:`e${specialRecords(s).length+1}`,kind,room:action.room,day:s.day,status:'pending',usedDay:null,...actor});log(s,`${action.room+1} 号牢房触发特殊事件：${kind==='chain'?'连锁反应':'处刑效率'}，等待决定。`);}
     }
     s.position=action.room;
   }
@@ -178,17 +218,10 @@ export function applyReferenceAction(state,action){
     const r=s.rooms[action.room],p=ensureHidden(s,r);r.reference.revealedTier=p.tier;s.reference.reveals++;
     log(s,`探查 ${r.id+1} 号牢房：仅显示${RARITIES[p.tier]}，不开门；实际稀有度仍可能受未复刻的刑具与事变影响。`);
   }
-  if(action.type==='eat'){
-    const eater=s.rooms[action.room],prey=s.rooms[action.prey],scratch=prey.status==='closed';
-    const a={...eater.prisoner},b={...(scratch?prey.reference.hidden:prey.prisoner)};
-    const gain=scratch?2+(params(s).scratchBaseGainIncluded?1:0):1;
-    clearRoom(s,prey);s.stats.eaten++;
-    log(s,`${label(a)}吃掉${scratch?'划痕房中同阶囚犯':label(b)}，升 ${gain} 阶${scratch?'（额外 2 阶；基础升阶叠加口径为练习参数）':''}，随后随机代号。`);
-    promote(s,eater,gain,true);clearInvalidPrey(s);
-  }
+  if(action.type==='eat')eatReference(s,action.room,action.prey);
   if(action.type==='reroll'){
     const r=s.rooms[action.room],wasTusk=r.reference.tusk,before={...r.prisoner};
-    r.prisoner=inmate(s);s.rerolls++;s.stats.swaps++;
+    r.prisoner=hasReferenceRewards(s)?referenceRerollInmate(s,before,rewardHooks()):inmate(s);s.rerolls++;s.stats.swaps++;
     log(s,`${label(before)}换为${label(r.prisoner)}；生成概率使用练习权重。`);
     collect(s,r);clearInvalidPrey(s);
     if(wasTusk){
@@ -199,6 +232,7 @@ export function applyReferenceAction(state,action){
       clearInvalidPrey(s);
     }
   }
+  if(action.type==='choose')chooseReferenceReward(s,action.id,rewardHooks());
   if(action.type==='event'){
     const event=s.event;s.event=null;s.phase='manage';
     const entry=specialRecords(s).find(e=>e.status==='pending');
@@ -235,12 +269,14 @@ export function applyReferenceAction(state,action){
 
 export function addReferenceMarker(state,kind,options){
   validateReferenceState(state);
+  if(hasReferenceRewards(state)&&state.pending.length)throw new Error('先完成刑具或珍藏选择，再校准标记');
   if(!['patrol','manage'].includes(state.phase))throw new Error('仅经营中可手动校准标记');
   const keys=kind==='prey'?['room','prey']:['room'];if(!exact(options,keys)||keys.some(k=>!Number.isInteger(options[k])))throw new Error('标记参数无效');
   const s=structuredClone(state);mark(s,kind,options);return record(s,state,{type:'mark',kind,...options});
 }
 export function editReferenceRoom(state,id,code,tier){
   validateReferenceState(state);
+  if(hasReferenceRewards(state)&&state.pending.length)throw new Error('先完成刑具或珍藏选择，再校准场面');
   if(!['patrol','manage'].includes(state.phase))throw new Error('仅经营中可校准场面');
   if(!Number.isInteger(id)||!state.rooms[id])throw new Error('牢房不存在');
   if(!['closed','empty',...codes].includes(code)||!Number.isInteger(tier)||tier<0||tier>5)throw new Error('囚犯参数无效');
@@ -258,10 +294,11 @@ export function referenceView(s){
     if(r.reference.tusk)markers.push({room:r.id,kind:'tusk',label:'象牙',displayText:'换后随机最多 4 名场上囚犯各升 1 阶'});
     if(r.reference.scratch)markers.push({room:r.id,kind:'scratch',label:'划痕',hiddenTier:r.reference.revealedTier,displayText:`${RARITIES[r.reference.revealedTier]} · 同阶头狼可吞噬，额外升 2 阶`});
     else if(r.reference.revealedTier!==null)markers.push({room:r.id,kind:'reveal',label:'已探查',hiddenTier:r.reference.revealedTier,displayText:`${RARITIES[r.reference.revealedTier]} · 代号未知`});
-    if(r.nest)markers.push({room:r.id,kind:'nest',label:'鼠巢',due:r.nest.due,displayText:`第 ${r.nest.due} 日自动开房 · 稀有硕鼠`});
+    if(r.nest)markers.push({room:r.id,kind:'nest',label:'鼠巢',due:r.nest.due,displayText:hasReferenceRewards(s)&&r.nest.source==='referenceTool'?`第 ${r.nest.due} 日自动开房 · ${RARITIES[s.config.nestTier]}硕鼠（${s.config.nestDays}次日切换）`:`第 ${r.nest.due} 日自动开房 · 稀有硕鼠`});
   }
   for(const m of s.reference.prey){const lion=findInmate(s,m.lionId),prey=findInmate(s,m.preyId);markers.push({room:lion.id,linkedRoom:prey.id,kind:'prey',label:'猎物',remaining:m.remaining,due:m.nextDay,displayText:`与 ${prey.id+1} 号联动 · 剩 ${m.remaining} 次日开始升阶`});}
   return {mode:'公开资料校准练习',version:s.reference.version,preset:s.reference.preset,markers,specialEventEffects:specialRecords(s).map(e=>({...e,label:e.kind==='chain'?'连锁反应':'处刑效率',displayText:e.kind==='chain'?'下一次巡监移动沿路径打开未开牢房，不触发其他开门效果。':'移除当前囚犯克制且稀有度严格更低的场上囚犯，每名升 1 阶。'})),caches:structuredClone(s.reference.caches),combat:{...s.reference.combat,index:s.combatIndex,status:s.phase},treasures:structuredClone(s.reference.treasures),endgameInmates:structuredClone(s.reference.endgameInmates),
+    ...(hasReferenceRewards(s)?{...referenceRewardsView(s),eventCanAccept:referenceEventCanAccept(s)}:{}),
     assumptions:[
       '资料来自测试预览；正式上线规则和完整卡池尚未核验。',
       '开门/换人随机权重、每日换人次数、目的地选项与耗天按本地练习参数；不代表官方限制或收益。',
@@ -272,10 +309,16 @@ export function referenceView(s){
       '鼠巢按两次日切换成熟，提前开门清除；不按任意两次操作成熟。',
       '探查只显示稀有度；练习每日次数可配置。欺压未给基数及完整触发，不模拟概率。',
       '绮彩收容、进入终局、击败点亮与开启秘藏分别记录；不模拟战力、复活上限、真实掉落或利润。',
-      ...(s.reference.version===REFERENCE_VERSION?[
+      ...(hasEventVersion(s)?[
         `特殊事件${params(s).specialEvents?`启用，初始房间发生率 ${Math.round(s.config.eventsChance*100)}%`:'关闭'}；发生率、两种事件等权、可略过与不额外耗日均为本地练习参数，不代表完整事变池。`,
         '连锁仅下一次移动生效，顺时针路线为练习策略；沿途事件随额外开门消耗、划痕与鼠巢清除，不连带触发其他效果。',
         `处刑使用当前代号与稀有度快照，只处理场上严格低阶克制目标；处刑后${params(s).executionChangesCode?'随机变号':'保持代号'}为练习参数，尚无完整触发顺序。`
+      ]:[]),
+      ...(hasReferenceRewards(s)?[
+        '至臻目标只发一次刑具三选一；每名绮彩各发一次四选一珍藏。8件刑具与4张珍藏仅为已展示样本，候选等权与奖励次数口径属于练习策略。',
+        '同次行动先排刑具、后排珍藏；领奖不额外耗日并保留原阶段。珍藏继续产生的奖励逐一排队，完成选择前不能继续其他行动或编辑。',
+        '处刑绑定开门原囚犯身份；若原主体已收容或被吞噬，只能略过，后续补入同一牢房的囚犯不能接替。连锁为下一次移动的路径效果，原囚犯离场仍可领取；此为避免处刑主体漂移的练习处理。',
+        '额外开门不触发钥匙、事变或房间效果；仍处理基础目标达成与绮彩收容。工具触发概率、口枷/火刑判定时点和顺序沿用可校准练习参数。'
       ]:[])
     ]};
 }
@@ -285,7 +328,8 @@ export function referenceView(s){
 export function referenceVisibleState(s){
   const view=referenceView(s);
   return {day:s.day,phase:s.phase,position:s.position,destinations:[...s.destinations],rainbow:structuredClone(s.rainbow),
-    rooms:s.rooms.map(r=>({id:r.id,status:r.status,prisoner:r.prisoner?{...r.prisoner}:null,knownTier:r.reference.revealedTier,nest:r.nest?{...r.nest}:null,...(s.reference.version===REFERENCE_VERSION?{specialEvent:!!r.event}:{})})),
+    rooms:s.rooms.map(r=>({id:r.id,status:r.status,prisoner:r.prisoner?{...r.prisoner}:null,knownTier:r.reference.revealedTier,nest:r.nest?{...r.nest}:null,...(hasEventVersion(s)?{specialEvent:!!r.event}:{})})),
+    ...(hasReferenceRewards(s)?{tools:[...s.tools],pending:structuredClone(s.pending)}:{}),
     ...view};
 }
 
@@ -294,11 +338,11 @@ export function validateReferenceState(s){
   validateConfig(s.config);
   const p=params(s);
   if(!p||typeof p.scratchBaseGainIncluded!=='boolean'||typeof p.tuskIncludeReplaced!=='boolean'||!Number.isInteger(p.revealLimitPerDay)||p.revealLimitPerDay<0||p.revealLimitPerDay>16)throw new Error('资料练习参数无效');
-  const v2=s.reference.version===REFERENCE_VERSION;
+  const v2=hasEventVersion(s),v3=hasReferenceRewards(s);
   if(v2&&(typeof p.specialEvents!=='boolean'||typeof p.executionChangesCode!=='boolean'))throw new Error('特殊事件练习参数无效');
-  if((!v2||!p.specialEvents)&&s.config.eventsChance!==0||s.config.initialPrisoners!==0||s.config.goalTiers.length||s.tools?.length||s.pending?.length||typeof s.chain!=='boolean'||!v2&&(s.chain!==false||s.event!==null))throw new Error('资料练习不得伪造未知卡池或事件概率');
+  if((!v2||!p.specialEvents)&&s.config.eventsChance!==0||s.config.initialPrisoners!==0||!v3&&(s.config.goalTiers.length||s.tools?.length||s.pending?.length)||typeof s.chain!=='boolean'||!v2&&(s.chain!==false||s.event!==null))throw new Error('资料练习不得伪造未知卡池或事件概率');
   if(s.phase==='event'){
-    if(!hasSpecialEvents(s)||!exact(s.event,['kind','room'])||!eventKinds.includes(s.event.kind)||!Number.isInteger(s.event.room)||s.event.room<0||s.event.room>=16||s.event.room!==s.position||s.rooms[s.event.room].status!=='open'&&s.rooms[s.event.room].prisoner)throw new Error('待处理特殊事件无效');
+    if(!hasSpecialEvents(s)||!exact(s.event,v3?['kind','room','actorId']:['kind','room'])||!eventKinds.includes(s.event.kind)||!Number.isInteger(s.event.room)||s.event.room<0||s.event.room>=16||s.event.room!==s.position||s.rooms[s.event.room].status!=='open'&&s.rooms[s.event.room].prisoner||v3&&(!/^p\d+$/.test(s.event.actorId)||Number(s.event.actorId.slice(1))<1||Number(s.event.actorId.slice(1))>=s.nextId))throw new Error('待处理特殊事件无效');
   }else if(s.event!==null)throw new Error('待处理特殊事件与阶段不一致');
   if(s.chain&&(!hasSpecialEvents(s)||!['patrol','manage'].includes(s.phase)))throw new Error('连锁只能等待下一次巡监移动');
   if(!Number.isInteger(s.day)||s.day<1||s.day>s.config.days||!phases.includes(s.phase)||!Number.isInteger(s.rng)||s.rng<1||s.rng>4294967295||!Number.isInteger(s.nextId)||s.nextId<1)throw new Error('资料练习日或随机状态无效');
@@ -306,6 +350,7 @@ export function validateReferenceState(s){
   const population=[];
   for(const r of s.rooms){const d=r.reference;
     if(typeof d.tusk!=='boolean'||typeof d.scratch!=='boolean'||r.status==='closed'&&r.prisoner||r.status==='open'&&(d.hidden||d.scratch||d.revealedTier!==null)||d.tusk&&!r.prisoner||d.scratch&&!d.hidden||d.revealedTier!==null&&(!d.hidden||d.revealedTier!==d.hidden.tier)||r.nest&&(r.status!=='closed'||!Number.isInteger(r.nest.due)||r.nest.due<=s.day))throw new Error('资料标记或探查状态无效');
+    if(v3&&r.nest&&(!exact(r.nest,r.nest.source===undefined?['due']:['due','source'])||r.nest.source!==undefined&&(r.nest.source!=='referenceTool'||!s.tools.includes('nest'))))throw new Error('刑具鼠巢来源无效');
     if(r.prisoner)population.push(r.prisoner);if(d.hidden)population.push(d.hidden);
   }
   if(!Array.isArray(s.rainbow)||s.rainbow.some(q=>q.tier!==5))throw new Error('单独收容状态无效');population.push(...s.rainbow);
@@ -313,18 +358,20 @@ export function validateReferenceState(s){
   if(!Array.isArray(s.reference.prey)||s.reference.prey.some(m=>{const a=findInmate(s,m.lionId)?.prisoner,b=findInmate(s,m.preyId)?.prisoner;return !a||!b||a.id===b.id||a.code!=='lion'||m.lionCode!=='lion'||b.code!==m.preyCode||!Number.isInteger(m.remaining)||m.remaining<1||m.remaining>3||!Number.isInteger(m.nextDay)||m.nextDay!==s.day+1;}))throw new Error('猎物引用或计时无效');
   const preyIds=s.reference.prey.flatMap(m=>[m.lionId,m.preyId]);
   if(new Set(preyIds).size!==preyIds.length)throw new Error('猎物标记不得重复绑定囚犯');
-  if(!Number.isInteger(s.reference.reveals)||s.reference.reveals<0||s.reference.reveals>p.revealLimitPerDay||!Number.isInteger(s.rerolls)||s.rerolls<0||s.rerolls>s.config.rerollsPerDay||!Number.isInteger(s.position)||s.position<0||s.position>=16||s.goalIndex!==0)throw new Error('资料经营次数无效');
+  if(!Number.isInteger(s.reference.reveals)||s.reference.reveals<0||s.reference.reveals>p.revealLimitPerDay||!Number.isInteger(s.rerolls)||s.rerolls<0||s.rerolls>s.config.rerollsPerDay||!Number.isInteger(s.position)||s.position<0||s.position>=16||(v3?![0,1].includes(s.goalIndex):s.goalIndex!==0))throw new Error('资料经营次数无效');
   if(!Array.isArray(s.destinations)||new Set(s.destinations).size!==s.destinations.length||s.destinations.some(x=>!Number.isInteger(x)||x<0||x>=16)||!Array.isArray(s.log)||!Array.isArray(s.history)||!Number.isInteger(s.revision)||s.revision<0||s.history.length!==s.revision||!s.stats||['opened','eaten','swaps','points'].some(k=>!Number.isInteger(s.stats[k])||s.stats[k]<0)||s.stats.points!==0)throw new Error('资料操作记录无效');
-  if(!['normal','tusk','prey','scratch','nest'].includes(s.reference.preset)||!Array.isArray(s.reference.treasures)||s.reference.treasures.length!==s.rainbow.length||s.reference.treasures.some(t=>t.status!=='catalogue_unavailable'||!s.rainbow.some(q=>q.id===t.inmateId)||!Number.isInteger(t.day)||t.day<1||t.day>s.day)||new Set(s.reference.treasures.map(t=>t.inmateId)).size!==s.reference.treasures.length)throw new Error('资料珍藏记录无效');
+  if(!['normal','tusk','prey','scratch','nest'].includes(s.reference.preset)||!Array.isArray(s.reference.treasures)||s.reference.treasures.length!==s.rainbow.length||!v3&&s.reference.treasures.some(t=>t.status!=='catalogue_unavailable'||!s.rainbow.some(q=>q.id===t.inmateId)||!Number.isInteger(t.day)||t.day<1||t.day>s.day)||new Set(s.reference.treasures.map(t=>t.inmateId)).size!==s.reference.treasures.length)throw new Error('资料珍藏记录无效');
+  if(v3)validateReferenceRewards(s);
   if(v2){
     const records=s.reference.specialEventRecords;
     if(!Array.isArray(records)||records.some((e,i)=>
-      !exact(e,['id','kind','room','day','status','usedDay'])||e.id!==`e${i+1}`||!eventKinds.includes(e.kind)||
+      !exact(e,v3?['id','kind','room','day','status','usedDay','actorId']:['id','kind','room','day','status','usedDay'])||e.id!==`e${i+1}`||!eventKinds.includes(e.kind)||
+      v3&&(!/^p\d+$/.test(e.actorId)||Number(e.actorId.slice(1))<1||Number(e.actorId.slice(1))>=s.nextId)||
       !Number.isInteger(e.room)||e.room<0||e.room>=16||!Number.isInteger(e.day)||e.day<1||e.day>s.day||
       !['pending','ready','used','skipped','expired'].includes(e.status)||['ready','expired'].includes(e.status)&&e.kind!=='chain'||
       (['used','expired'].includes(e.status)?!Number.isInteger(e.usedDay)||e.usedDay<e.day||e.usedDay>s.day:e.usedDay!==null)))throw new Error('特殊事件效果记录无效');
     const pending=records.filter(e=>e.status==='pending'),ready=records.filter(e=>e.status==='ready');
-    if(pending.length!==(s.phase==='event'?1:0)||pending.some(e=>e.kind!==s.event.kind||e.room!==s.event.room)||ready.length!==(s.chain?1:0)||!p.specialEvents&&records.length)throw new Error('特殊事件记录与待处理效果不一致');
+    if(pending.length!==(s.phase==='event'?1:0)||pending.some(e=>e.kind!==s.event.kind||e.room!==s.event.room||v3&&e.actorId!==s.event.actorId)||ready.length!==(s.chain?1:0)||!p.specialEvents&&records.length)throw new Error('特殊事件记录与待处理效果不一致');
   }
   const c=s.reference.combat;
   if(!c||typeof c.entered!=='boolean'||typeof c.ended!=='boolean'||!Number.isInteger(c.revivalsRecorded)||c.revivalsRecorded<0||!Array.isArray(s.reference.caches)||!Array.isArray(s.reference.endgameInmates)||!Array.isArray(s.waves))throw new Error('资料终局状态无效');
@@ -343,6 +390,7 @@ export function validateReferenceState(s){
 
 export function recommendReference(s){
   return referenceLegalActions(s).filter(a=>a.type!=='reveal').map(action=>{
+    if(action.type==='choose')return {action,score:0,label:`选择${[...TOOLS,...GIFTS].find(item=>item.id===action.id).name}`,reason:'领取当前已展示样本奖励，不额外消耗经营日；完整卡池仍未知。'};
     if(action.type==='eat')return {action,score:20,label:`${action.room+1} 号吃 ${action.prey+1} 号`,reason:s.rooms[action.prey].reference.scratch?'同阶头狼可吞噬划痕房；叠加口径为练习参数，不能据此预测正式收益。':'同阶克制关系成立，基础升 1 阶；代号随机，随后重查配对。'};
     if(action.type==='visit')return {action,score:5,label:`前往 ${action.room+1} 号牢房`,reason:'关闭房只依据已显示的稀有度/标记；不读取隐藏代号进行推荐。'};
     if(action.type==='reroll')return {action,score:0,label:`换 ${action.room+1} 号囚犯`,reason:'代号与稀有度权重未知，当前采用练习参数。'};
