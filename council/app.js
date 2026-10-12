@@ -761,76 +761,109 @@ function setUp(){
 async function init(){
  setUp();
  try{
-  await getManifest();
-  loaded=true;
-  buildRoster();chart();
-  const incoming=new URLSearchParams(location.search);
-  const sharedHero=heroMap.get(safeChoice(incoming.get("hero")));
-  if(sharedHero){
-    const ref=rosterCards.get(sharedHero.id);
-    if(ref)ref.button.classList.add("invited");
-    $("my-camp").textContent="朋友邀请你支持 "+sourceName(sharedHero)+"，可以直接点击下方卡片投票。";
-    if(location.hash==="#all-heroes"){$("hero-search").value=sharedHero.alias;searchRoster();}
-  }
-  const pollId=incoming.get("poll"),choice=incoming.get("choice");
-  const topic=polling.find(t=>t.id===pollId);
-  if(topic&&topic.choices.some(option=>option[0]===choice)){
-    const target=document.querySelector('#'+topic.host+' [data-option="'+choice+'"]');
-    if(target)target.classList.add("invited");
-  }
-  if(incoming.get("open")==="lottery"){
-    window.setTimeout(()=>{if(!isHeroClosed())openSlot();},220);
-  }
-  $("open-lottery").disabled=isHeroClosed();
-  if(!LIVE?.available){
-    $("vote-source-label").textContent="实时服务连接失败";
-    showActivity("无法加载实时投票模块，请刷新页面重试",false);
-    $("roundtable-submit-feedback").textContent="提问服务暂时不可用，请刷新页面重试。";
-    return;
-  }
-  LIVE.hooks.onCounts=()=>{
-    remoteReady=true;
-    polling.forEach(t=>{
-      t.choices.forEach(c=>{c[2]=LIVE.getCount(t.id,c[0]);});
-    });
-    chart();updateRoster();polling.forEach(renderTopic);
-    $("vote-source-label").textContent="真实投票 · 即时更新";
-  };
-  LIVE.hooks.onOwnVotes=values=>{
-    state.hero=heroMap.has(values.hero)?values.hero:null;
-    polling.forEach(t=>{state[t.id]=t.choices.some(c=>c[0]===values[t.id])?values[t.id]:null;});
-    chart();updateRoster();polling.forEach(renderTopic);
-  };
-  LIVE.hooks.onVoteEvent=event=>{
-    if(!state.motion||document.hidden)return;
-    if(event.topic==="hero"){
-      const h=heroMap.get(event.choice);
-      if(h){bubble(h,"真实 +1",false);showActivity("有玩家投给了 "+sourceName(h),false);}
-    }else{
-      const poll=polling.find(t=>t.id===event.topic);
-      const option=poll?.choices.find(c=>c[0]===event.choice);
-      if(option)showActivity("有玩家选择了「"+option[1]+"」",false);
-    }
-  };
-  LIVE.hooks.onKeywordStats=rows=>{keywordRows=rows;renderRoundQuestions();};
-  LIVE.hooks.onQuestions=rows=>{roundQuestions=rows;renderRoundQuestions();};
-  LIVE.hooks.onStatus=status=>{
-    if(status?.state==="error"&&!remoteReady){
-      $("vote-source-label").textContent="连接失败";
-    }else if(status?.state==="polling"){
-      $("vote-source-label").textContent="真实票数 · 定时刷新";
-    }else if(status?.state==="ready"){
-      $("vote-source-label").textContent="真实票数 · 实时更新";
-    }
-    if(status?.message)showActivity(status.message,false);
-  };
-  await LIVE.start();
+   await getManifest();
+   loaded=true;buildRoster();chart();
+   const incoming=new URLSearchParams(location.search);
+   const sharedHero=heroMap.get(safeChoice(incoming.get("hero")));
+   if(sharedHero){
+     const ref=rosterCards.get(sharedHero.id);
+     if(ref)ref.button.classList.add("invited");
+     $("my-camp").textContent="朋友邀请你支持 "+sourceName(sharedHero)+"。展开全部英雄，就能直接投票。";
+     if(location.hash==="#all-heroes"){
+       $("all-heroes").open=true;
+       $("hero-search").value=sharedHero.alias;
+       searchRoster();
+     }
+   }
+   const topicId=incoming.get("topic")||incoming.get("poll");
+   const incomingTopic=topicById(topicId);
+   if(incomingTopic){
+     setActiveTopic(incomingTopic.id);
+     const selectedOption=incoming.get("choice");
+     const matching=Array.from($("focus-topic-options").children).find(x=>x.dataset.option===selectedOption);
+     if(matching)matching.classList.add("invited");
+   }
+   if(incoming.get("open")==="lottery"){
+     window.setTimeout(()=>{if(!isHeroClosed())openSlot();},220);
+   }
+   $("open-lottery").disabled=isHeroClosed();
+   if(!LIVE?.available){
+     $("vote-source-label").textContent="实时服务连接失败";
+     $("focus-topic-live").textContent="网络暂时无法连接，稍后刷新再试";
+     $("roundtable-submit-feedback").textContent="提问服务暂时不可用，请刷新后重试。";
+     return;
+   }
+   LIVE.hooks.onCounts=()=>{
+     const previouslyHadData=hadRealCountSnapshot;
+     const previousRanked=previouslyHadData?sorted():[];
+     remoteReady=true;
+     polling.forEach(topic=>topic.choices.forEach(choice=>{
+       choice[2]=LIVE.getCount(topic.id,choice[0]);
+     }));
+     const rankedNow=sorted(),leader=rankedNow[0]&&count(rankedNow[0])>0?rankedNow[0]:null;
+     chart();updateRoster();renderTopic(topicById(activeTopicId));
+     if(previouslyHadData){
+       const oldTop=previousLeader;
+       if(leader&&oldTop&&oldTop!==leader.id){
+         showActivity("👑 "+sourceName(leader)+" 升到榜首",false);
+       }else if(leader&&!oldTop){
+         showActivity("👑 "+sourceName(leader)+" 收到第一票",false);
+       }else{
+         const prevRank=new Map(previousRanked.map((h,i)=>[h.id,i+1]));
+         const rose=rankedNow.find((h,i)=>count(h)>0&&prevRank.has(h.id)&&prevRank.get(h.id)>i+1);
+         if(rose)showActivity("🚀 "+sourceName(rose)+" 升到第 "+(rankedNow.indexOf(rose)+1)+" 名",false);
+       }
+     }
+     previousLeader=leader?leader.id:null;
+     hadRealCountSnapshot=true;
+     $("vote-source-label").textContent="真实投票 · 实时更新";
+   };
+   LIVE.hooks.onOwnVotes=values=>{
+     state.hero=heroMap.has(values.hero)?values.hero:null;
+     polling.forEach(topic=>{
+       state[topic.id]=topic.choices.some(c=>c[0]===values[topic.id])?values[topic.id]:null;
+     });
+     chart();updateRoster();renderTopic(topicById(activeTopicId));
+   };
+   LIVE.hooks.onVoteEvent=event=>{
+     if(!state.motion||document.hidden)return;
+     if(event.topic==="hero"){
+       const hero=heroMap.get(event.choice);
+       if(hero){
+         const emoji=["🗳️","⚡","🔥","🚀"][hero.position%4];
+         bubble(hero,emoji+" +1",false);
+         showActivity(emoji+" "+sourceName(hero)+" +1",false);
+       }
+     }else{
+       const topic=topicById(event.topic),option=topic?.choices.find(c=>c[0]===event.choice);
+       if(topic&&option){
+         if(activeTopicId===topic.id){
+           $("focus-topic-live").textContent="🗳️ 刚有人投了「"+option[1]+"」";
+           $("focus-topic-live").classList.add("live-success");
+         }
+         showActivity("🗳️ 「"+topic.short+"」新增真实投票",false);
+       }
+     }
+   };
+   LIVE.hooks.onKeywordStats=rows=>{keywordRows=rows;renderRoundQuestions();};
+   LIVE.hooks.onQuestions=rows=>{roundQuestions=rows;renderRoundQuestions();};
+   LIVE.hooks.onStatus=status=>{
+     if(status?.state==="error"&&!remoteReady){
+       $("vote-source-label").textContent="连接失败";
+       $("focus-topic-live").textContent="⚠️ 暂时无法读取票数，请检查网络";
+     }else if(status?.state==="polling"){
+       $("vote-source-label").textContent="真实票数 · 定时刷新";
+     }else if(status?.state==="ready"){
+       $("vote-source-label").textContent="真实票数 · 实时更新";
+     }
+     if(status?.message&&status?.state==="error")showActivity(status.message,false);
+   };
+   await LIVE.start();
  }catch(error){
-  $("hero-list").textContent="暂时无法读取英雄资料，请刷新重试。";
-  $("chart").textContent="暂时无法读取真实票数。";
-  $("hero-search-summary").textContent="连接失败";
-  $("vote-source-label").textContent="连接失败";
-  $("roundtable-submit-feedback").textContent="无法连接数据服务："+String(error?.message||error);
+   $("hero-search-summary").textContent="连接失败";
+   $("vote-source-label").textContent="连接失败";
+   $("focus-topic-live").textContent="⚠️ "+String(error?.message||"暂时无法连接");
+   $("roundtable-submit-feedback").textContent="提问服务暂时不可用，请稍后重试。";
  }
 }
 init();
