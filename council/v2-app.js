@@ -42,6 +42,7 @@ const state={
  recentRank:[],rankInitialized:false,lastEmoji:0,lastActivity:0,
  incomingHero:null
 };
+let heroLoadPromise=null;
 const labelHero=hero=>hero.name+" · "+hero.trait;
 const fmt=v=>new Intl.NumberFormat("zh-CN").format(Number(v)||0);
 const emojiByPosition=i=>["👑","🔥","⚡","🚀","✨","💪"][i%6];
@@ -93,6 +94,11 @@ async function loadHeroes(){
  }));
  state.heroById=new Map(state.heroes.map(h=>[h.id,h]));
  state.loaded=true;
+}
+function ensureHeroes(){
+ if(state.loaded)return Promise.resolve();
+ if(!heroLoadPromise)heroLoadPromise=loadHeroes().finally(()=>{heroLoadPromise=null;});
+ return heroLoadPromise;
 }
 function makeHeroColumn(h){
  const b=document.createElement("button");b.type="button";b.className="contender";b.dataset.hero=h.id;
@@ -550,7 +556,12 @@ function drawRandom(){
  do{window.crypto.getRandomValues(bits)}while(bits[0]>=limit);
  return state.heroes[bits[0]%n];
 }
-function openLottery(){
+async function openLottery(){
+ if(!state.loaded){
+  toast("🎰 正在读取英雄特性，请稍候…");
+  try{await ensureHeroes();}
+  catch(error){toast("英雄资料加载失败，请检查网络再试一次");return;}
+ }
  state.slotResult=null;state.spinning=false;
  if(state.slotTimer)window.clearTimeout(state.slotTimer);
  showSlot(null,null,null);
@@ -560,6 +571,7 @@ function openLottery(){
  $("lottery-accept").disabled=true;$("lottery-share").disabled=true;
  $("lottery-spin").disabled=false;$("spin-label").textContent="开始抽签";
  $("lottery-dialog").showModal();
+ document.body.classList.add("modal-open");
 }
 function finishSlot(hero){
  state.spinning=false;state.slotResult=hero;state.slotTimer=null;
@@ -568,7 +580,9 @@ function finishSlot(hero){
  showSlot(arr[(i+arr.length-1)%arr.length],hero,arr[(i+1)%arr.length]);
  $("lottery-result-label").textContent="🎉 抽中了";
  $("lottery-result-name").textContent=labelHero(hero);
- $("lottery-result-sub").textContent="真实榜第 "+(orderedHeroes().findIndex(h=>h.id===hero.id)+1)+" 名";
+ $("lottery-result-sub").textContent=state.ready
+  ?"真实榜第 "+(orderedHeroes().findIndex(h=>h.id===hero.id)+1)+" 名"
+  :"🎰 抽签成功！实时投票服务连接后才能投票";
  $("lottery-accept").disabled=!state.ready||isClosed();
  $("lottery-share").disabled=false;$("lottery-spin").disabled=false;
  $("spin-label").textContent="再抽一次";
@@ -577,7 +591,8 @@ function spinSlot(){
  if(state.spinning||!state.loaded)return;
  let chosen;try{chosen=drawRandom()}catch(error){toast(String(error?.message||error));return;}
  state.spinning=true;state.slotResult=null;
- $("lottery-spin").disabled=true;$("lottery-accept").disabled=true;$("lottery-share").disabled=true;
+ $("lottery-spin").disabled=true;$("spin-label").textContent="抽取中…";
+ $("lottery-accept").disabled=true;$("lottery-share").disabled=true;
  $("lottery-result-label").textContent="🎰 旋转中…";$("lottery-result-name").textContent="？";
  if(reduced){finishSlot(chosen);return;}
  let steps=0;
@@ -585,7 +600,7 @@ function spinSlot(){
   if(!$("lottery-dialog").open){state.spinning=false;return;}
   showSlot(drawRandom(),drawRandom(),drawRandom());
   steps++;
-  if(steps>=17){finishSlot(chosen);return;}
+  if(steps>=(window.innerWidth<=700?12:17)){finishSlot(chosen);return;}
   state.slotTimer=window.setTimeout(tick,42+steps*5);
  };
  tick();
@@ -593,6 +608,7 @@ function spinSlot(){
 function closeDialog(d){
  if(d.id==="lottery-dialog"&&state.slotTimer){window.clearTimeout(state.slotTimer);state.slotTimer=null;state.spinning=false;}
  if(d.open)d.close();
+ document.body.classList.toggle("modal-open",!!document.querySelector("dialog.modal[open]"));
 }
 /* Share independent topic, hero, chair or lottery URLs. */
 function share(kind,args={}){
@@ -628,7 +644,9 @@ function share(kind,args={}){
  $("open-share-page").href=url.toString();
  $("share-tip").textContent="发给朋友后，他们可以直接打开对应英雄、议题或席位。";
  $("share-dialog").dataset.title=heading;
+ if($("lottery-dialog").open)closeDialog($("lottery-dialog"));
  $("share-dialog").showModal();
+ document.body.classList.add("modal-open");
 }
 async function copyShare(){
  try{await navigator.clipboard.writeText($("share-link").value);$("share-tip").textContent="✅ 链接已复制";}
@@ -657,7 +675,8 @@ function bind(){
   if(good)closeDialog($("lottery-dialog"));
  });
  $("lottery-share").addEventListener("click",()=>share("lottery"));
- $("lottery-choose").addEventListener("click",()=>{
+ $("lottery-choose").addEventListener("click",event=>{
+  event.preventDefault();
   closeDialog($("lottery-dialog"));$("all-heroes").open=true;arrangeCards();$("all-heroes").scrollIntoView({behavior:reduced?"auto":"smooth"});
  });
  $("share-arena").addEventListener("click",()=>share("hero"));
@@ -685,6 +704,10 @@ function bind(){
  document.querySelectorAll(".modal").forEach(d=>{
   d.addEventListener("click",e=>{if(e.target===d)closeDialog(d)});
   d.addEventListener("cancel",()=>{if(d.id==="lottery-dialog"&&state.slotTimer)window.clearTimeout(state.slotTimer);});
+  d.addEventListener("close",()=>{
+   if(d.id==="lottery-dialog"&&state.slotTimer){window.clearTimeout(state.slotTimer);state.slotTimer=null;state.spinning=false;}
+   document.body.classList.toggle("modal-open",!!document.querySelector("dialog.modal[open]"));
+  });
  });
  window.addEventListener("resize",()=>{
   const current=window.innerWidth<=700;
@@ -736,7 +759,7 @@ async function init(){
  bind();showCountdown();window.setInterval(showCountdown,60000);
  if(Date.now()>=ASK_CLOSE_AT){$("submit-roundtable-question").disabled=true;$("roundtable-question-input").disabled=true;}
  try{
-  await loadHeroes();
+  await ensureHeroes();
   const group=document.createDocumentFragment();
   state.heroes.forEach(h=>group.appendChild(makeHeroCard(h)));
   $("hero-list").replaceChildren(group);
