@@ -284,6 +284,77 @@ function showCountdown(){
  const d=Math.floor(gap/86400000),h=Math.floor(gap%86400000/3600000);
  span.textContent=String(d).padStart(2,"0")+" 天 "+String(h).padStart(2,"0")+" 小时";
 }
+
+/* Explicit opt-in/out is visible. Synthetic heat NEVER changes server data. */
+function refreshHeatLabels(connection){
+ const demo=state.demoOn;
+ const valid=state.heroes.reduce((sum,hero)=>sum+realCount(hero),0);
+ $("real-vote-count").textContent="真实投票 "+fmt(valid)+" 张";
+ $("heat-mode-explain").textContent=demo
+  ?"🧪 热场演示中：排名与热度是虚构示例，不计入真实票数"
+  :"✅ 正在查看 Supabase 真实投票结果";
+ const label=$("vote-source-label");
+ label.classList.toggle("is-demo",demo);
+ label.textContent=demo?"🧪 演示热度 · 非真实票数":(state.ready?"✅ 真实票数 · 实时更新":connection==="error"?"真实票数 · 连接失败":"真实票数 · 连接中");
+ $("arena-stage").classList.toggle("demo-playing",demo);
+ const toggle=$("heat-switch");
+ toggle.textContent=demo?"👁 查看真实结果":"🎭 看热场演示";
+ toggle.setAttribute("aria-pressed",String(demo));
+ $("hero-board-subtitle").textContent=demo
+  ?"🧪 当前是演示热度榜，数字和排行仅作页面热场。真实票数随时可切换。"
+  :"实时记录每一张真实选票，排名可随玩家投票变化。";
+}
+function setDemoMode(enabled){
+ state.demoOn=!!enabled;
+ refreshHeatLabels();
+ if(!state.loaded)return;
+ updateHeroChart();updateCards();updateFocusCounts();updateSeatNumbers();
+ if(state.demoOn)statusText("🧪 正在播放模拟热场，不代表真实玩家投票");
+ else statusText(state.ready?"✅ 已切换真实数据 · 可直接投票":"⏳ 等待真实投票服务连接");
+ $("focus-activity").textContent=state.demoOn
+  ?"🧪 当前为虚构热场示意。投票会真实提交，提交后自动切回真实结果。"
+  :"✅ 当前显示真实票数，每题独立投票，可改选。";
+}
+function heatSpark(hero){
+ if(reduced||!state.motion||document.hidden)return;
+ const host=$("bubble-layer"),area=$("arena-stage").getBoundingClientRect();
+ const ref=state.rankNodes.get(hero.id);
+ const face=ref?.face?.isConnected?ref.face.getBoundingClientRect():null;
+ const x=face?Math.max(30,Math.min(area.width-30,face.left+face.width/2-area.left)):Math.max(40,area.width/2);
+ const y=face?Math.max(40,face.top-area.top-10):60;
+ const e=document.createElement("span");
+ e.className="heat-demo-particle";e.setAttribute("aria-hidden","true");
+ e.textContent=["🔥","⚡","✨","🚀","💥"][state.heat.ticks()%5];
+ e.style.left=x+"px";e.style.top=y+"px";
+ host.appendChild(e);
+ window.setTimeout(()=>e.remove(),1400);
+}
+function runHeatTick(){
+ if(!state.demoOn||!state.loaded||!state.heat||document.hidden)return;
+ const previous=orderedHeroes()[0]?.id;
+ const change=state.heat.advance();
+ if(change.type==="hero"){
+   updateHeroChart();
+   const hero=state.heroById.get(change.id);
+   if(hero){
+     heatSpark(hero);
+     const newFirst=orderedHeroes()[0]?.id;
+     statusText(previous!==newFirst
+       ?"🧪 虚构演示：👑 "+labelHero(state.heroById.get(newFirst))+" 冲上榜首！"
+       :"🧪 虚构演示：🔥 "+labelHero(hero)+" 热度 +"+change.delta);
+   }
+ }else if(change.type==="topic"){
+   updateTabCounts();updateFocusCounts();
+   const topic=FOCUS.find(t=>t.id===change.topic);
+   const label=topic?.options.find(o=>o[0]===change.id)?.[1]||"议题";
+   if(topic?.id===currentTopic().id)$("focus-activity").textContent="🧪 演示走势："+label+" 虚构热度 +"+change.delta;
+ }else{
+   updateSeatNumbers();
+   const seat=state.chairs.find(c=>c.key===change.id);
+   if(seat&&state.selectedSeat===seat.key)statusText("🧪 圆桌演示："+seat.title+" 热度 +"+change.delta);
+ }
+}
+
 /* One compact switchable poll board; exact original copy and independent counters. */
 const currentTopic=()=>FOCUS[state.activeTopic];
 function topicVotes(topic){return topic.options.reduce((sum,c)=>sum+shownTopicCount(topic.id,c[0]),0);}
