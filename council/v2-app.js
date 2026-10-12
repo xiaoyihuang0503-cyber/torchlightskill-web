@@ -45,6 +45,83 @@ const state={
  demoOn:true,heat:null
 };
 let heroLoadPromise=null;
+/* Infinite local petition: repeated clicks are NOT votes and never reach Supabase. */
+const PETITION_KEY="torchlight-council-petition-local-v1";
+const petition={total:0,combo:0,lastTap:0,lastPersist:0,comboTimer:0,partyTimer:0};
+function persistPetition(){
+ try{localStorage.setItem(PETITION_KEY,String(petition.total));petition.lastPersist=Date.now();}
+ catch(error){/* Some private browsers disable localStorage; tapping still works. */}
+}
+function loadPetition(){
+ try{
+  const stored=Number(localStorage.getItem(PETITION_KEY)||0);
+  petition.total=Number.isSafeInteger(stored)&&stored>=0?stored:0;
+ }catch(error){petition.total=0;}
+ $("petition-total").textContent=fmt(petition.total);
+ $("petition-combo").textContent="0 连击";
+}
+function petitionSpark(text,isMilestone=false){
+ if(reduced||document.hidden)return;
+ const container=$("petition-effects");
+ if(!container)return;
+ while(container.children.length>=11)container.firstElementChild?.remove();
+ const node=document.createElement("span");
+ node.className="petition-spark"+(text.startsWith("+")?" is-plus":"");
+ node.textContent=text;
+ const rand=Math.random;
+ node.style.setProperty("--spark-x",(25+rand()*45).toFixed(1)+"%");
+ node.style.setProperty("--spark-y",(19+rand()*41).toFixed(1)+"%");
+ node.style.setProperty("--spark-dx",Math.round((rand()-.5)*95)+"px");
+ node.style.setProperty("--spark-dy",Math.round((rand()-.5)*26)+"px");
+ node.style.setProperty("--spark-size",isMilestone?"26px":"20px");
+ container.appendChild(node);
+ window.setTimeout(()=>node.remove(),1120);
+}
+function petitionTap(){
+ const now=Date.now();
+ petition.combo=now-petition.lastTap<1100?petition.combo+1:1;
+ petition.lastTap=now;
+ petition.total=Math.min(Number.MAX_SAFE_INTEGER,petition.total+1);
+ $("petition-total").textContent=fmt(petition.total);
+ $("petition-combo").textContent="🔥 "+fmt(petition.combo)+" 连击";
+ const orb=$("petition-orb");
+ if(!reduced && typeof orb.animate==="function"){
+  orb.animate([{transform:"scale(1)"},{transform:"scale(.91)"},{transform:"scale(1.065)"},{transform:"scale(1)"}],
+   {duration:220,easing:"ease-out"});
+ }
+ const emoji=["🔥","⚡","🙏","💥","✨"];
+ const milestone=petition.combo===10||petition.combo===30||petition.combo===100||petition.total%100===0;
+ petitionSpark(milestone?"🎉":emoji[petition.total%emoji.length],milestone);
+ if(petition.combo>=2)petitionSpark("+1");
+ let message="🔥 再求一次！";
+ if(petition.combo===10)message="⚡ 10 连击！策划快看！";
+ else if(petition.combo===30)message="💥 30 连击！全桌都听见了！";
+ else if(petition.combo===100)message="👑 100 连击！火炬都快点燃了！";
+ else if(petition.total%100===0)message="🎉 本机累计 "+fmt(petition.total)+" 次求回应！";
+ else if(petition.combo>=5)message="🔥 "+fmt(petition.combo)+" 连击！继续点！";
+ $("petition-feedback").textContent=message;
+ if(milestone){
+  const card=$("petition-orb").closest(".petition-card");
+  card?.classList.add("petition-party");
+  window.clearTimeout(petition.partyTimer);
+  petition.partyTimer=window.setTimeout(()=>card?.classList.remove("petition-party"),900);
+  for(let i=0;i<5;i++)petitionSpark(["🎉","🔥","✨","🙏","⚡"][i],true);
+ }
+ if(petition.total%5===0||now-petition.lastPersist>1100)persistPetition();
+ window.clearTimeout(petition.comboTimer);
+ petition.comboTimer=window.setTimeout(()=>{
+  petition.combo=0;
+  $("petition-combo").textContent="0 连击";
+ },1850);
+}
+function initPetition(){
+ loadPetition();
+ $("petition-orb").addEventListener("click",petitionTap);
+ window.addEventListener("pagehide",persistPetition);
+ document.addEventListener("visibilitychange",()=>{
+  if(document.hidden)persistPetition();
+ });
+}
 const labelHero=hero=>hero.name+" · "+hero.trait;
 const fmt=v=>new Intl.NumberFormat("zh-CN").format(Number(v)||0);
 const emojiByPosition=i=>["👑","🔥","⚡","🚀","✨","💪"][i%6];
@@ -781,6 +858,7 @@ async function nativeShare(){
  await copyShare();
 }
 function bind(){
+ initPetition();
  $("open-hero-pool").addEventListener("click",()=>{
   $("all-heroes").open=true;$("all-heroes").scrollIntoView({behavior:reduced?"auto":"smooth",block:"start"});
   arrangeCards();
