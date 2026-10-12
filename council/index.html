@@ -55,19 +55,19 @@
       <div class="section-heading">
         <div><span class="section-index">01 / 英雄投票</span><h2 id="arena-title">英雄实时榜 👑</h2>
         <p id="hero-board-subtitle">真实票数决定排名，随时可能反超。</p></div>
-        <span class="sample-label is-demo" id="vote-source-label">🧪 热场演示 · 非真实票数</span>
+        <span class="sample-label" id="vote-source-label">✅ 真实票数 · 连接中</span>
       </div>
       <div class="arena-panel">
         <div class="arena-toolbar">
           <div class="arena-toolbar-label"><span class="live-indicator">●</span><strong>开荒排行榜</strong><span>TOP <span id="ranking-label">6</span></span></div>
-          <span class="arena-meta"><strong id="hero-total">28</strong> 个特性 · <strong id="demo-vote-total">—</strong><span id="board-count-unit"> 演示热度</span></span>
+          <span class="arena-meta"><strong id="hero-total">28</strong> 个特性 · <strong id="demo-vote-total">—</strong><span id="board-count-unit"> 张真实票</span></span>
         </div>
-        <div class="heat-disclosure" id="heat-disclosure">
+        <div class="heat-disclosure" id="heat-disclosure" hidden aria-hidden="true">
           <strong id="heat-mode-explain">🧪 正在播放模拟热场，数字与动效均为虚构示意</strong>
           <span id="real-vote-count">真实投票 0 张</span>
           <button type="button" class="heat-switch" id="heat-switch" aria-pressed="true">👁 查看真实结果</button>
         </div>
-        <div class="arena-stage demo-playing" id="arena-stage">
+        <div class="arena-stage" id="arena-stage">
           <span class="stage-stamp">SS14 / 2026</span>
           <div class="chart-guides" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
           <div class="chart" id="chart" aria-label="当前真实排行"><p class="loading-note">正在加载英雄头像…</p></div>
@@ -89,7 +89,7 @@
           <button id="open-hero-pool" type="button" class="button primary">查看全部 28 个英雄 <span aria-hidden="true">↓</span></button>
           <div class="lottery-main-action"><button type="button" id="open-lottery" class="button secondary">🎰 不知道选谁？抽一个 <span aria-hidden="true">↗</span></button><button type="button" class="minor-share" id="share-lottery-game">分享随机开荒玩法 ↗</button></div>
         </div>
-        <p class="demo-disclosure">🧪 热场演示仅用于展示页面氛围，不是真实玩家投票。切换「查看真实结果」可看到 Supabase 实际票数。真实投票匿名记录，每个匿名账号每题一票，改选会撤回旧票。</p>
+        <p class="demo-disclosure">排行榜只显示 Supabase 的真实选票，不包含模拟热度。英雄每个匿名账号一票，支持改选；「炸策划」单独按点击次数累计。</p>
       </div>
     </section>
 
@@ -160,18 +160,19 @@
           <button id="planner-vote" class="planner-vote-button" type="button">🗳️ 支持这道问题 +1</button>
         </div>
         <button id="planner-share" class="planner-share-button" type="button">📣 分享当前问题，喊朋友来支持 ↗</button>
-        <p class="planner-battle-note">✅ 每个账号每题只能支持一次；点击投弹不限次数。真票更高的题，炸弹更强。</p>
+        <p class="planner-battle-note">💣 每次点击都让当前问题 +1，并增加一次策划被炸次数。可以一直点，问题越热炸弹越猛。</p>
         <div class="planner-fx-layer" id="planner-fx-layer" aria-hidden="true"></div>
         <div class="petition-stats">
-          <span><strong id="petition-total">0</strong> 本机已炸次数</span>
+          <span class="planner-global-headline"><strong id="petition-global-total">—</strong><span>策划被炸次数 · 全站点击累计</span></span>
+          <span><strong id="petition-total">0</strong> 我扔出的炸弹</span>
           <span id="petition-combo">0 连击</span>
-          <span class="petition-global" id="petition-global">🌍 全站真实累计 · 连接中</span>
+          <span class="petition-global" id="petition-global">🌍 连接中 · 每次点击都会累计</span>
         </div>
         <p class="petition-feedback" id="petition-feedback" role="status" aria-live="polite">💥 点策划或炸弹，连续炸更有意思！</p>
-        <p class="petition-hint" id="petition-hint">炸策划是卡通互动，本机可反复点；每天最多 1,000 次计入全站点击数。正式投票仍每题一票。</p>
+        <p class="petition-hint" id="petition-hint">卡通策划可以一直炸，点击累计无每日上限；网络慢时先在本机排队，再同步到全站。英雄正式投票仍每题一票。</p>
         </aside>
       </div>
-      <p class="bomb-game-footer-note">玩家投稿审核通过后进入公开问题榜；每个匿名账号每题仅能支持一次。自由投弹只增加娱乐互动次数。</p>
+      <p class="bomb-game-footer-note">玩家问题审核通过后加入排行榜；「炸策划」按真实点击次数累计，点击越多问题热度越高。英雄投票规则不变。</p>
     </section>
 
     <section class="focus-section legacy-v2-hidden" id="legacy-topics" hidden aria-hidden="true" aria-labelledby="topics-title">
