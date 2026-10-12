@@ -138,25 +138,7 @@ async function getManifest(){
   const node=document.querySelector('[data-mentor-image="'+a.id+'"]');
   if(node){node.dataset.siteUrl=a.site_url;node.dataset.assetId=a.id;}
  });
- renderSources(m,relevant);
  return m;
-}
-function renderSources(m,assets){
- $("avatar-source-status").textContent="头像清单 v"+m.schema_version+"（"+m.published_date+"）。共 "+assets.filter(a=>a.type==="hero").length+" 个英雄特性与 3 位导师。素材说明："+m.rights;
- const group=document.createDocumentFragment();
- assets.forEach(a=>{
-  const li=document.createElement("li");
-  const title=document.createElement("strong");title.textContent=a.type==="hero"?a.name+" · "+a.trait_name+"（"+a.id+"）":a.name+"（导师 "+a.id+"）";
-  li.appendChild(title);
-  const detail=document.createElement("small");
-  detail.textContent=a.type==="hero"?(a.source_snapshot_date+" · "+a.source_freshness+(a.covered_face?" · 有遮面":"")):(a.source||"素材授权待核");
-  li.appendChild(detail);
-  if(a.source_url){
-   const link=document.createElement("a");link.href=a.source_url;link.target="_blank";link.rel="noopener noreferrer";link.textContent="原始图片 ↗";li.appendChild(link);
-  }
-  group.appendChild(li);
- });
- $("avatar-source-list").replaceChildren(group);
 }
 function makeChartHero(hero){
  const b=document.createElement("button");b.type="button";b.className="contender";b.dataset.hero=hero.id;
@@ -336,6 +318,143 @@ function toggleMotion(){
  $("motion-toggle").setAttribute("aria-pressed",String(state.motion));
  showActivity(state.motion?"已继续播放模拟投票":"模拟动态已暂停",false);
 }
+
+/* 策划圆桌：匿名问题与关键词本机即时预览。等 Supabase 连接后替换为后端聚合数据。 */
+const ROUND_QUESTIONS_KEY="torchlight-council-roundtable-questions-local-v1";
+const ROUND_MAX_QUESTIONS=40;
+const ROUND_MIN_INTERVAL=10000;
+const ROUND_KEYWORDS=[
+ {label:"掉落",matches:["掉落","爆率","出货","爆东西","爆装"]},
+ {label:"迷城",matches:["迷城","燃料"]},
+ {label:"刷图收益",matches:["刷图","刷宝","搬砖","收益","产出"]},
+ {label:"英雄平衡",matches:["英雄","平衡","砍","加强","削弱","增强","数值"]},
+ {label:"契灵",matches:["契灵","宠物","氪金","充钱"]},
+ {label:"赛季玩法",matches:["赛季","塔罗斯","新玩法","机制","活动"]},
+ {label:"装备打造",matches:["装备","打造","词缀","词条"]},
+ {label:"交易价格",matches:["交易","价格","拍卖","物价","市场"]},
+ {label:"开荒难度",matches:["开荒","前期","难度","速刷","过图"]},
+ {label:"游戏体验",matches:["卡顿","掉线","延迟","服务器","崩溃","bug","BUG"]}
+];
+let roundQuestions=[];
+function keywordsForQuestion(value){
+ const text=value.toLowerCase();
+ const matched=ROUND_KEYWORDS.filter(entry=>entry.matches.some(term=>text.includes(term.toLowerCase()))).map(entry=>entry.label);
+ return matched.length?matched:["其他"];
+}
+function loadRoundQuestions(){
+ try{
+  const entries=JSON.parse(localStorage.getItem(ROUND_QUESTIONS_KEY)||"[]");
+  if(Array.isArray(entries)){
+   roundQuestions=entries.filter(v=>v&&typeof v.text==="string"&&v.text.trim().length>=8&&v.text.length<=160&&Number.isFinite(v.at)).slice(-ROUND_MAX_QUESTIONS);
+  }
+ }catch(error){roundQuestions=[];}
+}
+function saveRoundQuestions(){
+ try{
+  localStorage.setItem(ROUND_QUESTIONS_KEY,JSON.stringify(roundQuestions));
+  return true;
+ }catch(error){
+  $("roundtable-submit-feedback").textContent="无法在当前浏览器保存，请检查隐私设置。";
+  return false;
+ }
+}
+function renderRoundQuestions(){
+ const cloud=$("keyword-cloud"),list=$("roundtable-question-list");
+ if(!cloud||!list)return;
+ const counts=new Map();
+ for(const question of roundQuestions){
+  for(const word of keywordsForQuestion(question.text))counts.set(word,(counts.get(word)||0)+1);
+ }
+ const ranking=[...counts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],"zh-CN")).slice(0,12);
+ const cloudFrag=document.createDocumentFragment();
+ if(!ranking.length){
+  const empty=document.createElement("span");empty.className="keyword-empty";empty.textContent="还没有提交的问题";cloudFrag.appendChild(empty);
+ }else{
+  const maximum=ranking[0][1];
+  ranking.forEach(([word,n],i)=>{
+   const item=document.createElement("span");item.className="keyword-pill";
+   const prominence=maximum?Math.round(100*n/maximum):0;
+   item.style.setProperty("--weight",String(prominence));
+   item.classList.toggle("keyword-leading",i===0);
+   const tag=document.createElement("strong");tag.textContent=word;
+   const volume=document.createElement("small");volume.textContent=String(n);
+   item.append(tag,volume);cloudFrag.appendChild(item);
+  });
+ }
+ cloud.replaceChildren(cloudFrag);
+ $("keyword-status").textContent=roundQuestions.length?"本机 · 即时更新":"本机预览";
+ $("question-total").textContent=roundQuestions.length+" 条（本机）";
+ const frag=document.createDocumentFragment();
+ if(!roundQuestions.length){
+  const empty=document.createElement("li");empty.className="question-empty";empty.textContent="等你提交第一个问题";frag.appendChild(empty);
+ }else{
+  roundQuestions.slice(-5).reverse().forEach(q=>{
+   const li=document.createElement("li");li.className="question-item";
+   const text=document.createElement("span");text.className="question-text";text.textContent=q.text;
+   const bottom=document.createElement("div");bottom.className="question-meta";
+   const date=document.createElement("time");
+   date.dateTime=new Date(q.at).toISOString();
+   date.textContent=new Intl.DateTimeFormat("zh-CN",{timeZone:"Asia/Shanghai",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date(q.at));
+   const remove=document.createElement("button");remove.type="button";remove.className="remove-local-question";remove.textContent="删除";
+   remove.setAttribute("aria-label","删除本机问题："+q.text.slice(0,18));
+   remove.addEventListener("click",()=>{
+    roundQuestions=roundQuestions.filter(entry=>entry.id!==q.id);
+    saveRoundQuestions();renderRoundQuestions();
+    $("roundtable-submit-feedback").textContent="已从当前浏览器删除这条问题。";
+   });
+   const shareQuestion=document.createElement("button");shareQuestion.type="button";shareQuestion.className="share-local-question";shareQuestion.textContent="分享";
+   shareQuestion.setAttribute("aria-label","分享这条圆桌问题："+q.text.slice(0,18));
+   shareQuestion.addEventListener("click",()=>share("roundtable-question",q.text));
+   bottom.append(date,shareQuestion,remove);li.append(text,bottom);frag.appendChild(li);
+  });
+ }
+ list.replaceChildren(frag);
+}
+function submitRoundQuestion(event){
+ event.preventDefault();
+ const field=$("roundtable-question-input"),feedback=$("roundtable-submit-feedback");
+ if(!field)return;
+ if(Date.now()>=ROUNDTABLE_END){
+  feedback.textContent="本轮圆桌征集已结束。";
+  return;
+ }
+ const value=field.value.trim().replace(/\s+/g," ");
+ if(value.length<8||value.length>160){
+  feedback.textContent="请写 8～160 个字，说明你具体想问什么。";
+  return;
+ }
+ if(roundQuestions.some(item=>item.text===value)){
+  feedback.textContent="这条问题已经在当前浏览器保存过了。";
+  return;
+ }
+ if(roundQuestions.length&&Date.now()-roundQuestions[roundQuestions.length-1].at<ROUND_MIN_INTERVAL){
+  feedback.textContent="请稍等几秒再提交，避免重复问题。";
+  return;
+ }
+ const q={id:String(Date.now())+"-"+String(Math.floor(Math.random()*10000)),text:value,at:Date.now()};
+ roundQuestions.push(q);roundQuestions=roundQuestions.slice(-ROUND_MAX_QUESTIONS);
+ if(!saveRoundQuestions()){roundQuestions.pop();return;}
+ field.value="";$("question-length").textContent="0 / 160 字";
+ renderRoundQuestions();
+ feedback.textContent="已保存在当前浏览器，右侧热词已更新。全站同步要等 Supabase 接入。";
+}
+function setupRoundtable(){
+ loadRoundQuestions();renderRoundQuestions();
+ const form=$("roundtable-question-form"),field=$("roundtable-question-input");
+ if(!form||!field)return;
+ field.addEventListener("input",()=>{
+  $("question-length").textContent=Array.from(field.value).length+" / 160 字";
+ });
+ form.addEventListener("submit",submitRoundQuestion);
+ if(Date.now()>=ROUNDTABLE_END){
+  $("submit-roundtable-question").disabled=true;
+  field.disabled=true;
+  $("roundtable-submit-feedback").textContent="本轮圆桌提问已经结束。";
+ }
+ window.addEventListener("storage",event=>{
+  if(event.key===ROUND_QUESTIONS_KEY){loadRoundQuestions();renderRoundQuestions();}
+ });
+}
 function renderTopic(topic){
  const host=$(topic.host);
  if(host.children.length!==topic.choices.length){
@@ -478,6 +597,18 @@ function shareEntry(kind,heroId){
    title=state.maze==="support"?"我觉得迷城这次调整还能接受，你呢？":state.maze==="oppose"?"迷城这次砍得太狠了，你觉得呢？":"迷城燃料被砍，你能接受吗？";
    caption="朋友可以在分享页直接选择自己的立场。";
    break;
+  case "roundtable-question":
+   url.searchParams.set("kind","roundtable");
+   const question=typeof heroId==="string"?heroId.trim().slice(0,160):"";
+   if(question.length>=8){
+    url.searchParams.set("question",question);
+    title="我想问策划："+question;
+    caption="朋友可以阅读你的问题，也能提交自己的问题。";
+   }else{
+    title="10 月 14 日策划圆桌，你想问什么？";
+    caption="朋友可以直接提问。";
+   }
+   break;
   case "roundtable":
    url.searchParams.set("kind","roundtable");
    if(state.roundtable)url.searchParams.set("choice",state.roundtable);
@@ -517,6 +648,7 @@ async function copyLink(){
  catch(error){inp.focus();inp.select();$("share-tip").textContent="链接已选中，请用系统复制。";}
 }
 function setUp(){
+ setupRoundtable();
  $("hero-search").addEventListener("input",searchRoster);
  $("open-lottery").addEventListener("click",openSlot);
  $("lottery-spin").addEventListener("click",spin);
@@ -550,7 +682,13 @@ function setUp(){
  },{passive:true});
  updateCountdown();setInterval(updateCountdown,1000);
  polling.forEach(renderTopic);
- setInterval(()=>{if(isTopicClosed(polling[1]))renderTopic(polling[1]);},30000);
+ setInterval(()=>{
+  if(isTopicClosed(polling[1]))renderTopic(polling[1]);
+  if(Date.now()>=ROUNDTABLE_END){
+   $("submit-roundtable-question").disabled=true;
+   $("roundtable-question-input").disabled=true;
+  }
+ },30000);
 }
 async function init(){
  setUp();
@@ -588,7 +726,6 @@ async function init(){
   $("hero-list").textContent="头像清单加载失败，请刷新重试。";
   $("chart").textContent="暂时无法读取英雄资料。";
   $("hero-search-summary").textContent="加载失败";
-  $("avatar-source-status").textContent="读取失败："+error.message;
   state.motion=false;$("motion-toggle").disabled=true;
  }
 }

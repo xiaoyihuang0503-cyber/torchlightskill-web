@@ -15,6 +15,7 @@ const params=new URLSearchParams(location.search);
 const kind=ALLOWED.has(params.get("kind"))?params.get("kind"):"ranking";
 const heroId=/^[a-z0-9_]{1,32}$/.test(params.get("hero")||"")?params.get("hero"):"";
 const sharedChoice=/^[a-z0-9_]{1,32}$/.test(params.get("choice")||"")?params.get("choice"):"";
+const sharedQuestion=(params.get("question")||"").trim().replace(/\s+/g," ").slice(0,160);
 const state={kind,hero:null,title:"",intro:"",choice:null,manifest:null};
 function labelHero(hero){return hero.name+" · "+hero.trait_name;}
 function feedback(text){$("export-feedback").textContent=text;}
@@ -121,7 +122,9 @@ function setupPoll(type){
  }else{
   heading=chosen?"我最想问策划："+chosen[1]+"。你呢？":"你最想让策划回答哪件事？";
  }
- setHeading(chosen?"朋友投了这一项":"看看你会选什么",heading,type==="maze"?"有人能接受，有人觉得砍得太狠。你选哪边？":"掉落、平衡、契灵、赛季玩法，选你最在意的一件事。");
+ if(type==="roundtable"&&sharedQuestion.length>=8)heading="我想问策划："+sharedQuestion;
+ setHeading(type==="roundtable"&&sharedQuestion.length>=8?"朋友提出的问题":"看看你会选什么",heading,
+ type==="maze"?"有人能接受，有人觉得砍得太狠。你选哪边？":sharedQuestion.length>=8?"这条问题来自朋友分享的链接，还没有经过审核。你也可以提交自己的问题。":"掉落、平衡、契灵、赛季玩法，选你最在意的一件事。");
  const answerHost=$("share-poll-options");
  answerHost.hidden=false;
  answerHost.classList.toggle("quad",poll.choices.length===4);
@@ -149,18 +152,21 @@ function setupPoll(type){
   fragment.appendChild(btn);
  });
  answerHost.replaceChildren(fragment);
- if(chosen){
+ if(type==="roundtable"&&sharedQuestion.length>=8){
+  $("choice-tag").hidden=false;
+  $("choice-tag").textContent="分享者提出的问题 · 尚未审核";
+ }else if(chosen){
   $("choice-tag").hidden=false;
   $("choice-tag").textContent="对方投给："+chosen[1];
  }
  if(pollEnd())joinFeedback("本期圆桌投票已结束，还可以查看这道题。");
- const primary=$("primary-action");primary.textContent="去看这道题 ↗";primary.disabled=false;
+ const primary=$("primary-action");primary.textContent=type==="roundtable"?"我也要提问题 ↗":"去看这道题 ↗";primary.disabled=false;
  primary.onclick=()=>{
   const chosenNow=snapshot()[type];
   const query="?poll="+encodeURIComponent(type)+(chosenNow?"&choice="+encodeURIComponent(chosenNow):"");
-  navigation("../"+query+"#topics");
+  navigation("../"+query+(type==="roundtable"?"#roundtable":"#topics"));
  };
- setLink("secondary-action","../#topics","看其他投票 ↗");
+ setLink("secondary-action",type==="roundtable"?"../#roundtable":"../#topics",type==="roundtable"?"看看大家关心什么 ↗":"看其他投票 ↗");
 }
 function validateAsset(asset){
  if(!asset||asset.type!=="hero"||asset.id!==asset.trait||asset.id!==heroId||!asset.trait_name||!asset.name)return false;
