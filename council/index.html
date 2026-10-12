@@ -52,7 +52,7 @@
     <section class="arena-section" id="hero-board" aria-labelledby="arena-title">
       <div class="section-heading">
         <div><span class="section-index">01 / 英雄投票</span><h2 id="arena-title">英雄实时榜 👑</h2>
-        <p>真实票数决定排名，随时可能反超。</p></div>
+        <p id="hero-board-subtitle">真实票数决定排名，随时可能反超。</p></div>
         <span class="sample-label" id="vote-source-label">真实票数 · 连接中</span>
       </div>
       <div class="arena-panel">
@@ -141,8 +141,16 @@
               <span id="table-total" class="table-total">等待玩家参与</span>
             </div>
           </div>
-          <div class="seat-strip" id="seat-strip" aria-label="滑动查看更多问题席位"></div>
-          <p class="seat-hint">🔥 每人每把椅子可支持一次。空椅子可以提交问题。</p>
+          <div class="seat-navigation" aria-label="切换圆桌八个席位">
+            <span class="seat-nav-intro">🪑 8 个席位 · 点椅子或左右滑动查看全部</span>
+            <div class="seat-nav-controls">
+              <button type="button" id="seat-prev" aria-label="上一把圆桌椅子">← 上一席</button>
+              <output id="seat-position" aria-live="polite">01 / 08</output>
+              <button type="button" id="seat-next" aria-label="下一把圆桌椅子">下一席 →</button>
+            </div>
+          </div>
+          <div class="seat-strip" id="seat-strip" aria-label="圆桌全部八个席位，可横向滑动选择"></div>
+          <p class="seat-hint">🔥 每人每把椅子可支持一次。点任意椅子打开详情；空椅子可提交问题。</p>
         </div>
         <div class="seat-panel" id="seat-panel">
           <div id="seat-detail" class="seat-detail">
