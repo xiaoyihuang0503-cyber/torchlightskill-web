@@ -15,7 +15,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
   const state={
     selected:"topic:mode_reduction",questions:[],pending:[],
     ranked:[],localClicks:0,pendingClicks:0,pendingBySeat:new Map(),combo:0,lastClick:0,lastSave:0,
-    timer:0,flushTimer:0,busy:false,totalKnown:false,
+    timer:0,flushTimer:0,busy:false,totalKnown:false,lastGlobal:0,
     activeBombs:0,lastRemoteBomb:0,submitBusy:false,submitting:false,reactionTimer:0,expanded:false,ambientTimer:0,pendingSelect:null
   };
   const STORAGE="torchlight-council-petition-local-v1";
@@ -329,8 +329,9 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
     const number=Number(data?.total);
     if(!Number.isFinite(number)||number<0)return;
     state.totalKnown=true;
+    state.lastGlobal=Math.max(state.lastGlobal,number);
     const label=$("petition-global-total");
-    if(label)label.textContent=fmt(number);
+    if(label)label.textContent=fmt(state.lastGlobal);
     $("petition-global").textContent="🌍 全站实时累计 · 每次点击都计入（同步后更新）";
   }
   function queueFlush(wait=950){
@@ -362,8 +363,19 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
       // A short request cooldown protects the database, not the total click count.
       if(result?.reason==="cooldown")queueFlush(1200);
     }catch(error){
-      if(!state.totalKnown)$("petition-global").textContent="🌍 暂时无法同步 · 已在本机排队";
-      console.warn("Planner click sync waiting to retry",error);
+      const reason=String(error?.message||error);
+      if(/not approved|invalid issue key|unknown official seat|问题.*未审核/i.test(reason)){
+        // Rejecting a public question must not leave an endless retry loop.
+        const dropped=state.pendingBySeat.get(seat)||0;
+        state.pendingBySeat.delete(seat);
+        state.pendingClicks=Math.max(0,state.pendingClicks-dropped);
+        saveClicks();
+        toast("这道问题暂不可投弹，请选择其他已审核问题");
+        syncRows();
+      }else{
+        if(!state.totalKnown)$("petition-global").textContent="🌍 暂时无法同步 · 已在本机排队";
+        console.warn("Planner click sync waiting to retry",error);
+      }
     }finally{
       state.submitting=false;
       if(state.pendingClicks>0)queueFlush(1300);
