@@ -1,6 +1,6 @@
-import {referenceView,isReference,applyAction,editRoom,targets,onBoard,nameOf} from './session-engine.js?v=0.6.12-1';
+import {referenceView,isReference,applyAction,editRoom,targets,onBoard,nameOf} from './session-engine.js?v=0.6.13-1';
 import {RARITIES,SPECIES} from './rules.js?v=0.6.8-1';
-import {journalSpeciesSymbol} from './run-journal.js?v=0.6.12-1';
+import {journalSpeciesSymbol} from './run-journal.js?v=0.6.13-1';
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const terminal=s=>['riot','finished'].includes(s.phase);
@@ -52,15 +52,30 @@ export function referenceHandoffMarkup(s){
   const v=referenceView(s),inmates=v.endgameInmates;
   return `<section class="reference-handoff"><h3>经营完成 · 待镇压囚犯</h3><p>沙盘剩余 ${onBoard(s).length} 名 · 单独收容 ${s.rainbow.length} 名 · 记录珍藏 ${v.treasures.length} 次</p><ul class="reference-handoff-list">${RARITIES.map((rarity,tier)=>{const group=inmates.filter(p=>p.tier===tier);return `<li class="reference-handoff-group tier-${tier}"><strong>${rarity} · ${group.length} 名</strong>${group.length?`<span class="reference-handoff-inmates">${group.map(p=>`<span class="reference-handoff-inmate">${journalSpeciesSymbol(p.code)}${esc(SPECIES.find(x=>x.id===p.code).name)}${p.origin==='confined'?' · 已收容':''}</span>`).join('')}</span>`:'<span class="reference-handoff-empty">无该稀有度囚犯</span>'}</li>`;}).join('')}</ul><p class="reference-uncertainty">此处只交接经营成果。正式游戏随后镇压囚犯并点亮秘藏；不在本界面模拟刷怪、战力、复活、真实物品掉落或搬砖收益。</p></section>`;
 }
+const referenceJournalCaches=new WeakMap();
+function freezeJournalView(value){
+  if(value&&typeof value==='object'&&!Object.isFrozen(value)){for(const item of Object.values(value))freezeJournalView(item);Object.freeze(value);}return value;
+}
 export function referenceJournalView(initial,state){
-  let before=structuredClone(initial);const entries=[{id:'reference-start',day:1,verb:'开局',summary:'资料校准练习',details:['固定练习场面不代表官方开局；未知权重与操作限制保留为练习参数。'],codes:[...new Set(onBoard(initial).map(p=>p.code))].slice(0,2)}];
-  for(const [i,record] of state.history.entries()){
-    const {revision,day,...action}=record,after=action.type==='edit'?editRoom(before,action.room,action.code,action.tier):applyAction(before,action);
-    const details=after.log.slice(before.log.length).map(l=>l.text),verb=({visit:after.phase==='event'?'事变':'开门',event:action.accept?'接受':'略过',eat:'吞噬',reroll:'换人',end:after.day>before.day?'过日':'交接',reveal:'探查',mark:'标记',edit:'校准'})[action.type]??'记录';
-    const actors=action.type==='eat'?[before.rooms[action.room].prisoner,before.rooms[action.prey].prisoner]:action.type==='reroll'?[before.rooms[action.room].prisoner,after.rooms[action.room].prisoner]:action.type==='visit'?[after.rooms[action.room].prisoner]:onBoard(after).filter(p=>!onBoard(before).some(q=>q.id===p.id));
-    entries.push({id:`reference-${i}`,day:before.day,verb,summary:details[0]??'经营场面更新',details,codes:[...new Set(actors.filter(Boolean).map(p=>p.code))].slice(0,2)});before=after;
-  }
-  const groups=[];for(const e of entries){let g=groups.find(g=>g.day===e.day);if(!g){g={day:e.day,entries:[]};groups.push(g);}g.entries.push(e);}return {entries,groups};
+  // Cache only derived history. Record signatures also detect imported or
+  // in-place edits; a shortened/changed prefix always starts a fresh replay.
+  const initialSignature=JSON.stringify(initial),signatures=state.history.map(record=>JSON.stringify(record));
+  let cache=referenceJournalCaches.get(initial);
+  const append=cache&&cache.initialSignature===initialSignature&&cache.signatures.length<=signatures.length&&cache.signatures.every((signature,index)=>signature===signatures[index]);
+  if(append&&cache.state===state&&cache.history===state.history&&cache.revision===state.revision&&cache.signatures.length===signatures.length)return cache.view;
+  if(!append)cache={initialSignature,signatures:[],replayed:structuredClone(initial),entries:[{id:'reference-start',day:1,verb:'开局',summary:'资料校准练习',details:['固定练习场面不代表官方开局；未知权重与操作限制保留为练习参数。'],codes:[...new Set(onBoard(initial).map(p=>p.code))].slice(0,2)}]};
+  try{
+    for(let i=cache.signatures.length;i<state.history.length;i++){
+      const record=state.history[i],before=cache.replayed;
+      const {revision,day,...action}=record,after=action.type==='edit'?editRoom(before,action.room,action.code,action.tier):applyAction(before,action);
+      const details=after.log.slice(before.log.length).map(l=>l.text),verb=({visit:after.phase==='event'?'事变':'开门',event:action.accept?'接受':'略过',eat:'吞噬',reroll:'换人',end:after.day>before.day?'过日':'交接',reveal:'探查',mark:'标记',edit:'校准'})[action.type]??'记录';
+      const actors=action.type==='eat'?[before.rooms[action.room].prisoner,before.rooms[action.prey].prisoner]:action.type==='reroll'?[before.rooms[action.room].prisoner,after.rooms[action.room].prisoner]:action.type==='visit'?[after.rooms[action.room].prisoner]:onBoard(after).filter(p=>!onBoard(before).some(q=>q.id===p.id));
+      cache.entries.push({id:`reference-${i}`,day:before.day,verb,summary:details[0]??'经营场面更新',details,codes:[...new Set(actors.filter(Boolean).map(p=>p.code))].slice(0,2)});cache.replayed=after;cache.signatures.push(signatures[i]);
+    }
+    // The renderer receives a frozen snapshot, never the mutable cache model.
+    const entries=structuredClone(cache.entries),groups=[];for(const e of entries){let g=groups.find(g=>g.day===e.day);if(!g){g={day:e.day,entries:[]};groups.push(g);}g.entries.push(e);}
+    cache.view=freezeJournalView({entries,groups});cache.state=state;cache.history=state.history;cache.revision=state.revision;referenceJournalCaches.set(initial,cache);return cache.view;
+  }catch(error){referenceJournalCaches.delete(initial);throw error;}
 }
 export function referenceJournalMarkup(initial,s){const view=referenceJournalView(initial,s);return `<header class="run-journal-heading"><h2>经营记录</h2><span>${s.history.length} 次</span></header><div class="run-journal-scroll" tabindex="0" aria-label="按日滚动查看经营记录">${view.groups.map(g=>`<section class="journal-day"><h3>第 ${g.day} 日</h3><ol>${g.entries.map(e=>`<li class="journal-entry"><button type="button" class="journal-entry-trigger" data-journal-detail="${e.id}" aria-label="${esc(e.summary)}"><span class="journal-entry-icons">${e.codes.length?e.codes.map(journalSpeciesSymbol).join(''):'<span class="journal-operation-mark">◆</span>'}</span><span class="journal-entry-verb">${esc(e.verb)}</span></button></li>`).join('')}</ol></section>`).join('')}</div>`;}
 export function referenceJournalDetailMarkup(initial,s,id){const e=referenceJournalView(initial,s).entries.find(e=>e.id===id);return e?`<header><span>第 ${e.day} 日 · ${esc(e.verb)}</span><h3>${esc(e.summary)}</h3></header><ul>${e.details.map(d=>`<li>${esc(d)}</li>`).join('')}</ul>`:'';}

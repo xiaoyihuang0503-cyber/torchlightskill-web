@@ -1,5 +1,5 @@
 import {DEFAULT_CONFIG} from './rules.js?v=0.6.8-1';
-import {createChallenge,createReferenceGame,exportRun,importRun,isChallenge,isReference} from './session-engine.js?v=0.6.12-1';
+import {createChallenge,createReferenceGame,exportRun,importRun,isChallenge,isReference} from './session-engine.js?v=0.6.13-1';
 
 export const RUN_STORE='ss14-prison-lab-v1';
 

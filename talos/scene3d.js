@@ -7,6 +7,28 @@ const ATLAS={elephant:[0,.5],lion:[.5,.5],rat:[0,0],wolf:[.5,0]};
 const PORTRAIT_SIZE=1.9;
 const ease=t=>1-Math.pow(1-t,3);
 
+/** Buffer resolution only; the camera and CSS-sized hit surfaces stay unchanged. */
+export function chooseScenePixelRatio(width,height,{devicePixelRatio=1,coarsePointer=false,hardwareConcurrency}={}){
+  const dpr=Number.isFinite(devicePixelRatio)&&devicePixelRatio>0?devicePixelRatio:1;
+  // Mobile keeps its original resolution; this iteration targets desktop only.
+  if(coarsePointer)return Math.min(dpr,1.5);
+  const lowCore=Number.isFinite(hardwareConcurrency)&&hardwareConcurrency>0&&hardwareConcurrency<=4;
+  const ceiling=Math.min(dpr,lowCore?1:1.5),budget=lowCore?1000000:2000000;
+  if(!Number.isFinite(width)||!Number.isFinite(height)||width<=0||height<=0)return ceiling;
+  return Math.min(ceiling,Math.sqrt(budget/(width*height)));
+}
+
+/** Cache the room transforms, never the moving door/portrait descendants. */
+export function sceneLayoutKey(asset,camera,width,height){
+  const values=[width,height,asset.config.cellPitchX,asset.config.cellPitchZ,asset.config.wallHeight,...camera.projectionMatrix.elements];
+  const seen=new Set();
+  for(const leaf of [camera,...asset.rooms.map(room=>room.root)])for(let node=leaf;node&&!seen.has(node);node=node.parent){
+    seen.add(node);values.push(node.uuid,...node.position.toArray(),...node.quaternion.toArray(),...node.scale.toArray());
+    if(!node.matrixAutoUpdate)values.push(...node.matrix.elements);
+  }
+  return values.join('/');
+}
+
 /** Solid mesh strokes retain width in WebGL; these belong to the gameplay adapter. */
 export function createRoomAccent(room,config,keep=value=>value,shared={}){
   const group=new THREE.Group();group.name='Gameplay_selection';group.position.y=config.wallHeight+.405;room.root.add(group);
@@ -50,13 +72,14 @@ export function setRoomAccent(accent,{selected=false,target=false,hover=false,ca
 
 /** Presentation adapter. Game state remains owned by the host, including during animations. */
 export class PrisonScene3D {
-  constructor({stage,board,motion=()=>true,fast=()=>false}){
+  constructor({stage,board,motion=()=>true,fast=()=>false,visible=()=>!stage.closest('[hidden]')&&!document.querySelector('dialog[open]')}){
     this.stage=stage;this.board=board;this.motion=motion;this.fast=fast;
+    this.visible=visible;this.presentationVisible=visible();this.environmentTime=0;
     this.ready=false;this.disposed=false;this.cells=[];this.tweens=[];this.resources=new Set();
     this.reduced=matchMedia('(prefers-reduced-motion: reduce)');this.frame=this.frame.bind(this);
     try{
       this.renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'low-power'});
-      this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));this.renderer.setClearColor(0x100e0a,1);
+      this.renderer.setClearColor(0x100e0a,1);
       this.renderer.outputColorSpace=THREE.SRGBColorSpace;this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.12;
       this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFShadowMap;this.renderer.shadowMap.autoUpdate=false;this.renderer.shadowMap.needsUpdate=true;
       this.canvas=this.renderer.domElement;this.canvas.className='scene-3d-canvas';this.canvas.setAttribute('aria-hidden','true');this.stage.prepend(this.canvas);
@@ -68,21 +91,31 @@ export class PrisonScene3D {
       this.asset.lights.key.shadow.mapSize.set(1024,1024);
       this.makePresentation();
       this.ready=true;this.stage.classList.add('three-ready');
-      Object.assign(this.stage.dataset,{renderer:'three-webgl',projection:'perspective',sceneAsset:'talos-editable-v1',worldTexture:'procedural-3d'});
+      Object.assign(this.stage.dataset,{renderer:'three-webgl',projection:'perspective',sceneAsset:'talos-editable-v1',worldTexture:'procedural-3d',scenePaused:String(!this.presentationVisible)});
       this.onLost=event=>{event.preventDefault();this.fallback('webgl-context-lost');};
       this.canvas.addEventListener('webglcontextlost',this.onLost);
       this.onVisibility=()=>{if(document.hidden){cancelAnimationFrame(this.raf);this.raf=null;this.previousFrame=0;this.finishTweens();}else this.request();};
       document.addEventListener('visibilitychange',this.onVisibility);
+      this.onPresentation=()=>this.updatePresentation();
+      this.presentationObserver=new MutationObserver(this.onPresentation);
+      for(let node=stage;node;node=node.parentElement)this.presentationObserver.observe(node,{attributes:true,attributeFilter:['hidden']});
+      for(const dialog of document.querySelectorAll('dialog'))this.presentationObserver.observe(dialog,{attributes:true,attributeFilter:['open']});
+      document.addEventListener('close',this.onPresentation,true);
       this.observer=new ResizeObserver(()=>this.resize());this.observer.observe(stage);this.resize();this.loadTextures();
-      this.onHover=event=>{if(this.stage.getAttribute('aria-busy')==='true')return;const id=event.target.closest('[data-room]')?.dataset.room;this.hovered=id===undefined?null:Number(id);if(this.state)this.sync(this.state,this.selection);};
-      this.onLeave=()=>{this.hovered=null;if(this.stage.getAttribute('aria-busy')!=='true'&&this.state)this.sync(this.state,this.selection);};
-      this.onFocus=event=>{const id=event.target.closest('[data-room]')?.dataset.room;this.focused=id===undefined?null:Number(id);if(this.stage.getAttribute('aria-busy')!=='true'&&this.state)this.sync(this.state,this.selection);};
-      this.onBlur=()=>{this.focused=null;if(this.stage.getAttribute('aria-busy')!=='true'&&this.state)this.sync(this.state,this.selection);};
+      this.onHover=event=>{if(this.stage.getAttribute('aria-busy')==='true')return;const id=event.target.closest('[data-room]')?.dataset.room,next=id===undefined?null:Number(id);if(next===this.hovered)return;this.hovered=next;this.repaintHighlights();};
+      this.onLeave=()=>{if(this.hovered===null)return;this.hovered=null;if(this.stage.getAttribute('aria-busy')!=='true')this.repaintHighlights();};
+      this.onFocus=event=>{const id=event.target.closest('[data-room]')?.dataset.room,next=id===undefined?null:Number(id);if(next===this.focused)return;this.focused=next;if(this.stage.getAttribute('aria-busy')!=='true')this.repaintHighlights();};
+      this.onBlur=()=>{if(this.focused===null)return;this.focused=null;if(this.stage.getAttribute('aria-busy')!=='true')this.repaintHighlights();};
       board.addEventListener('pointerover',this.onHover);board.addEventListener('pointerleave',this.onLeave);
       board.addEventListener('focusin',this.onFocus);board.addEventListener('focusout',this.onBlur);
-    }catch(error){this.fallback('webgl-unavailable');this.releaseResources();this.renderer?.dispose();}
+    }catch(error){this.fallback('webgl-unavailable');this.presentationObserver?.disconnect();this.observer?.disconnect();document.removeEventListener('visibilitychange',this.onVisibility);document.removeEventListener('close',this.onPresentation,true);this.releaseResources();this.renderer?.dispose();}
   }
-  get active(){return this.ready&&this.motion()&&!this.reduced.matches&&!document.hidden;}
+  get active(){return this.ready&&this.motion()&&!this.reduced.matches&&!document.hidden&&this.presentationVisible!==false;}
+  updatePresentation(){
+    const visible=this.visible();if(visible===this.presentationVisible)return;
+    this.presentationVisible=visible;this.previousFrame=0;this.stage.dataset.scenePaused=String(!visible);
+    if(!visible){cancelAnimationFrame(this.raf);this.raf=null;this.finishTweens();}else this.request();
+  }
   keep(resource){this.resources.add(resource);return resource;}
   canvasTexture(draw,size=128){const canvas=document.createElement('canvas');canvas.width=canvas.height=size;draw(canvas.getContext('2d'),size);const map=this.keep(new THREE.CanvasTexture(canvas));map.colorSpace=THREE.SRGBColorSpace;return map;}
   makePresentation(){
@@ -110,30 +143,41 @@ export class PrisonScene3D {
   }
   sync(state,{selected=0,armed=false,pairTarget=null,routeRooms=[]}={}){
     if(!this.ready)return;this.state=state;this.selection={selected,armed,pairTarget,routeRooms};
-    const candidates=state.phase==='patrol'&&!state.pending.length?state.destinations:[];
+    let shadowChanged=!this.hasSynced;
     for(const [id,cell]of this.cells.entries()){
       const room=state.rooms[id],prisoner=room?.prisoner;if(!room)continue;const open=room.status!=='closed';
       // Initial/read-save sync and committed transitions only. Hover never restarts a moving gate.
-      if(cell.open!==open||!this.hasSynced){this.asset.setDoor(id,open?1:0);cell.open=open;}
+      if(cell.open!==open||!this.hasSynced){this.asset.setDoor(id,open?1:0);cell.open=open;shadowChanged=true;}
       cell.portrait.visible=!!prisoner;cell.portrait.material.opacity=prisoner?1:0;
       const key=prisoner?.code||null;if(cell.key!==key||cell.portrait.material.map!==(prisoner?this.atlas?.[key]||null:null)){
         cell.key=key;cell.portrait.material.map=prisoner?this.atlas?.[key]||null:null;cell.portrait.material.needsUpdate=true;
       }
       cell.tierRing.visible=!!prisoner;cell.tierMaterial.color.setHex(TIER_COLORS[prisoner?.tier]||TIER_COLORS[0]);
-      const source=selected===id,target=pairTarget===id,candidate=candidates.includes(id),hover=this.hovered===id||this.focused===id,route=routeRooms.includes(id);
-      cell.highlight.visible=false;
-      if(cell.accent)setRoomAccent(cell.accent,{selected:source,target,candidate,hover,route});
     }
     this.hasSynced=true;
-    this.stage.dataset.sceneSelection=this.cells.filter(cell=>cell.accent?.group.visible).map(cell=>`${cell.id}:${cell.accent.mode}`).join(',');
+    PrisonScene3D.prototype.repaintHighlights.call(this,false);
     const position=Number.isInteger(state.position)?this.asset.getRoomAnchor(state.position,'floor'):null;
     if(position){const forward=new THREE.Vector3(0,.15,this.asset.config.cellPitchZ*.45);forward.applyQuaternion(this.cells[state.position].group.getWorldQuaternion(new THREE.Quaternion()));this.warden.position.copy(position).add(forward);}
-    this.warden.visible=!!position;this.renderer.shadowMap.needsUpdate=true;this.layout();this.request();
+    this.warden.visible=!!position;if(shadowChanged)this.renderer.shadowMap.needsUpdate=true;this.layout();this.request();
   }
-  layout(){
-    if(!this.ready||!this.width)return;this.asset.root.updateMatrixWorld(true);
+  repaintHighlights(request=true){
+    if(!this.ready||!this.state)return;
+    const {selected=0,pairTarget=null,routeRooms=[]}=this.selection||{},state=this.state;
+    const candidates=state.phase==='patrol'&&!state.pending.length?state.destinations:[];
     for(const [id,cell]of this.cells.entries()){
-      const node=this.board.querySelector(`[data-room="${id}"]`);if(!node)continue;
+      cell.highlight.visible=false;
+      if(cell.accent)setRoomAccent(cell.accent,{selected:selected===id,target:pairTarget===id,candidate:candidates.includes(id),hover:this.hovered===id||this.focused===id,route:routeRooms.includes(id)});
+    }
+    this.stage.dataset.sceneSelection=this.cells.filter(cell=>cell.accent?.group.visible).map(cell=>`${cell.id}:${cell.accent.mode}`).join(',');
+    if(request)this.request();
+  }
+  layout(force=false){
+    if(!this.ready||!this.width)return false;
+    const key=sceneLayoutKey(this.asset,this.camera,this.width,this.height),nodes=this.cells.map((_,id)=>this.board.querySelector(`[data-room="${id}"]`));
+    if(!force&&key===this.layoutKey&&nodes.every((node,id)=>node===this.layoutNodes?.[id]))return false;
+    this.asset.root.updateMatrixWorld(true);this.camera.updateWorldMatrix(true,false);
+    for(const [id,cell]of this.cells.entries()){
+      const node=nodes[id];if(!node)continue;
       const p=projectRoom(cell,this.asset.config,this.camera,this.width,this.height);
       Object.assign(node.style,{left:`${p.left}px`,top:`${p.top}px`,width:`${p.width}px`,height:`${p.height}px`});node.dataset.sceneRoom='true';
       node.style.setProperty('--scene-label-y',`${p.label.y-p.top}px`);node.style.setProperty('--scene-number-y',`${p.number.y-p.top}px`);node.style.setProperty('--scene-number-x',`${p.number.x-p.left}px`);
@@ -141,30 +185,38 @@ export class PrisonScene3D {
       node.style.setProperty('--scene-hit-polygon',p.hitPolygon);
     }
     this.stage.dataset.sceneRoomCount=String(this.board.querySelectorAll('[data-scene-room]').length);
+    this.layoutKey=key;this.layoutNodes=nodes;return true;
   }
   resize(){
     if(!this.ready)return;const rect=this.stage.getBoundingClientRect();if(!rect.width||!rect.height)return;
+    const ratio=chooseScenePixelRatio(rect.width,rect.height,{devicePixelRatio:globalThis.devicePixelRatio||1,coarsePointer:matchMedia('(pointer: coarse)').matches,hardwareConcurrency:globalThis.navigator?.hardwareConcurrency});
+    const pixelChanged=this.pixelRatio!==ratio;if(pixelChanged){this.renderer.setPixelRatio(ratio);this.pixelRatio=ratio;}
+    this.stage.dataset.scenePixelRatio=String(ratio);
+    if(this.width===rect.width&&this.height===rect.height){if(this.layout()||pixelChanged)this.request();return;}
     this.width=rect.width;this.height=rect.height;fitPrisonCamera(this.camera,this.width,this.height);
     this.renderer.setSize(this.width,this.height,false);this.layout();this.request();
   }
-  request(dirty=true){if(dirty)this.dirty=true;if(this.ready&&!this.disposed&&!document.hidden&&!this.raf)this.raf=requestAnimationFrame(this.frame);}
+  request(dirty=true){if(dirty)this.dirty=true;if(this.ready&&!this.disposed&&!document.hidden&&this.presentationVisible!==false&&!this.raf)this.raf=requestAnimationFrame(this.frame);}
   frame(time){
     this.raf=null;if(!this.ready||this.disposed||document.hidden)return;
-    const delta=this.previousFrame?Math.min(.05,(time-this.previousFrame)/1000):0;this.previousFrame=time;
-    for(const tween of [...this.tweens]){const progress=Math.min(1,(time-tween.start)/tween.duration);tween.update(ease(progress),progress);this.renderer.shadowMap.needsUpdate=true;if(progress===1){this.tweens.splice(this.tweens.indexOf(tween),1);tween.finish();tween.resolve();}}
-    if(this.active){this.asset.update(delta,time/1000);for(const cell of this.cells)if(cell.accent&&['selected','target'].includes(cell.accent.mode))cell.accent.haloMaterial.opacity=.14+Math.sin(time*.0026)*.025;}
-    if(this.dirty||!this.lastDraw||time-this.lastDraw>=32||this.tweens.length){this.renderer.render(this.scene,this.camera);this.lastDraw=time;this.dirty=false;Object.assign(this.stage.dataset,{sceneCalls:String(this.renderer.info.render.calls),sceneTriangles:String(this.renderer.info.render.triangles),sceneBatched:String(this.batchCount)});}
+    if(this.presentationVisible===false)return;
+    if(this.dirty||!this.lastDraw||time-this.lastDraw>=32||this.tweens.length){
+      const delta=this.previousFrame?Math.min(.05,(time-this.previousFrame)/1000):0;this.previousFrame=time;
+      for(const tween of [...this.tweens]){const progress=Math.min(1,(time-tween.start)/tween.duration);tween.update(ease(progress),progress);if(tween.shadow)this.renderer.shadowMap.needsUpdate=true;if(progress===1){this.tweens.splice(this.tweens.indexOf(tween),1);tween.finish();tween.resolve();}}
+      if(this.active){this.environmentTime=(this.environmentTime||0)+delta;this.asset.update(delta,this.environmentTime);for(const cell of this.cells)if(cell.accent&&['selected','target'].includes(cell.accent.mode))cell.accent.haloMaterial.opacity=.14+Math.sin(this.environmentTime*2.6)*.025;}
+      this.renderer.render(this.scene,this.camera);this.frameCount=(this.frameCount||0)+1;this.lastDraw=time;this.dirty=false;Object.assign(this.stage.dataset,{sceneCalls:String(this.renderer.info.render.calls),sceneTriangles:String(this.renderer.info.render.triangles),sceneBatched:String(this.batchCount),sceneFrames:String(this.frameCount)});
+    }
     if(this.active||this.tweens.length)this.request(false);
   }
-  tween(duration,update,finish=()=>{}){
-    if(!this.active){update(1,1);finish();this.request();return Promise.resolve();}
-    return new Promise(resolve=>{this.tweens.push({duration:duration*(this.fast()?.45:1),start:performance.now(),update,finish,resolve});this.request();});
+  tween(duration,update,finish=()=>{},{shadow=false}={}){
+    if(!this.active){update(1,1);finish();if(shadow)this.renderer.shadowMap.needsUpdate=true;this.request();return Promise.resolve();}
+    return new Promise(resolve=>{this.tweens.push({duration:duration*(this.fast()?.45:1),start:performance.now(),update,finish,resolve,shadow});this.request();});
   }
-  finishTweens(){for(const tween of this.tweens){tween.update(1,1);tween.finish();tween.resolve();}this.tweens=[];}
+  finishTweens(){for(const tween of this.tweens){tween.update(1,1);tween.finish();if(tween.shadow&&this.renderer)this.renderer.shadowMap.needsUpdate=true;tween.resolve();}this.tweens=[];}
   async effectBefore(action,before){
     if(!this.ready)return;const cell=this.cells[action.room];if(!cell)return;
     if(action.type==='visit'&&before.rooms[action.room]?.status==='closed'){
-      await this.tween(380,t=>this.asset.setDoor(action.room,t),()=>this.asset.setDoor(action.room,1));
+      await this.tween(380,t=>this.asset.setDoor(action.room,t),()=>this.asset.setDoor(action.room,1),{shadow:true});
     }else if(action.type==='eat'){
       const prey=this.cells[action.prey];if(!prey)return;
       if(!before.rooms[action.prey]?.prisoner){
@@ -193,11 +245,12 @@ export class PrisonScene3D {
     await Promise.all(changed.map(room=>{
       const cell=this.cells[room.id],opening=before.rooms[room.id].status==='closed'&&!(action.type==='visit'&&room.id===action.room);
       if(opening)this.asset.setDoor(room.id,0);
-      return this.tween(340,(t,p)=>{const size=PORTRAIT_SIZE*(1+Math.sin(p*Math.PI)*.1);cell.portrait.scale.set(size,size,1);cell.tierMaterial.opacity=.4+Math.sin(p*Math.PI)*.5;if(opening)this.asset.setDoor(room.id,t);},()=>{cell.portrait.scale.set(PORTRAIT_SIZE,PORTRAIT_SIZE,1);cell.tierMaterial.opacity=.4;if(opening)this.asset.setDoor(room.id,1);});
+      return this.tween(340,(t,p)=>{const size=PORTRAIT_SIZE*(1+Math.sin(p*Math.PI)*.1);cell.portrait.scale.set(size,size,1);cell.tierMaterial.opacity=.4+Math.sin(p*Math.PI)*.5;if(opening)this.asset.setDoor(room.id,t);},()=>{cell.portrait.scale.set(PORTRAIT_SIZE,PORTRAIT_SIZE,1);cell.tierMaterial.opacity=.4;if(opening)this.asset.setDoor(room.id,1);},{shadow:opening});
     }));
   }
   fallback(reason){
     this.ready=false;this.stage.classList.remove('three-ready');this.stage.dataset.renderer='css-fallback';this.stage.dataset.rendererReason=reason;
+    this.stage.dataset.scenePaused='true';
     delete this.stage.dataset.projection;delete this.stage.dataset.sceneAsset;
     this.canvas?.remove();cancelAnimationFrame(this.raf);this.raf=null;this.finishTweens();
     for(const node of this.board.querySelectorAll('[data-scene-room]')){for(const key of ['left','top','width','height'])node.style[key]='';for(const key of ['--scene-label-y','--scene-label-x','--scene-number-y','--scene-number-x','--scene-hit-polygon'])node.style.removeProperty(key);delete node.dataset.sceneRoom;}
@@ -209,7 +262,7 @@ export class PrisonScene3D {
     for(const resource of this.resources)resource.dispose();this.resources.clear();this.asset?.dispose();
   }
   dispose(){
-    if(this.disposed)return;this.disposed=true;this.observer?.disconnect();document.removeEventListener('visibilitychange',this.onVisibility);this.board.removeEventListener('pointerover',this.onHover);this.board.removeEventListener('pointerleave',this.onLeave);this.board.removeEventListener('focusin',this.onFocus);this.board.removeEventListener('focusout',this.onBlur);this.canvas?.removeEventListener('webglcontextlost',this.onLost);
+    if(this.disposed)return;this.disposed=true;this.observer?.disconnect();this.presentationObserver?.disconnect();document.removeEventListener('visibilitychange',this.onVisibility);document.removeEventListener('close',this.onPresentation,true);this.board.removeEventListener('pointerover',this.onHover);this.board.removeEventListener('pointerleave',this.onLeave);this.board.removeEventListener('focusin',this.onFocus);this.board.removeEventListener('focusout',this.onBlur);this.canvas?.removeEventListener('webglcontextlost',this.onLost);
     this.fallback('disposed');this.releaseResources();this.renderer?.dispose();
   }
 }

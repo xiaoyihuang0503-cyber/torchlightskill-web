@@ -1,6 +1,6 @@
 import { DEFAULT_CONFIG, SPECIES, RARITIES, TOOLS, GIFTS, FOOD_CHAIN_VERSION, validateConfig } from './rules.js?v=0.6.8-1';
-import {isReference,referenceCanEat,referenceTargets,referenceLegalActions,applyReferenceAction,editReferenceRoom,addReferenceMarker,validateReferenceState,recommendReference,createReferenceGame} from './reference-rules.js?v=0.6.12-1';
-export {createReferenceGame,referenceView,referenceVisibleState,addReferenceMarker,isReference} from './reference-rules.js?v=0.6.12-1';
+import {isReference,referenceCanEat,referenceTargets,referenceLegalActions,applyReferenceAction,editReferenceRoom,addReferenceMarker,validateReferenceState,recommendReference,createReferenceGame} from './reference-rules.js?v=0.6.13-1';
+export {createReferenceGame,referenceView,referenceVisibleState,addReferenceMarker,isReference} from './reference-rules.js?v=0.6.13-1';
 
 export function seedNumber(value) {
   let n = 2166136261;
@@ -370,7 +370,7 @@ export function recommend(s) {
       const r=s.rooms[action.room];score=r.status==='closed'?15:2;
       if(r.nest){score-=12;reason='这里有未成熟鼠巢，先比较其他目的地。';}
       if(s.chain){let n=s.position,opened=0;while(n!==r.id){n=(n+1)%16;if(s.rooms[n].status==='closed')opened++;}score+=opened*3;reason=`当前连锁路径可新增 ${opened} 间牢房；注意人数条件。`;}
-      label=`前往 ${r.id+1} 号牢房`;reason||='补充未知囚犯；不开门前不预测里面是什么。';
+      label=`前往 ${r.id+1} 号牢房`;if(!reason)reason='补充未知囚犯；不开门前不预测里面是什么。';
     }
     if(action.type==='reroll'){
       const useful=targets(s,action.room).length||s.rooms.some(r=>targets(s,r.id).includes(action.room));score=useful?-20:4;

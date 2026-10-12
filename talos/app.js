@@ -1,26 +1,26 @@
 import { DEFAULT_CONFIG, SPECIES, RARITIES, TOOLS, GIFTS, ASSUMPTIONS, validateConfig } from './rules.js?v=0.6.8-1';
-import { applyAction, targets, onBoard, nameOf, editRoom, addTool, recommend, replay, exportRun, importRun, isChallenge, challengeView, upgradeFoodChain, undoUserAction, isReference, referenceView } from './session-engine.js?v=0.6.12-1';
-import {REFERENCE_PRESETS,referenceGoal,referencePairDecision,referenceRoomBadges,referenceRoomDescription,referenceMarkersMarkup,referenceSpecialEffectsMarkup,specialEventBadge,referenceHandoffMarkup,referenceJournalMarkup,referenceJournalDetailMarkup} from './reference-ui.js?v=0.6.12-1';
-import {preyCodes} from './engine.js?v=0.6.12-1';
-import {pairDecision} from './interaction.js?v=0.6.12-1';
-import {PrisonEffects} from './effects.js?v=0.6.12-1';
-import {goalGuide} from './goal-guide.js?v=0.6.12-1';
-import {LazyPrisonScene} from './scene-loader.js?v=0.6.12-1';
-import {PrisonAudio,musicTracks} from './audio.js?v=0.6.12-1';
-import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.6.12-1';
+import { applyAction, targets, onBoard, nameOf, editRoom, addTool, recommend, replay, exportRun, importRun, isChallenge, challengeView, upgradeFoodChain, undoUserAction, isReference, referenceView } from './session-engine.js?v=0.6.13-1';
+import {REFERENCE_PRESETS,referenceGoal,referencePairDecision,referenceRoomBadges,referenceRoomDescription,referenceMarkersMarkup,referenceSpecialEffectsMarkup,specialEventBadge,referenceHandoffMarkup,referenceJournalMarkup,referenceJournalDetailMarkup} from './reference-ui.js?v=0.6.13-1';
+import {preyCodes} from './engine.js?v=0.6.13-1';
+import {pairDecision} from './interaction.js?v=0.6.13-1';
+import {PrisonEffects} from './effects.js?v=0.6.13-1';
+import {goalGuide} from './goal-guide.js?v=0.6.13-1';
+import {LazyPrisonScene} from './scene-loader.js?v=0.6.13-1';
+import {PrisonAudio,musicTracks} from './audio.js?v=0.6.13-1';
+import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.6.13-1';
 import {rewardIcon,ruleText} from './reward-icons.js?v=0.6.2-1';
 import {rainbowMarkup,animateRainbowArrivals} from './rainbow-ui.js?v=0.6.8-1';
-import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.12-1';
-import {journalMarkup,effectsMarkup,journalDetailMarkup} from './run-journal.js?v=0.6.12-1';
+import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.13-1';
+import {journalMarkup,effectsMarkup,journalDetailMarkup} from './run-journal.js?v=0.6.13-1';
 import {ModalNavigation,initManualTabs} from './modal-ui.js?v=0.6.9-1';
-import {MobilePrisonUI,listenMediaChange} from './mobile-ui.js?v=0.6.10-1';
+import {MobilePrisonUI,listenMediaChange} from './mobile-ui.js?v=0.6.13-1';
 
 const $=id=>document.getElementById(id);
 const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state,initial,selected=0,configDraft=structuredClone(DEFAULT_CONFIG),resultShown=-1;
 let armed=false,pairTarget=null,pendingAction=null,uiMode=null,rewardChoice=null,busy=false,contextAnchor=null;
 let startupActive=true,runStorage=null;
-let journalInitial=null,journalRevision=-1,journalPinned=false,journalAnchor=null,journalHideTimer;
+let journalInitial=null,journalRevision=-1,journalPinned=false,journalAnchor=null,journalHideTimer,journalDetailState=null;
 try{runStorage=localStorage;}catch{}
 const startupSave=readStartupSave(runStorage);
 let preferences={advice:false,adviceExpanded:false,motion:true,fast:false,quick:false,journalHidden:false,sidebarHidden:false};
@@ -181,15 +181,17 @@ function renderJournal(){
 }
 function hideJournalDetail(){
   clearTimeout(journalHideTimer);$('journal-tooltip').hidden=true;
-  journalAnchor?.setAttribute('aria-expanded','false');journalAnchor=null;journalPinned=false;
+  journalAnchor?.setAttribute('aria-expanded','false');journalAnchor=null;journalPinned=false;journalDetailState=null;
 }
 function showJournalDetail(anchor){
   if(startupActive||busy||!state)return;
   clearTimeout(journalHideTimer);const tip=$('journal-tooltip');
+  // Moving between child icons/text of one entry is still the same hover.
+  if(anchor===journalAnchor&&journalDetailState===state&&!tip.hidden)return;
   if(anchor.dataset.journalDetail)tip.innerHTML=isReference(state)?referenceJournalDetailMarkup(initial,state,anchor.dataset.journalDetail):journalDetailMarkup(initial,state,anchor.dataset.journalDetail);
   else{const description=anchor.querySelector('.room-effect-description');tip.innerHTML=`<h3>${esc(anchor.querySelector('strong')?.textContent||'房间效果')}</h3>${description?.innerHTML||esc(anchor.getAttribute('aria-label')||'')}`;}
   if(!tip.innerHTML)return;
-  journalAnchor?.setAttribute('aria-expanded','false');journalAnchor=anchor;anchor.setAttribute('aria-expanded','true');
+  journalAnchor?.setAttribute('aria-expanded','false');journalAnchor=anchor;journalDetailState=state;anchor.setAttribute('aria-expanded','true');
   tip.hidden=false;const rect=anchor.getBoundingClientRect();
   const left=rect.right+12+tip.offsetWidth<=innerWidth-12?rect.right+12:Math.max(12,rect.left-tip.offsetWidth-12);
   tip.style.left=`${left}px`;tip.style.top=`${Math.max(12,Math.min(rect.top,innerHeight-tip.offsetHeight-12))}px`;

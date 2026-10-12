@@ -2,6 +2,16 @@
 export const MOBILE_LANDSCAPE_QUERY='(orientation: landscape) and (max-height: 500px) and (max-width: 1100px)';
 export const MOBILE_PORTRAIT_QUERY='(orientation: portrait) and (max-width: 600px)';
 
+// Both callers supply DOM nodes. Keep their identity and avoid an HTML round trip
+// on browsers whose ParentNode implementation has no replaceChildren method.
+function replaceChildNodes(parent,...nodes) {
+  if(typeof parent.replaceChildren==='function'){
+    parent.replaceChildren(...nodes);return;
+  }
+  while(parent.firstChild)parent.removeChild(parent.firstChild);
+  for(const node of nodes)parent.appendChild(node);
+}
+
 // Older MediaQueryList objects expose addListener instead of EventTarget methods.
 // Own the abort cleanup so both forms have the same lifetime.
 export function listenMediaChange(query,callback,{signal}={}) {
@@ -113,7 +123,7 @@ export class MobilePrisonUI {
       const button=document.createElement('button');button.type='button';button.id=id;
       button.dataset.mobileUtility=kind;button.setAttribute('aria-expanded','false');
       const panel=this.stage.querySelector(kind==='tools'?'.game-tools':'.game-rainbow');
-      if(panel){panel.id ||= `mobile-${kind}-panel`;button.setAttribute('aria-controls',panel.id);}
+      if(panel){if(!panel.id)panel.id=`mobile-${kind}-panel`;button.setAttribute('aria-controls',panel.id);}
       const copy=document.createElement('span');copy.textContent=label;
       const count=document.createElement('small');count.dataset.mobileCount=kind;
       button.append(copy,count);this.actions.append(button);
@@ -181,7 +191,7 @@ export class MobilePrisonUI {
       const copy=document.createElement('small');copy.textContent=label.replace(/^\d+\s*号\s*/,'');
       button.append(number,copy);buttons.push(button);
     }
-    this.roomChoices.replaceChildren(...buttons);
+    replaceChildNodes(this.roomChoices,...buttons);
   }
 
   prepareTools() {
@@ -205,7 +215,7 @@ export class MobilePrisonUI {
     if(!this.active||this.screen.hidden||this.stage.getAttribute('aria-busy')==='true'||document.querySelector('dialog[open]'))return;
     const description=tool.querySelector('p');if(!description)return;
     this.toolTitle.textContent=tool.querySelector('strong')?.textContent||'刑具说明';
-    this.toolCopy.replaceChildren(description.cloneNode(true));this.toolDialog.showModal();
+    replaceChildNodes(this.toolCopy,description.cloneNode(true));this.toolDialog.showModal();
   }
 
   clicked(event) {

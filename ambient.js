@@ -167,7 +167,7 @@
 
   function animate(timestamp) {
     frame = 0;
-    if (document.hidden || reduceMotion.matches) return;
+    if (document.hidden || reduceMotion.matches || !gl || !program || gl.isContextLost()) return;
     if (!previous || timestamp - previous >= 1000 / 45) {
       const delta = previous ? Math.min((timestamp - previous) / 1000, 0.1) : 1 / 30;
       previous = timestamp;
@@ -183,6 +183,7 @@
     previous = 0;
     field.classList.toggle('is-paused', document.hidden || reduceMotion.matches);
     resetPointer();
+    if (!gl || !program || gl.isContextLost()) return;
     if (reduceMotion.matches) {
       draw();
     } else if (!document.hidden) {
@@ -214,8 +215,16 @@
   document.documentElement.addEventListener('pointerleave', resetPointer);
   window.addEventListener('blur', resetPointer);
   document.addEventListener('visibilitychange', updateActivity);
-  reduceMotion.addEventListener('change', updateActivity);
-  finePointer.addEventListener('change', resetPointer);
+  function listenMedia(query, handler) {
+    if (typeof query.addEventListener === 'function') query.addEventListener('change', handler);
+    else if (typeof query.addListener === 'function') query.addListener(handler);
+  }
+  listenMedia(reduceMotion, updateActivity);
+  listenMedia(finePointer, () => {
+    resizeNeeded = true;
+    resetPointer();
+    updateActivity();
+  });
   window.addEventListener('resize', () => {
     resizeNeeded = true;
     if (reduceMotion.matches) draw();

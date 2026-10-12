@@ -1,6 +1,6 @@
 // Optional presentation loads after the game controls. It never owns or changes a run.
 export class LazyPrisonScene {
-  constructor({options,load=()=>import('./scene3d.js?v=0.6.12-1'),canAttach=()=>true}){
+  constructor({options,load=()=>import('./scene3d.js?v=0.6.13-1'),canAttach=()=>true}){
     this.options=options;this.load=load;this.canAttach=canAttach;
     this.instance=null;this.Scene=null;this.latest=null;this.loading=null;this.failed=false;
   }

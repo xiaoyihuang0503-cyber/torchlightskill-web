@@ -59,7 +59,7 @@
   var state = 'loading', reason = '', message = '', timer = null, reloadBound = false;
   var files = ('app.js rules.js engine.js session-engine.js interaction.js effects.js goal-guide.js scene3d.js ' +
     'audio.js challenge.js challenge-v2.js challenge-ui.js reward-icons.js rainbow-ui.js startup.js run-journal.js ' +
-    'modal-ui.js mobile-ui.js scene-loader.js model/prison.js model/materials.js model/projection.js ' +
+    'modal-ui.js mobile-ui.js scene-loader.js reference-rules.js reference-ui.js model/prison.js model/materials.js model/projection.js ' +
     'vendor/three/three.module.js vendor/three/three.core.js').split(' ');
   var current = String(view.location.href).split('#')[0].split('?')[0];
   var directory = current.slice(0, current.lastIndexOf('/') + 1);
