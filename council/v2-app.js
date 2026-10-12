@@ -251,7 +251,9 @@ async function voteHero(id,node){
  const h=state.heroById.get(id);if(!h)return false;
  try{
   const result=await LIVE.vote("hero",id);
-  state.selected.hero=id;updateHeroChart();updateCards();
+  state.selected.hero=id;
+  if(state.demoOn)setDemoMode(false);
+  updateHeroChart();updateCards();
   toast("✅ 已投给 "+labelHero(h)+"！📣 叫朋友来支持吧");
   if(node&&!reduced){
    const plus=document.createElement("span");plus.className="tap-plus";plus.textContent="🔥 +1";
@@ -436,6 +438,7 @@ async function voteFocus(topic,choice){
  try{
   await LIVE.vote(topic.id,choice);
   state.selected[topic.id]=choice;
+  if(state.demoOn)setDemoMode(false);
   updateFocusCounts();
   const label=topic.options.find(c=>c[0]===choice)?.[1]||"选项";
   const message="✅ 已投票： "+label+"  📣 快分享给朋友！";
@@ -589,6 +592,7 @@ async function supportSeat(){
  const button=$("seat-support");button.disabled=true;
  try{
   const result=await LIVE.supportSeat(seat.key);
+  if(state.demoOn)setDemoMode(false);
   updateSeatNumbers();
   toast(result?.changed?"🔥 支持成功！这道问题 +1，分享出去让更多人看见":"✅ 已经支持过这个问题");
  }catch(error){toast(String(error?.message||error));button.disabled=false;}
@@ -815,6 +819,7 @@ function bind(){
  $("seat-next").addEventListener("click",()=>moveSeat(1));
  $("roundtable-question-input").addEventListener("input",e=>{$("question-length").textContent=[...e.target.value].length+" / 160 字";});
  $("roundtable-question-form").addEventListener("submit",sendQuestion);
+ $("heat-switch").addEventListener("click",()=>setDemoMode(!state.demoOn));
  $("motion-toggle").addEventListener("click",()=>{
   state.motion=!state.motion;
   $("motion-toggle").textContent=state.motion?"隐藏气泡":"显示气泡";
@@ -842,14 +847,14 @@ function wireLive(){
   syncSlotVoteAction();
   if(state.slotResult&&!isClosed())$("lottery-result-sub").textContent="可以将抽签结果投进实时榜单，也可以分享";
   updateHeroChart();updateCards();updateFocusCounts();
-  $("vote-source-label").textContent="真实票数 · 实时更新";
+  refreshHeatLabels();
  };
  LIVE.hooks.onOwnVotes=values=>{
   state.selected=values||{};
   updateHeroChart();updateCards();updateFocusCounts();updateSeatDetail();
  };
  LIVE.hooks.onVoteEvent=event=>{
-  if(!state.motion)return;
+  if(!state.motion||state.demoOn)return;
   if(event.topic==="hero"){
    const h=state.heroById.get(event.choice);
    if(h){handleBubble(h,event.action==="switch"?"🔁 改选 +1":"🗳️ 真实 +1");statusText("🔥 有人支持 "+labelHero(h));}
@@ -866,16 +871,17 @@ function wireLive(){
  };
  LIVE.hooks.onMySeats=()=>updateSeatDetail();
  LIVE.hooks.onSeatEvent=event=>{
-  if(!state.motion)return;
-  if(event.seat===state.selectedSeat)toast("🔥 这把椅子刚刚多了一票支持");
+  if(!state.motion||state.demoOn)return;
+  if(event.seat===state.selectedSeat)toast("🔥 这把椅子刚刚多了一票真实支持");
  };
  LIVE.hooks.onQuestions=()=>renderRoundQuestions();
  LIVE.hooks.onKeywordStats=()=>renderRoundQuestions();
  LIVE.hooks.onStatus=message=>{
-  if(message?.state==="error"&&!state.ready)$("vote-source-label").textContent="连接失败，请刷新";
-  else if(message?.state==="polling")$("vote-source-label").textContent="定时同步中";
-  else if(message?.state==="ready")$("vote-source-label").textContent="真实票数 · 实时更新";
-  if(message?.message)statusText(message.message);
+  refreshHeatLabels(message?.state);
+  if(message?.message){
+   if(state.demoOn)statusText("🧪 热场演示进行中 · "+message.message+"（仅真实投票服务状态）");
+   else statusText(message.message);
+  }
  };
 }
 async function init(){
@@ -884,6 +890,9 @@ async function init(){
  if(Date.now()>=ASK_CLOSE_AT){$("submit-roundtable-question").disabled=true;$("roundtable-question-input").disabled=true;}
  try{
   await ensureHeroes();
+  state.heat=createHeatEngine(state.heroes,FOCUS,FOCUS.map(t=>"topic:"+t.id),Math.floor(Date.now()/3600000));
+  refreshHeatLabels();
+  window.setInterval(runHeatTick,3200);
   const group=document.createDocumentFragment();
   state.heroes.forEach(h=>group.appendChild(makeHeroCard(h)));
   $("hero-list").replaceChildren(group);
@@ -897,7 +906,7 @@ async function init(){
   if(location.hash==="#all-heroes"||state.incomingHero&&location.hash.includes("heroes")){
    $("all-heroes").open=true;arrangeCards();
   }
-  if(!LIVE?.available){$("vote-source-label").textContent="实时服务加载失败";statusText("刷新页面后重试");return;}
+  if(!LIVE?.available){refreshHeatLabels("error");statusText("🧪 热场演示可以继续玩；实时投票服务暂不可用");return;}
   wireLive();await LIVE.start();
   if(query.get("open")==="lottery"&&!isClosed())window.setTimeout(openLottery,200);
   const seat=decodeURIComponent(query.get("seat")||"");
@@ -905,7 +914,7 @@ async function init(){
   if(query.get("open")==="ask")selectSeat("empty:main",false);
  }catch(error){
   console.warn("Council homepage initialization",error);
-  $("vote-source-label").textContent=state.loaded?"实时投票暂不可用":"英雄资料加载失败";
+  refreshHeatLabels("error");
   statusText(state.loaded?"🎰 抽英雄可继续玩，实时投票正在恢复":String(error?.message||error));
   toast(state.loaded?"实时投票暂不可用，随机抽签仍可使用":"英雄资料加载失败，请刷新页面再试");
  }
