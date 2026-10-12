@@ -1,4 +1,4 @@
-import {challengeView,deliveryPreview,onBoard,nameOf} from './session-engine.js?v=0.6.8-1';
+import {challengeView,deliveryPreview,onBoard,nameOf} from './session-engine.js?v=0.6.12-1';
 import {RARITIES} from './rules.js?v=0.6.8-1';
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

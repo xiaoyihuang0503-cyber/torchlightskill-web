@@ -1,16 +1,17 @@
 import { DEFAULT_CONFIG, SPECIES, RARITIES, TOOLS, GIFTS, ASSUMPTIONS, validateConfig } from './rules.js?v=0.6.8-1';
-import { applyAction, targets, onBoard, nameOf, editRoom, addTool, recommend, replay, exportRun, importRun, isChallenge, challengeView, upgradeFoodChain, undoUserAction } from './session-engine.js?v=0.6.8-1';
-import {preyCodes} from './engine.js?v=0.6.8-1';
-import {pairDecision} from './interaction.js?v=0.6.8-1';
-import {PrisonEffects} from './effects.js?v=0.6.3-1';
-import {goalGuide} from './goal-guide.js?v=0.6.8-1';
-import {LazyPrisonScene} from './scene-loader.js?v=0.6.10-1';
-import {PrisonAudio,musicTracks} from './audio.js?v=0.6.5-1';
-import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.6.8-1';
+import { applyAction, targets, onBoard, nameOf, editRoom, addTool, recommend, replay, exportRun, importRun, isChallenge, challengeView, upgradeFoodChain, undoUserAction, isReference, referenceView } from './session-engine.js?v=0.6.12-1';
+import {REFERENCE_PRESETS,referenceGoal,referencePairDecision,referenceRoomBadges,referenceRoomDescription,referenceMarkersMarkup,referenceSpecialEffectsMarkup,specialEventBadge,referenceHandoffMarkup,referenceJournalMarkup,referenceJournalDetailMarkup} from './reference-ui.js?v=0.6.12-1';
+import {preyCodes} from './engine.js?v=0.6.12-1';
+import {pairDecision} from './interaction.js?v=0.6.12-1';
+import {PrisonEffects} from './effects.js?v=0.6.12-1';
+import {goalGuide} from './goal-guide.js?v=0.6.12-1';
+import {LazyPrisonScene} from './scene-loader.js?v=0.6.12-1';
+import {PrisonAudio,musicTracks} from './audio.js?v=0.6.12-1';
+import {challengePanel,challengeGuide,cargoChoices,deliveryStatus,patrolRoute,destinationDetail} from './challenge-ui.js?v=0.6.12-1';
 import {rewardIcon,ruleText} from './reward-icons.js?v=0.6.2-1';
 import {rainbowMarkup,animateRainbowArrivals} from './rainbow-ui.js?v=0.6.8-1';
-import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.8-1';
-import {journalMarkup,effectsMarkup,journalDetailMarkup} from './run-journal.js?v=0.6.8-1';
+import {readStartupSave,createStartupRun,saveStartupRun,startupRunSummary,startupConfigDraft,startupPhaseHelp} from './startup.js?v=0.6.12-1';
+import {journalMarkup,effectsMarkup,journalDetailMarkup} from './run-journal.js?v=0.6.12-1';
 import {ModalNavigation,initManualTabs} from './modal-ui.js?v=0.6.9-1';
 import {MobilePrisonUI,listenMediaChange} from './mobile-ui.js?v=0.6.10-1';
 
@@ -93,7 +94,7 @@ function showStartupError(message){$('startup-error').hidden=!message;$('startup
 function renderStartup(){
   const run=startupSave.run,summary=run?startupRunSummary(run.current):null;
   $('startup-continue').hidden=!summary;
-  if(summary){$('continue-run').textContent=summary.label;$('saved-run-summary').textContent=summary.detail;}
+  if(summary){$('continue-run').textContent=summary.label;$('saved-run-summary').textContent=(isReference(run.current)?'':isChallenge(run.current)?'原创挑战 · ':'旧版实验样本 · ')+summary.detail;}
   showStartupError(startupSave.error);
 }
 const modalNavigation=new ModalNavigation({document,ids:['menu-dialog','manual-dialog','run-dialog','settings-dialog','calibration-dialog','editor-dialog','changelog-dialog','rules-dialog','audio-dialog','export-dialog'],
@@ -157,12 +158,23 @@ function hideGoalGuide(){
   $('goal-details-trigger').setAttribute('aria-expanded','false');
 }
 function hideMechanics(){ $('mechanics-tooltip').hidden=true; }
+function showReferenceRoomTooltip(node){
+  if(startupActive||busy||!isReference(state)||!$('context-actions').hidden)return;
+  const room=Number(node.dataset.room),view=referenceView(state),marks=view.markers.filter(m=>m.room===room||m.linkedRoom===room);
+  if(!marks.length){hideMechanics();return;}
+  const tip=$('mechanics-tooltip');tip.innerHTML=`<strong>${room+1} 号 · ${marks.map(m=>esc(m.label)).join(' / ')}</strong><p>${esc(referenceRoomDescription(state,room))}</p><p class="reference-uncertainty">标记生成频率、叠加与日切换计时采用练习策略；在手册查看边界。</p>`;tip.hidden=false;
+  const r=node.getBoundingClientRect();tip.style.left=`${Math.max(12,Math.min(r.right+10,innerWidth-tip.offsetWidth-12))}px`;tip.style.top=`${Math.max(12,Math.min(r.top,innerHeight-tip.offsetHeight-12))}px`;
+}
+$('board').addEventListener('pointerover',event=>{const node=event.target.closest('[data-room]');if(node)showReferenceRoomTooltip(node);});
+$('board').addEventListener('focusin',event=>{const node=event.target.closest('[data-room]');if(node)showReferenceRoomTooltip(node);});
+$('board').addEventListener('pointerout',event=>{const node=event.target.closest('[data-room]');if(node&&!node.contains(event.relatedTarget))hideMechanics();});
+$('board').addEventListener('focusout',hideMechanics);
 function renderJournal(){
   if(journalInitial===initial&&journalRevision===state.revision)return;
   const old=$('run-journal').querySelector('.run-journal-scroll');
   const follow=journalInitial!==initial||!old||old.scrollHeight-old.scrollTop-old.clientHeight<40,top=old?.scrollTop||0;
-  $('run-journal').innerHTML=journalMarkup(initial,state);
-  $('room-effects').innerHTML=effectsMarkup(initial,state);
+  $('run-journal').innerHTML=isReference(state)?referenceJournalMarkup(initial,state):journalMarkup(initial,state);
+  $('room-effects').innerHTML=isReference(state)?referenceSpecialEffectsMarkup(state)+referenceMarkersMarkup(state):effectsMarkup(initial,state);
   const scroll=$('run-journal').querySelector('.run-journal-scroll');
   if(scroll)scroll.scrollTop=follow?scroll.scrollHeight:top;
   journalInitial=initial;journalRevision=state.revision;
@@ -174,7 +186,7 @@ function hideJournalDetail(){
 function showJournalDetail(anchor){
   if(startupActive||busy||!state)return;
   clearTimeout(journalHideTimer);const tip=$('journal-tooltip');
-  if(anchor.dataset.journalDetail)tip.innerHTML=journalDetailMarkup(initial,state,anchor.dataset.journalDetail);
+  if(anchor.dataset.journalDetail)tip.innerHTML=isReference(state)?referenceJournalDetailMarkup(initial,state,anchor.dataset.journalDetail):journalDetailMarkup(initial,state,anchor.dataset.journalDetail);
   else{const description=anchor.querySelector('.room-effect-description');tip.innerHTML=`<h3>${esc(anchor.querySelector('strong')?.textContent||'房间效果')}</h3>${description?.innerHTML||esc(anchor.getAttribute('aria-label')||'')}`;}
   if(!tip.innerHTML)return;
   journalAnchor?.setAttribute('aria-expanded','false');journalAnchor=anchor;anchor.setAttribute('aria-expanded','true');
@@ -195,6 +207,10 @@ function scheduleGoalGuideHide(){
   },120);
 }
 function renderGoalGuide(guide){
+  if(isReference(state)){
+    $('goal-tooltip').innerHTML=`<header class="goal-tooltip-header"><h2>培养更多绮彩</h2><span class="goal-status">${esc(guide.overall.status)}</span></header><p>${esc(guide.condition)}</p><p class="goal-current">${esc(guide.overall.progress)}</p><h3>${esc(guide.routeTitle)}</h3><ol>${guide.steps.map(x=>`<li>${esc(x)}</li>`).join('')}</ol><p class="goal-reward">${esc(guide.reward)}</p><h3>资料与练习边界</h3><p>测试预览提供基础克制与标记文字；完整卡池、随机权重、耗天与触发细节待核。体验不代表正式游戏节奏、难度或收益。</p>`;
+    if(!$('goal-tooltip').hidden)positionGoalGuide();return;
+  }
   if(isChallenge(state)){
     $('goal-tooltip').innerHTML=challengeGuide(state);
     if(!$('goal-tooltip').hidden)positionGoalGuide();
@@ -207,8 +223,13 @@ function renderGoalGuide(guide){
 function renderRunOverview(guide,challenge){
   $('practice-overview').hidden=!!challenge;
   $('challenge-panel').hidden=!challenge;
-  $('run-mode-label').textContent=challenge?'原创挑战':'基础经营';
+  $('run-mode-label').textContent=isReference(state)?'资料校准练习':challenge?'原创挑战':'旧版实验样本';
   if(challenge)return;
+  if(isReference(state)){
+    const o=guide.overall;
+    $('practice-overview').innerHTML=`<h3 class="run-objective">培养更多绮彩</h3><p class="run-condition">经营期间持续养成；沙盘与单独收容的囚犯分别保留，结束后交接。</p><div class="run-counts"><div><strong>${o.currentExquisite}</strong><span>当前至臻</span></div><div><strong>${o.totalRainbow}</strong><span>累计绮彩</span></div><div><strong>${o.remainingDays}</strong><span>剩余经营日</span></div></div><p class="run-next">${esc(o.nextTarget)}</p>`;
+    $('advice-objective').innerHTML='<p class="reference-uncertainty">只判断当前可见配对与标记。未知代号、权重与正式收益不作预判。</p>';return;
+  }
   const o=guide.overall,stage=guide.completed?(state.pending.some(p=>p.kind==='tool')?'待领刑具':'已完成'):guide.status;
   $('practice-overview').innerHTML=`<h3 class="run-objective">培养更多绮彩</h3><p class="run-condition">${state.config.days} 日经营，持续养成高阶囚犯，最终镇压暴乱。</p><div class="run-counts"><div><strong>${o.currentExquisite}</strong><span>当前至臻</span></div><div><strong>${o.totalRainbow}</strong><span>累计绮彩</span></div><div><strong>${o.remainingDays}</strong><span>剩余经营日</span></div></div><p class="run-next">${esc(['riot','finished'].includes(state.phase)?o.status:o.nextTarget)}</p><div class="stage-goal"><div class="stage-heading"><span>阶段目标 · 困兽称王</span><span class="goal-status ${guide.completed?'complete':''}">${esc(stage)}</span></div><p>${esc(guide.condition)}</p><small>${esc(guide.reward)}</small></div>`;
   $('advice-objective').innerHTML=`<div class="advice-caption">${esc(o.nextTarget)} · ${esc(o.remainingDaysText)}</div><h3>${esc(guide.routeTitle)}</h3><p>${guide.steps.slice(0,2).map(esc).join('<br>')}</p>`;
@@ -243,6 +264,10 @@ async function act(action){
   $('motion-status').textContent=action.type==='eat'?`吞噬完成 · ${newEater&&oldEater.code!==newEater.code?`随机换号：${speciesOf(oldEater.code).name} → ${nameOf(newEater)}`:newEater?nameOf(newEater):'绮彩囚犯已收容'}`:action.type==='visit'?'巡监完成':action.type==='reroll'?'更换完成':action.type==='choose'?'已获得奖励':'';
   if(action.type==='scout')$('motion-status').textContent='侦察完成 · 可开门或改去已开牢房';
   if(action.type==='deliver')$('motion-status').textContent='押运完成 · 合约已兑现';
+  if(isReference(state)){
+    const effects=state.log.slice(before.log.length).map(l=>l.text).filter(t=>/象牙|猎物|划痕|鼠巢|探查|单独收容/.test(t));
+    if(effects.length)$('motion-status').textContent=effects.slice(0,2).join(' ');
+  }
 }
 function speciesOf(code){return SPECIES.find(p=>p.id===code);}
 function buttonsFor(action,label,cls=''){return `<button class="button ${cls}" data-action="${esc(JSON.stringify(action))}">${esc(label)}</button>`;}
@@ -258,15 +283,17 @@ function positionContext(point){
   menu.style.top=`${Math.max(10,Math.min(point.y+12,height-menu.offsetHeight-10))}px`;
 }
 function showContext(html,point){
+  if(isReference(state))hideMechanics();
   if(mobileUI.active){hideGoalGuide();hideMechanics();hideJournalDetail();}
   const menu=$('context-actions');contextAnchor=pairTarget??selected;menu.innerHTML=html;menu.hidden=false;positionContext(point);
   menu.querySelector('button:not(:disabled)')?.focus({preventScroll:true});
 }
-function pairPreview(room){const p=state.rooms[room].prisoner;return `<div class="pair-label"><div class="portrait ${p.code} tier-${p.tier}"></div><span>${room+1}号 ${nameOf(p)}</span></div>`;}
+function pairPreview(room){const p=state.rooms[room].prisoner;return p?`<div class="pair-label"><div class="portrait ${p.code} tier-${p.tier}"></div><span>${room+1}号 ${nameOf(p)}</span></div>`:`<div class="pair-label"><span class="reference-mark-badge reference-mark-scratch">划痕房</span><span>${room+1}号 ${esc(referenceRoomDescription(state,room))}</span></div>`;}
 function showPair(target,point){
-  const decision=pairDecision(state,selected,target);pairTarget=target;uiMode='eat';pendingAction=decision.action;armed=true;render();
+  const decision=isReference(state)?referencePairDecision(state,selected,target):pairDecision(state,selected,target);pairTarget=target;uiMode='eat';pendingAction=decision.action;armed=true;render();
   if(decision.action&&preferences.quick){act(decision.action);return;}
-  showContext(`<h3>囚犯吞噬</h3><div class="pair-preview">${pairPreview(selected)}<span>→</span>${pairPreview(target)}</div><p class="${decision.action?'':'invalid'}">${decision.action?'吃后提升稀有度，并随机调整代号。':esc(decision.reason)}</p><div class="context-buttons"><button class="button gold" data-pair-confirm ${decision.action?'':'disabled'}>吃</button>${decision.reverse?'<button class="button" data-pair-swap>交换主次</button>':''}<button class="button cancel" data-cancel>取消</button></div>${!decision.action?'<div class="context-buttons"><button class="button" data-select-second>选为主囚犯</button></div>':''}`,point);
+  const explanation=decision.action&&isReference(state)&&state.rooms[target].reference.scratch?'同阶头狼吞噬划痕房，额外升 2 阶；基础升阶叠加按本地练习参数。':decision.action?'吃后提升稀有度，并随机调整代号。':decision.reason;
+  showContext(`<h3>囚犯吞噬</h3><div class="pair-preview">${pairPreview(selected)}<span>→</span>${pairPreview(target)}</div><p class="${decision.action?'':'invalid'}">${esc(explanation)}</p><div class="context-buttons"><button class="button gold" data-pair-confirm ${decision.action?'':'disabled'}>吃</button>${decision.reverse?'<button class="button" data-pair-swap>交换主次</button>':''}<button class="button cancel" data-cancel>取消</button></div>${!decision.action&&state.rooms[target].prisoner?'<div class="context-buttons"><button class="button" data-select-second>选为主囚犯</button></div>':''}`,point);
 }
 function showSingle(point){
   const p=state.rooms[selected].prisoner;if(!p||state.phase!=='manage'||state.pending.length||(isChallenge(state)&&challengeView(state).deliveryPending))return;
@@ -284,42 +311,58 @@ function render(deferDialogs=false){
   if(startupActive||!state)return;
   const active=onBoard(state),phase=state.phase;
   const challenge=isChallenge(state)?challengeView(state):null;
-  const guide=challenge?null:goalGuide(state);
+  const reference=isReference(state),ref=reference?referenceView(state):null,referenceDone=reference&&['riot','finished'].includes(phase);
+  const specialEvents=reference&&state.reference.version==='public-preview-v2'&&state.config.referenceParameters.specialEvents&&state.config.eventsChance>0;
+  const eventStatus=state.reference?.version==='public-preview-v1'?'此局沿用旧规则，没有特殊事件；新建一局可体验已恢复的样本。':specialEvents?'启用连锁反应与处刑效率；事件概率采用练习设置。':'本局未生成特殊事件，新局可在练习参数中启用并设置概率。';
+  $('advice-section').querySelector('summary h2').textContent=reference?'配对参考':'收益辅助';
+  const guide=challenge?null:reference?referenceGoal(state):goalGuide(state);
+  document.querySelector('main.game-screen').classList.toggle('reference-run',reference);
+  for(const id of ['reference-mode-note','reference-markers','reference-treasure-status'])$(id).hidden=!reference;
+  if(reference){
+    $('reference-mode-note').innerHTML=`<strong>经营规则练习 · 测试预览</strong><br>${eventStatus}完整刑具、事变与珍藏卡池仍待补全。`;
+    $('reference-markers').innerHTML=referenceMarkersMarkup(state);
+    $('reference-treasure-status').innerHTML=`<strong>珍藏获得记录 ${ref.treasures.length} 次</strong><br>绮彩已单独收容 ${state.rainbow.length} 名；珍藏完整候选池待补，不编造选择或已兑现奖励。`;
+  }
   const route=patrolRoute(state,pendingAction?.type==='visit'?pendingAction.room:null);
+  if(reference&&route&&!route.rooms.length){route.rooms=[pendingAction.room];route.closed=Number(state.rooms[pendingAction.room].status==='closed');route.nests=Number(!!state.rooms[pendingAction.room].nest);}
   $('challenge-panel').innerHTML=challenge?challengePanel(state,{selected,pendingAction,busy}):'';
   renderRunOverview(guide,challenge);
   $('advice-objective').hidden=!!challenge;
-  $('run-badge').hidden=!challenge;
-  $('countdown-caption').textContent=challenge?'距离经营结束':'距离暴乱剩余';
+  $('run-badge').hidden=!challenge;$('run-badge').textContent=challenge?'原创挑战':'';
+  $('countdown-caption').textContent=reference?'距离经营交接剩余':challenge?'距离经营结束':'距离暴乱剩余';
   const remains=Math.max(0,state.config.days-state.day+1);
-  $('countdown').textContent=['riot','finished'].includes(phase)?'暴乱已开始':`${remains} 天`;
+  $('countdown').textContent=referenceDone?'经营已完成':['riot','finished'].includes(phase)?'暴乱已开始':`${remains} 天`;
   $('day-tag').textContent=`第 ${state.day} / ${state.config.days} 日`;
   $('day-track').innerHTML=Array.from({length:state.config.days},(_,i)=>`<span class="${i+1<state.day?'past':i+1===state.day?'current':''}"></span>`).join('');
   $('goal-state').textContent=state.goalIndex?'已完成':'进行中';
-  $('goal-name').textContent='阶段目标 · 困兽称王';
+  if(reference)$('goal-state').textContent=guide.overall.status;
+  $('goal-progress').closest('.goal-meter').hidden=reference;
+  $('goal-name').textContent=reference?'经营目标 · 培养更多绮彩':'阶段目标 · 困兽称王';
   const target=state.config.goalTiers[state.goalIndex];
   $('scene-goal').innerHTML=challenge?'':`<span class="goal-heading">经营目标</span><span class="goal-main">培养更多绮彩</span><span class="goal-condition">至臻 ${guide.overall.currentExquisite} · 绮彩 ${guide.overall.totalRainbow}<br>经营结束后镇压暴乱</span>`;
+  if(reference)$('scene-goal').innerHTML=`<span class="goal-heading">典狱演习 · 经营目标</span><span class="goal-main">培养更多绮彩</span><span class="goal-condition">至臻 ${guide.overall.currentExquisite} · 绮彩 ${guide.overall.totalRainbow}<br>经营结束后交接囚犯</span>`;
   if(challenge)$('scene-goal').innerHTML=`<span class="goal-heading">目标：押运合约</span><span class="goal-condition">完成至少 2 单，必须包含重囚<br><strong>${challenge.completed}/3 单</strong> · ${challenge.tickets} 张调度券</span>`;
   renderGoalGuide(guide);
-  $('goal-description').textContent=target===undefined?'已领完本轮设定目标。继续经营，培养绮彩囚犯。':`至少一名囚犯达到${RARITIES[target]}。${state.goalIndex?'后续目标采用实验配置。':''}`;
+  $('goal-description').textContent=reference?guide.condition:target===undefined?'已领完本轮设定目标。继续经营，培养绮彩囚犯。':`至少一名囚犯达到${RARITIES[target]}。${state.goalIndex?'后续目标采用实验配置。':''}`;
   const maximum=Math.max(0,...active.map(p=>p.tier),...state.rainbow.map(p=>p.tier));
   $('goal-progress').style.width=`${target===undefined?100:Math.min(100,maximum/Math.max(1,target)*100)}%`;
   $('tool-count').textContent=state.tools.length;
   $('tools').innerHTML=state.tools.map(id=>{const t=TOOLS.find(x=>x.id===id);return `<div class="tool"><span class="tool-icon" aria-hidden="true">${rewardIcon(id)}</span><div><strong>${esc(t.name)}</strong><p>${ruleText(t.text)}</p></div></div>`;}).join('');
   $('tools-empty').hidden=!!state.tools.length;
+  $('tools-empty').textContent=reference?specialEvents?'刑具卡池尚未接全。特殊事件在开门后展示，可查看效果并确认或略过。':eventStatus:'尚未获得刑具';
   renderJournal();
   $('rainbow-count').textContent=state.rainbow.length;
   $('rainbow').innerHTML=rainbowMarkup(state);
   const edible=targets(state,selected);
   state.rooms.forEach((r,i)=>{
     const p=r.prisoner,candidate=phase==='patrol'&&state.destinations.includes(r.id)&&!state.pending.length&&(!challenge?.intel||challenge.intel.room===r.id||r.status==='open');
-    const roomName=p?nameOf(p):r.status==='closed'?'未开启牢房':'空牢房';
+    const roomName=reference?referenceRoomDescription(state,i):p?nameOf(p):r.status==='closed'?'未开启牢房':'空牢房';
     let node=$('board').querySelector(`[data-room="${i}"]`);
     if(!node){node=document.createElement('button');node.dataset.room=i;node.style.gridRow=positions[i][0];node.style.gridColumn=positions[i][1];$('board').append(node);}
     node.className=`room ${p?`occupied tier-${p.tier}`:''} ${candidate?'candidate':''} ${pendingAction?.type==='visit'&&pendingAction.room===i?'destination-selected':''} ${i===selected&&armed?'selected':''} ${i===pairTarget?'pair-target':''} ${edible.includes(i)&&phase==='manage'&&armed&&!challenge?.deliveryPending?'prey':''} ${route?.rooms.includes(i)?'route-step':''}`;
     node.setAttribute('aria-label',`${i+1} 号 ${roomName}${candidate?'，可巡监':''}`);node.setAttribute('aria-pressed',String((i===selected&&armed)||i===pairTarget));
-    const contentKey=JSON.stringify([r,state.position===i,state.day,targets(state,i).length]);
-    if(node.dataset.contentKey!==contentKey){node.innerHTML=`<span class="cell-interior" aria-hidden="true"></span><span class="room-number">${i+1}</span>${p?`<span class="cell-pedestal" aria-hidden="true"></span><span class="portrait ${p.code}"></span><span class="room-name">${speciesOf(p.code).name}</span><span class="room-rarity">${RARITIES[p.tier]}</span>${targets(state,i).length?'<span class="eat-mark" aria-label="有可吃目标">◆</span>':''}`:r.status==='closed'?`<span class="cell-door door-left" aria-hidden="true"></span><span class="cell-door door-right" aria-hidden="true"></span>${lockIcon}`:'<span class="cell-empty" aria-hidden="true">◇</span>'}${r.nest?`<span class="nest-mark">鼠巢 · ${Math.max(0,r.nest.due-state.day)} 日</span>`:''}${r.event?'<span class="event-mark">!</span>':''}${state.position===i?'<span class="current-mark" aria-label="当前位置">✧</span>':''}`;node.dataset.contentKey=contentKey;}
+    const contentKey=JSON.stringify([reference?[r.status,p,!!r.event,r.reference.revealedTier,r.nest,ref.markers.filter(m=>m.room===i||m.linkedRoom===i)]:r,state.position===i,state.day,targets(state,i).length]);
+    if(node.dataset.contentKey!==contentKey){node.innerHTML=`<span class="cell-interior" aria-hidden="true"></span><span class="room-number">${i+1}</span>${p?`<span class="cell-pedestal" aria-hidden="true"></span><span class="portrait ${p.code}"></span><span class="room-name">${speciesOf(p.code).name}</span><span class="room-rarity">${RARITIES[p.tier]}</span>${targets(state,i).length?'<span class="eat-mark" aria-label="有可吃目标">◆</span>':''}`:r.status==='closed'?`<span class="cell-door door-left" aria-hidden="true"></span><span class="cell-door door-right" aria-hidden="true"></span>${lockIcon}`:'<span class="cell-empty" aria-hidden="true">◇</span>'}${r.nest&&!reference?`<span class="nest-mark">鼠巢 · ${Math.max(0,r.nest.due-state.day)} 日</span>`:''}${reference?referenceRoomBadges(state,i):''}${r.event?specialEventBadge():''}${state.position===i?'<span class="current-mark" aria-label="当前位置">✧</span>':''}`;node.dataset.contentKey=contentKey;}
   });
   scene3d.sync(state,{selected,armed,pairTarget,routeRooms:route?.rooms||[]});
   const labels={patrol:['PATROL','请选择目的地',startupPhaseHelp(state)],manage:['MANAGEMENT',uiMode==='eat'?'请选择要吃的囚犯':'请进行决策',uiMode==='eat'?'选主囚犯，再选同阶可吃目标，确认吞噬。':startupPhaseHelp(state)],event:['SPECIAL EVENT',state.event?.kind==='chain'?'连锁反应':'处刑效率',''],riot:['PRISON RIOT','囚犯暴乱',''],finished:['RUN COMPLETE','经营结束','']};
@@ -330,7 +373,7 @@ function render(deferDialogs=false){
     $('phase-help').textContent=challenge.contract.description;
     $('center-actions').innerHTML='<button class="button gold" data-open-delivery>选择交付囚犯</button>'+(challenge.earlyDelivery?'<button class="button" data-cancel-early>继续经营</button>':'<button class="button" data-skip-delivery>放弃本次合约</button>');
   }else if(phase==='event'){
-    const description=state.event.kind==='chain'?'下次移动开启路径上所有未开牢房，不触发其他效果。':'移除当前囚犯克制的下位囚犯，每名提升一阶；筛选按实验配置。';
+    const description=state.event.kind==='chain'?'下次移动开启路径上所有未开牢房，不触发其他效果。':reference?'移除当前囚犯克制且稀有度严格低于它的已开囚犯，每移除一名提升一阶。按发动前代号与稀有度筛选。':'移除当前囚犯克制的下位囚犯，每名提升一阶；筛选按实验配置。';
     $('phase-help').textContent='查看事件，决定接受或略过。';
     $('center-actions').innerHTML='<button class="button gold" data-open-event>查看事件</button>';
     $('event-heading').textContent=state.event.kind==='chain'?'连锁反应':'处刑效率';
@@ -338,6 +381,9 @@ function render(deferDialogs=false){
     $('event-art').innerHTML=rewardIcon(state.event.kind==='chain'?'keys':'saw');
     $('event-rule').innerHTML=ruleText(description);
     $('event-options').innerHTML=buttonsFor({type:'event',accept:false},'略过')+' '+(state.event.kind==='chain'||state.rooms[state.event.room].prisoner?buttonsFor({type:'event',accept:true},'确认','gold'):'');
+  }else if(referenceDone){
+    $('phase-title').textContent='经营完成 · 待镇压交接';$('phase-help').textContent='查看沙盘与单独收容名单；当前只练习经营，不模拟后续刷怪与掉落。';
+    $('center-actions').innerHTML='<button class="button gold" data-show-results>查看交接名单</button>';
   }else if(phase==='riot'){
     const w=state.waves[state.combatIndex];
     $('phase-title').textContent=`${['下层','中层','上层'][w.group]}暴乱`;
@@ -348,7 +394,11 @@ function render(deferDialogs=false){
     const p=state.rooms[selected]?.prisoner;
     $('center-actions').innerHTML=(p&&edible.length?decisionCard('eat','吃',eatIcon,uiMode==='eat'):'')+(p?decisionCard('reroll','换','↻',pendingAction?.type==='reroll',state.rerolls>=state.config.rerollsPerDay):'')+decisionCard('end','结束','◷',pendingAction?.type==='end');
   }else $('center-actions').innerHTML='';
-  $('destination-cards').innerHTML=phase==='patrol'?state.destinations.map(id=>{const p=state.rooms[id].prisoner;return `<button class="decision-card" data-destination="${id}" aria-pressed="${pendingAction?.type==='visit'&&pendingAction.room===id}" ${challenge?.intel&&challenge.intel.room!==id&&state.rooms[id].status==='closed'?'disabled':''}>${p?`<span class="portrait ${p.code} tier-${p.tier}"></span>`:'<span class="decision-icon">▥</span>'}${state.rooms[id].event?'<span class="decision-event" aria-label="此处有事件">!</span>':''}<span>去${id+1}号</span><small class="decision-detail">${esc(destinationDetail(state,id))}</small></button>`;}).join(''):'';
+  $('destination-cards').innerHTML=phase==='patrol'?state.destinations.map(id=>{const p=state.rooms[id].prisoner;return `<button class="decision-card" data-destination="${id}" aria-pressed="${pendingAction?.type==='visit'&&pendingAction.room===id}" ${challenge?.intel&&challenge.intel.room!==id&&state.rooms[id].status==='closed'?'disabled':''}>${p?`<span class="portrait ${p.code} tier-${p.tier}"></span>`:'<span class="decision-icon">▥</span>'}${state.rooms[id].event?specialEventBadge('decision-event'):''}<span>去${id+1}号</span><small class="decision-detail">${esc(destinationDetail(state,id))}</small></button>`;}).join(''):'';
+  if(reference&&phase==='patrol'){
+    for(const card of $('destination-cards').querySelectorAll('[data-destination]'))card.querySelector('.decision-detail').textContent=referenceRoomDescription(state,Number(card.dataset.destination),true);
+    const r=state.rooms[selected];if(r.status==='closed'&&r.reference.revealedTier===null&&state.reference.reveals<state.config.referenceParameters.revealLimitPerDay)$('center-actions').innerHTML=buttonsFor({type:'reveal',room:selected},`探查 ${selected+1} 号稀有度`);
+  }
   if(route)$('phase-help').textContent=`连锁路线：${route.rooms.map(id=>id+1).join(' → ')} 号 · 预计开 ${route.closed} 间${route.nests?`，途经 ${route.nests} 个鼠巢`:''}（当前实验路径）`;
   if(pendingAction?.type==='scout'){$('phase-title').textContent=`侦察 ${pendingAction.room+1} 号牢房`;$('phase-help').textContent='确认消耗 1 张调度券。之后可走这条路线，或改去已开牢房。';}
   if(pendingAction?.type==='reroll'){$('phase-title').textContent=`更换 ${pendingAction.room+1} 号囚犯`;$('phase-help').textContent='重新随机代号与稀有度，可能降阶。确认后消耗今日一次换。';}
@@ -357,6 +407,7 @@ function render(deferDialogs=false){
     $('phase-title').textContent=`已选择 ${pendingAction.room+1} 号牢房`;
     if(!route)$('phase-help').textContent='点击右侧确认，前往这间牢房。';
   }
+  if(pendingAction?.type==='reveal'){$('phase-title').textContent=`探查 ${pendingAction.room+1} 号牢房`;$('phase-help').textContent='只显示门后稀有度，不显示代号，也不开门；次数与耗天采用练习参数。';}
   $('board-count').textContent=`场上 ${active.length} 名 · 已开 ${state.rooms.filter(r=>r.status==='open').length} 间`;
   $('confirm-action').disabled=!pendingAction||busy||!!state.pending.length;
   $('confirm-action').dataset.intent=pendingAction?.type||'';
@@ -371,7 +422,7 @@ function render(deferDialogs=false){
   renderInspect();
   $('advice-panel').hidden=!preferences.advice;
   $('advice-placeholder').hidden=preferences.advice;
-  const recommendations=preferences.advice?recommend(state):[];
+  const recommendations=preferences.advice&&!referenceDone?recommend(state):[];
   $('advice').innerHTML=recommendations.map((rec,i)=>`<div class="advice-item"><div class="advice-title">${i===0?'优先参考':'备选'} · ${esc(rec.label)}</div><p>${esc(rec.reason)}</p>${buttonsFor(rec.action,'采用这个选择')}</div>`).join('')||`<p class="hint">${challenge?.restock?'先在刑具整备中选择一件，再继续经营。':'本轮已结束，可导出记录或再开一局。'}</p>`;
   $('log').innerHTML=state.log.slice(-9).reverse().map(item=>`<li><time>第 ${item.day} 日</time><span>${esc(item.text)}</span></li>`).join('');
   $('action-count').textContent=`${state.history.length} 次操作`;
@@ -379,7 +430,7 @@ function render(deferDialogs=false){
   $('edit-code').value=r.prisoner?.code??(r.status==='closed'?'closed':'empty');
   $('edit-tier').value=String(r.prisoner?.tier??0);
   $('edit-room').disabled=!!challenge||!['patrol','manage'].includes(phase)||!!state.pending.length;
-  $('add-tool').disabled=!!challenge||!['patrol','manage'].includes(phase)||!!state.pending.length;
+  $('add-tool').disabled=reference||!!challenge||!['patrol','manage'].includes(phase)||!!state.pending.length;
   $('open-rules').disabled=!!challenge;
   $('open-rules').title=challenge?'挑战采用固定规则；可切换复刻练习校准参数。':'';
   $('add-tool-select').innerHTML=TOOLS.filter(t=>!state.tools.includes(t.id)).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
@@ -404,11 +455,17 @@ function render(deferDialogs=false){
   if(phase==='event'&&!state.pending.length){
     if(!deferDialogs&&!$('event-dialog').open)$('event-dialog').showModal();
   }else if($('event-dialog').open)$('event-dialog').close();
-  if(!deferDialogs&&phase==='finished'&&resultShown!==state.revision){resultShown=state.revision;showResults();}
-  if(phase!=='finished'&&$('result-dialog').open)$('result-dialog').close();
+  if(!deferDialogs&&(phase==='finished'||referenceDone)&&resultShown!==state.revision){resultShown=state.revision;showResults();}
+  if(phase!=='finished'&&!referenceDone&&$('result-dialog').open)$('result-dialog').close();
 }
 function renderInspect(){
   const r=state.rooms[selected];$('room-number').textContent=`${String(selected+1).padStart(2,'0')}`;
+  if(isReference(state)){
+    const markers=referenceView(state).markers.filter(m=>m.room===selected||m.linkedRoom===selected);
+    if(!r.prisoner){$('inspect').innerHTML=`<div class="empty-inspect"><span class="door-icon">${r.status==='closed'?'▥':'◇'}</span><span>${esc(referenceRoomDescription(state,selected))}</span></div><p class="reference-uncertainty">关闭房的代号不会预判。探查仅显示稀有度，划痕允许同阶头狼选择吞噬。</p>`;return;}
+    const p=r.prisoner,prey=targets(state,selected);
+    $('inspect').innerHTML=`<div class="inspect-portrait portrait ${p.code} tier-${p.tier}" role="img" aria-label="${nameOf(p)}"></div><div class="inspect-name"><strong>${speciesOf(p.code).name}</strong><span>${RARITIES[p.tier]}</span></div><p class="inspect-text">基础可吃同阶${preyCodes(state,p.code).map(code=>speciesOf(code).name).join('、')}。${p.code==='wolf'?'也可吃同阶划痕房。':''}吞噬后升阶并随机变号。</p><p>${markers.map(m=>esc(m.displayText)).join('<br>')}</p><p class="reference-uncertainty">可吃目标：${prey.length?prey.map(id=>`${id+1}号`).join('、'):'暂无'}<br>每日换次数与开/吃/换耗天属于练习参数。</p>`;return;
+  }
   if(!r.prisoner){
     $('inspect').innerHTML=`<div class="empty-inspect"><span class="door-icon" aria-hidden="true">${r.status==='closed'?'▥':'◇'}</span><span>${r.nest?`鼠巢，第 ${r.nest.due} 日预计成熟`:r.status==='closed'?'尚未开启':'囚犯已离开'}</span></div>`;
     return;
@@ -420,6 +477,11 @@ function renderInspect(){
 }
 function showResults(){
   const population=[...onBoard(state),...state.rainbow];
+  if(isReference(state)){
+    $('results').innerHTML=referenceHandoffMarkup(state);
+    $('result-dialog').querySelector('.result-actions').previousElementSibling.textContent='当前只呈现典狱经营交接。模拟节奏与未接完整卡池不代表正式玩法体验。';
+    if(!$('result-dialog').open)$('result-dialog').showModal();return;
+  }
   if(isChallenge(state)){
     const v=challengeView(state);
     $('results').innerHTML=`<div class="result-summary"><div><strong>${v.completed}/3</strong><span>完成合约</span></div><div><strong>${v.score}</strong><span>挑战积分</span></div><div><strong>${v.tickets}</strong><span>剩余调度券</span></div></div><h2 class="${v.result?.success?'challenge-success':''}">${v.result?.grade==='full'?'三单全部达成':v.result?.success?'押运挑战通过':'本轮挑战未通过'}</h2><p class="hint">${esc(v.summary)}</p>${(v.contracts??[]).map(c=>`<div class="wave ${c.status==='completed'?'cleared':'failed'}"><span>${esc(c.name)}</span><span>${c.status==='completed'?`已交付 · ${c.score??0} 分`:'未完成'}</span></div>`).join('')}<p class="challenge-origin">最多12日的原创挑战，第${state.day}日结束；合约完成数优先、交付积分次之；囚犯越高阶贡献越多，但押运仍需符合压力与用券限制。</p>`;
@@ -433,11 +495,16 @@ function showResults(){
 }
 let exportUrl;
 function syncNewMode(){
-  const challenge=$('run-mode').value==='challenge';
+  if(!['reference','challenge'].includes($('run-mode').value))$('run-mode').value='reference';
+  const mode=$('run-mode').value,challenge=mode==='challenge';
+  if(!challenge&&$('preset').dataset.mode!==mode){
+    const current=$('preset').value,options=REFERENCE_PRESETS;
+    $('preset').innerHTML=options.map(([id,label])=>`<option value="${id}">${esc(label)}</option>`).join('');
+    if(options.some(([id])=>id===current))$('preset').value=current;
+    $('preset').dataset.mode=mode;
+  }
   $('practice-presets').hidden=challenge;$('challenge-builds').hidden=!challenge;
-  $('new-mode-help').textContent=challenge?'12 日原创挑战。补给开局配给 6 名囚犯，紧编与育鼠配给 3 名；这些囚犯是初始配置。':
-    $('preset').value==='empty'?'从第 1 日、16 间未开启牢房开始，第一次巡监后才会有囚犯。':
-    $('preset').value==='normal'?'基础练习预置 6 名示例囚犯，从第 1 日巡监开始。':'专项练习预置 3 名囚犯与对应刑具，从第 1 日经营阶段开始。';
+  $('new-mode-help').textContent=challenge?'12 日原创挑战。补给开局配给 6 名囚犯，紧编与育鼠配给 3 名；这些囚犯是初始配置。':$('preset').value==='normal'?'第1日空监狱开始，公开文字支持基础克制与标记；完整刑具/事变/珍藏池未接全。随机权重、耗天、目的地和每日次数使用练习参数。':`标记专项：固定场面用于观察${REFERENCE_PRESETS.find(([id])=>id===$('preset').value)?.[1]??'效果'}，不代表官方开局或标记出现率。猎物施加时同阶可克制资格、日切换计时与划痕叠加口径为练习策略。`;
   $('new-save-warning').hidden=!startupSave.run&&!startupSave.protectedSave;
   $('new-save-warning').textContent=startupSave.protectedSave?'本机存档未能验证，本次不会替换原内容；新局请导出保存。':'点击开始经营会替换当前自动存档；返回或按 Escape 会保留原局。';
 }
@@ -481,14 +548,26 @@ function exportCurrent(){
   if($('result-dialog').open)$('result-dialog').close();
   modalNavigation.open('export-dialog',document.activeElement);
 }
-function startDialog(mode='practice',preset='empty'){
+function startDialog(mode='reference',preset='normal'){
   if(busy)return;showStartup();
   $('seed-input').value=`talos-${Date.now().toString(36)}`;
-  $('run-mode').value=mode==='challenge'?'challenge':'practice';$('preset').value=preset;syncNewMode();
+  mode=mode==='challenge'?'challenge':'reference';
+  $('run-mode').value=mode;syncNewMode();$('preset').value=mode==='reference'&&preset==='empty'?'normal':preset;syncNewMode();
   if(!$('new-dialog').open)$('new-dialog').showModal();
 }
 function fillConfig(){
   const c=configDraft;
+  const reference=!startupActive&&isReference(state);
+  for(const id of ['nest-days','nest-tier','muzzle-timing','fire-timing','combat-power','rainbow-counts','execution-same','wine-changes','circular-neighbors'])$(id).closest('label').hidden=reference;
+  if(!$('reference-parameter-controls')){
+    const panel=document.createElement('div');panel.id='reference-parameter-controls';panel.className='full-row reference-marker-card';panel.innerHTML='<h3>练习参数</h3><label class="check"><input id="reference-special-events" type="checkbox">新局启用特殊事件样本</label><label class="check"><input id="reference-execution-code" type="checkbox">处刑后随机变号（练习）</label><label class="check"><input id="reference-scratch-base" type="checkbox">划痕额外二阶叠加基础一阶</label><label class="check"><input id="reference-tusk-replaced" type="checkbox">象牙候选包含换后囚犯</label><label>每日可探查次数（练习）<input id="reference-reveal-limit" type="number" min="0" max="16"></label><p>仅接入连锁反应、处刑效率两种样本，默认保持代号。事件概率、路径方向、可略过与不额外耗日均采用本地练习设置；完整卡池待补。</p>';
+    $('config-form').prepend(panel);
+  }
+  $('reference-parameter-controls').hidden=!reference;
+  const p={scratchBaseGainIncluded:true,tuskIncludeReplaced:true,revealLimitPerDay:1,specialEvents:true,executionChangesCode:false,...c.referenceParameters};
+  $('reference-special-events').checked=p.specialEvents;$('reference-execution-code').checked=p.executionChangesCode;
+  $('reference-scratch-base').checked=p.scratchBaseGainIncluded;$('reference-tusk-replaced').checked=p.tuskIncludeReplaced;$('reference-reveal-limit').value=p.revealLimitPerDay;
+  $('assumptions').innerHTML=reference?referenceView(state).assumptions.map(x=>`<p>${esc(x)}</p>`).join(''):ASSUMPTIONS.map(([label,text])=>`<div class="assumption"><strong>${label}</strong><p>${text}</p></div>`).join('');
   $('rarity-weights').value=c.rarityWeights.join(',');$('code-weights').value=c.codeWeights.join(',');
   $('rerolls-limit').value=c.rerollsPerDay;$('nest-days').value=c.nestDays;$('nest-tier').value=String(c.nestTier);
   $('muzzle-timing').value=c.muzzleTiming;$('fire-timing').value=c.fireEligibility;
@@ -522,7 +601,7 @@ document.addEventListener('click',event=>{
     else offerAction(button.dataset.decision==='end'?{type:'end'}:{type:'reroll',room:selected},event);
     return;
   }
-  if(button.dataset.action){const action=JSON.parse(button.dataset.action);if(action.type==='deliver')openDelivery(action);else if(['eat','reroll','visit','end','scout','skipDelivery'].includes(action.type))offerAction(action,event);else act(action);return;}
+  if(button.dataset.action){const action=JSON.parse(button.dataset.action);if(action.type==='deliver')openDelivery(action);else if(['eat','reroll','visit','end','scout','reveal','skipDelivery'].includes(action.type))offerAction(action,event);else act(action);return;}
   if(button.hasAttribute('data-show-results')){showResults();return;}
   if(button.dataset.room!==undefined){
     const clicked=Number(button.dataset.room);
@@ -531,7 +610,7 @@ document.addEventListener('click',event=>{
     if(state.phase==='patrol'&&intel&&state.rooms[clicked].status==='closed'&&clicked!==intel.room)return;
     if(clicked!==selected||!armed)selectionSound();
     if(state.phase==='patrol'&&state.destinations.includes(clicked)){offerAction({type:'visit',room:clicked},event);return;}
-    if(state.phase==='manage'&&armed&&clicked!==selected&&state.rooms[selected].prisoner&&state.rooms[clicked].prisoner){showPair(clicked,pointerAt(event,button));return;}
+    if(state.phase==='manage'&&armed&&clicked!==selected&&state.rooms[selected].prisoner&&(state.rooms[clicked].prisoner||isReference(state)&&targets(state,selected).includes(clicked))){showPair(clicked,pointerAt(event,button));return;}
     cancelChoice();selected=clicked;armed=!!state.rooms[clicked].prisoner;render();
   }
 });
@@ -553,9 +632,9 @@ $('confirm-action').addEventListener('click',()=>{if(pendingAction)act(pendingAc
 $('cancel-action').addEventListener('click',()=>{if(!busy){audio.play('cancel');cancelChoice();render();}});
 $('confirm-reward').addEventListener('click',()=>{if(rewardChoice)act({type:'choose',id:rewardChoice});});
 $('new-game').addEventListener('click',showStartup);$('result-new').addEventListener('click',showStartup);
-$('startup-empty').addEventListener('click',()=>startDialog('practice','empty'));
+$('startup-empty').addEventListener('click',()=>startDialog('reference','normal'));
 $('startup-challenge').addEventListener('click',()=>startDialog('challenge'));
-$('startup-practice').addEventListener('click',()=>startDialog('practice','normal'));
+$('startup-practice').addEventListener('click',()=>startDialog('reference','tusk'));
 $('startup-import').addEventListener('click',()=>$('import-file').click());
 $('continue-run').addEventListener('click',()=>{if(startupSave.run)enterRun(structuredClone(startupSave.run));});
 $('new-dialog').addEventListener('close',()=>{if(startupActive)(startupSave.run?$('continue-run'):$('startup-empty')).focus({preventScroll:true});});
@@ -592,6 +671,7 @@ $('config-form').addEventListener('submit',event=>{
       rerollsPerDay:Number($('rerolls-limit').value),nestDays:Number($('nest-days').value),nestTier:Number($('nest-tier').value),
       muzzleTiming:$('muzzle-timing').value,fireEligibility:$('fire-timing').value,eventsChance:Number($('events-chance').value),combatPower:Number($('combat-power').value),
       reusableRooms:$('reuse-rooms').checked,rainbowCountsForMuzzle:$('rainbow-counts').checked,executionSameTier:$('execution-same').checked,wineChangesCode:$('wine-changes').checked,circularNeighbors:$('circular-neighbors').checked});
+    if(!startupActive&&isReference(state))configDraft.referenceParameters={specialEvents:$('reference-special-events').checked,executionChangesCode:$('reference-execution-code').checked,scratchBaseGainIncluded:$('reference-scratch-base').checked,tuskIncludeReplaced:$('reference-tusk-replaced').checked,revealLimitPerDay:Number($('reference-reveal-limit').value)};
     $('rules-dialog').close();startDialog();
   }catch(e){alert(`参数未保存：${e.message}`);}
 });

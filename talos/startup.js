@@ -1,5 +1,5 @@
 import {DEFAULT_CONFIG} from './rules.js?v=0.6.8-1';
-import {createGame,createChallenge,exportRun,importRun,isChallenge} from './session-engine.js?v=0.6.8-1';
+import {createChallenge,createReferenceGame,exportRun,importRun,isChallenge,isReference} from './session-engine.js?v=0.6.12-1';
 
 export const RUN_STORE='ss14-prison-lab-v1';
 
@@ -14,10 +14,9 @@ export function readStartupSave(storage){
   }catch(error){return {run:null,error:`${error.message}。仍可开始，本次不写入本机存档，请导出保存。`,protectedSave:true};}
 }
 
-export function createStartupRun({seed='talos',mode='practice',preset='empty',build='supply',config=DEFAULT_CONFIG}={}){
-  if(!['practice','challenge'].includes(mode))throw new Error('经营模式不存在');
-  const current=mode==='challenge'?createChallenge(seed,{build}):
-    preset==='empty'?createGame(seed,{...config,initialPrisoners:0},'normal'):createGame(seed,config,preset);
+export function createStartupRun({seed='talos',mode='reference',preset='normal',build='supply',config=DEFAULT_CONFIG}={}){
+  if(!['reference','challenge'].includes(mode))throw new Error('新局仅支持经营规则演习和原创挑战；旧版样本请继续或导入已有存档。');
+  const current=mode==='reference'?createReferenceGame(seed,config,preset==='empty'?'normal':preset):createChallenge(seed,{build});
   return {current,initial:structuredClone(current)};
 }
 
@@ -32,10 +31,11 @@ export function saveStartupRun(storage,run,{protectedSave=false}={}){
 }
 
 export function startupRunSummary(state){
-  const mode=isChallenge(state)?'挑战经营':state.config.initialPrisoners===0?'空监狱经营':'预设练习';
-  const phase=({patrol:'待巡监',manage:'经营中',event:'事件待处理',riot:'暴乱演算',finished:'已结束'})[state.phase];
-  return {mode,phase,day:state.day,days:state.config.days,finished:state.phase==='finished',
-    label:state.phase==='finished'?'查看上局结果':`继续第 ${state.day} 日`,
+  const reference=isReference(state),complete=reference&&['riot','finished'].includes(state.phase);
+  const mode=reference?'资料校准练习':isChallenge(state)?'挑战经营':state.config.initialPrisoners===0?'空监狱经营':'预设练习';
+  const phase=complete?'经营完成 · 待镇压交接':({patrol:'待巡监',manage:'经营中',event:'事件待处理',riot:'暴乱演算',finished:'已结束'})[state.phase];
+  return {mode,phase,day:state.day,days:state.config.days,finished:state.phase==='finished'||complete,
+    label:complete?'查看经营交接':state.phase==='finished'?'查看上局结果':`继续第 ${state.day} 日`,
     detail:`${mode} · 第 ${state.day} / ${state.config.days} 日 · ${phase}`};
 }
 
@@ -43,6 +43,12 @@ export function startupConfigDraft(state){
   const draft=structuredClone(state.config);
   // Zero belongs to the explicit empty start; keep preset practice populated.
   if(draft.initialPrisoners===0)draft.initialPrisoners=DEFAULT_CONFIG.initialPrisoners;
+  // v1 disabled all events internally. Restore the explicit new-game default
+  // only in this draft, without changing the continued/imported legacy run.
+  if(state.reference?.version==='public-preview-v1'){
+    draft.eventsChance=DEFAULT_CONFIG.eventsChance;
+    draft.referenceParameters={...draft.referenceParameters,specialEvents:true,executionChangesCode:false};
+  }
   return draft;
 }
 

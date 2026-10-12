@@ -1,11 +1,12 @@
-import * as engine from './engine.js?v=0.6.8-1';
+import * as engine from './engine.js?v=0.6.12-1';
 import {SPECIES,RARITIES,TOOLS,FOOD_CHAIN_VERSION} from './rules.js?v=0.6.8-1';
-import {CHALLENGE_VERSION,LEGACY_CHALLENGE_VERSION,ESCORTS,isChallenge,withoutChallenge,baseFingerprint,sameValue,refreshDestinations,deliveryOptions,deliveryPreview,settleChallenge,validateChallenge,challengeView,createChallenge,canOpenEarlyDelivery,currentContract} from './challenge.js?v=0.6.8-1';
-import {queueRestock,restockOptions,restockView} from './challenge-v2.js?v=0.6.8-1';
+import {CHALLENGE_VERSION,LEGACY_CHALLENGE_VERSION,ESCORTS,isChallenge,withoutChallenge,baseFingerprint,sameValue,refreshDestinations,deliveryOptions,deliveryPreview,settleChallenge,validateChallenge,challengeView,createChallenge,canOpenEarlyDelivery,currentContract} from './challenge.js?v=0.6.12-1';
+import {queueRestock,restockOptions,restockView} from './challenge-v2.js?v=0.6.12-1';
 
-export {onBoard,targets,nameOf,canEat,seedNumber} from './engine.js?v=0.6.8-1';
-export {createChallenge,isChallenge,challengeView,deliveryPreview} from './challenge.js?v=0.6.8-1';
+export {onBoard,targets,nameOf,canEat,seedNumber} from './engine.js?v=0.6.12-1';
+export {createChallenge,isChallenge,challengeView,deliveryPreview} from './challenge.js?v=0.6.12-1';
 export const createGame=engine.createGame;
+export {createReferenceGame,referenceView,referenceVisibleState,addReferenceMarker,isReference} from './reference-rules.js?v=0.6.12-1';
 export const CHALLENGE_EXPORT_SCHEMA='ss14.prison.challenge.export.v1';
 const exact=(a,keys)=>a&&typeof a==='object'&&!Array.isArray(a)&&Object.keys(a).length===keys.length&&keys.every(k=>Object.hasOwn(a,k));
 

@@ -5,9 +5,11 @@
 .mechanics-tooltip .rules-note{color:#948b81;font-size:11px;border-top:1px solid #5a4f413d;margin-top:14px;padding-top:10px}
 .game-rainbow .rainbow-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:.75cqw .65cqw;max-height:27cqw;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#776270 transparent;padding:.25cqw}
 .game-rainbow .rainbow-avatar,.game-rainbow .rainbow-slot{position:relative;aspect-ratio:.85;min-width:0;border-radius:0;clip-path:polygon(50% 0,97% 23%,97% 77%,50% 100%,3% 77%,3% 23%);background:linear-gradient(145deg,#9b939a,#51414d 42%,#181318 80%);box-shadow:none;isolation:isolate}
-.game-rainbow .rainbow-avatar{animation:none;filter:none}
+.game-rainbow .rainbow-avatar{animation:none;filter:none;background:conic-gradient(from -30deg,#ff697d,#ffa34f,#f1d96a,#6bd490,#60d8e3,#7396ff,#c585f0,#ff697d)}
+.game-rainbow .rainbow-avatar::before{content:"";position:absolute;inset:3%;z-index:0;clip-path:inherit;background:linear-gradient(145deg,#2a202b,#0c090f 70%);pointer-events:none}
 .rainbow-face{position:absolute;inset:5% 8% 8%;clip-path:polygon(50% 0,97% 23%,97% 77%,50% 100%,3% 77%,3% 23%);z-index:1;filter:brightness(1.13);background-color:#181318}
 .rainbow-frame{position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(transparent 58%,#080509e0 94%);box-shadow:inset 0 0 .55cqw #000;clip-path:inherit}
+.game-rainbow .rainbow-avatar .rainbow-frame{inset:3%}
 .rainbow-name{position:absolute;z-index:3;left:0;right:0;bottom:12%;color:#eedbed;text-align:center;font-size:.78cqw;text-shadow:0 1px 2px #000,0 0 4px #000;font-family:"Noto Serif SC","SimSun",serif;letter-spacing:.05em}
 .game-rainbow .rainbow-slot{opacity:.65;background:linear-gradient(145deg,#55535266,#1c1c1cdc 60%);border:0;box-shadow:inset 0 0 .9cqw #0008}
 .rainbow-slot-mark{position:absolute;inset:0;display:grid;place-items:center;color:#6f6669;font-size:1.35cqw;opacity:.5}

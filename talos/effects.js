@@ -20,7 +20,14 @@ export class PrisonEffects {
   async before(action,before){
     if(!this.active)return;
     const node=this.room(action.room);
-    if(action.type==='eat')await Promise.all([this.fly(this.room(action.prey),node,before.rooms[action.prey].prisoner.code),this.animate(this.room(action.prey),[{opacity:1},{opacity:.1,filter:'brightness(2)'}],300),this.animate(node,[{transform:'translateY(0)'},{transform:'translateY(-5px) scale(1.04)',filter:'brightness(1.65)'},{transform:'translateY(0)'}],340)]);
+    if(action.type==='eat'){
+      const prey=this.room(action.prey),visiblePrey=before.rooms[action.prey]?.prisoner;
+      const animations=[this.animate(node,[{transform:'translateY(0)'},{transform:'translateY(-5px) scale(1.04)',filter:'brightness(1.65)'},{transform:'translateY(0)'}],340)];
+      if(visiblePrey)animations.push(this.fly(prey,node,visiblePrey.code),this.animate(prey,[{opacity:1},{opacity:.1,filter:'brightness(2)'}],300));
+      // A closed scratch room exposes its rarity, never the concealed animal's identity.
+      else animations.push(this.animate(prey,[{filter:'brightness(1)',boxShadow:'inset 0 0 0 0 #ffe1ab'},{filter:'brightness(2.2)',boxShadow:'inset 0 0 0 3px #ffe1ab'},{filter:'brightness(1)',boxShadow:'inset 0 0 0 0 #ffe1ab'}],340));
+      await Promise.all(animations);
+    }
     else if(action.type==='visit'){
       const doors=node?.querySelectorAll('.cell-door');
       await Promise.all([this.fly(this.room(before.position),node,null,'warden'),...[...(doors??[])].map((door,i)=>this.animate(door,[{transform:'rotateY(0deg)'},{transform:`rotateY(${i?108:-108}deg)`,opacity:.1}],300))]);

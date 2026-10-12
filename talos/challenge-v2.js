@@ -1,5 +1,5 @@
 import {SPECIES,TOOLS} from './rules.js?v=0.6.8-1';
-import {seedNumber} from './engine.js?v=0.6.8-1';
+import {seedNumber} from './engine.js?v=0.6.12-1';
 
 export const CHALLENGE_V2='talos-original-contract-v2';
 

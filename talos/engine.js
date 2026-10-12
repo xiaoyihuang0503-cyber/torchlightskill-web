@@ -1,4 +1,6 @@
 import { DEFAULT_CONFIG, SPECIES, RARITIES, TOOLS, GIFTS, FOOD_CHAIN_VERSION, validateConfig } from './rules.js?v=0.6.8-1';
+import {isReference,referenceCanEat,referenceTargets,referenceLegalActions,applyReferenceAction,editReferenceRoom,addReferenceMarker,validateReferenceState,recommendReference,createReferenceGame} from './reference-rules.js?v=0.6.12-1';
+export {createReferenceGame,referenceView,referenceVisibleState,addReferenceMarker,isReference} from './reference-rules.js?v=0.6.12-1';
 
 export function seedNumber(value) {
   let n = 2166136261;
@@ -38,10 +40,12 @@ export function preyCodes(s, code) {
   return item ? s.foodChain===FOOD_CHAIN_VERSION ? [...item.prey] : [item.legacyPrey] : [];
 }
 export function canEat(s, a, b) {
+  if(isReference(s))return referenceCanEat(s,a,b);
   if (!a || !b || a.id===b.id || a.tier!==b.tier || a.tier>=5) return false;
   return preyCodes(s,a.code).includes(b.code) || (has(s,'rathead') && a.code==='rat' && b.code==='rat');
 }
 export function targets(s, room) {
+  if(isReference(s))return referenceTargets(s,room);
   const a=s.rooms[room]?.prisoner;
   return s.rooms.filter(r=>canEat(s,a,r.prisoner)).map(r=>r.id);
 }
@@ -188,6 +192,7 @@ export function createGame(seed='talos',config=DEFAULT_CONFIG,preset='normal') {
   return s;
 }
 export function legalActions(s) {
+  if(isReference(s))return referenceLegalActions(s);
   if(s.pending.length)return s.pending[0].options.map(id=>({type:'choose',id}));
   if(s.phase==='patrol')return s.destinations.map(room=>({type:'visit',room}));
   if(s.phase==='event')return [{type:'event',accept:false},...(s.event.kind==='chain'||s.rooms[s.event.room].prisoner ? [{type:'event',accept:true}]:[])];
@@ -207,6 +212,12 @@ export function upgradeFoodChain(state) {
   return s;
 }
 export function applyAction(state,action) {
+  if(isReference(state)){
+    if(action?.type==='mark'){
+      const {type,kind,...options}=action;return addReferenceMarker(state,kind,options);
+    }
+    return applyReferenceAction(state,action);
+  }
   if(action?.type==='upgradeFoodChain') {
     if(Object.keys(action).length!==2||action.version!==FOOD_CHAIN_VERSION||state.foodChain!==undefined)throw new Error('吞噬规则升级操作无效');
     return upgradeFoodChain(state);
@@ -269,6 +280,7 @@ export function applyAction(state,action) {
 }
 
 export function editRoom(state,id,code,tier) {
+  if(isReference(state))return editReferenceRoom(state,id,code,tier);
   if(!['patrol','manage'].includes(state.phase)||state.pending.length)throw new Error('先完成当前事件或奖励选择，再编辑场面');
   const s=structuredClone(state),r=s.rooms[id];
   if(!r)throw new Error('牢房不存在');
@@ -281,6 +293,7 @@ export function editRoom(state,id,code,tier) {
   s.revision++;s.history.push({type:'edit',room:id,code,tier,revision:s.revision,day:s.day});log(s,`手动校准 ${id+1} 号牢房。`);validateState(s);return s;
 }
 export function addTool(state,id) {
+  if(isReference(state))throw new Error('公开资料未提供完整刑具卡池；请在独立的旧版实验场校准样本刑具');
   if(!TOOLS.some(t=>t.id===id)||state.tools.includes(id))throw new Error('该刑具不存在或已取得');
   if(!['patrol','manage'].includes(state.phase)||state.pending.length)throw new Error('先完成当前选择');
   const s=structuredClone(state);s.tools.push(id);s.revision++;s.history.push({type:'addTool',id,revision:s.revision,day:s.day});log(s,`实验添加刑具：${TOOLS.find(t=>t.id===id).name}。`);return s;
@@ -295,6 +308,7 @@ export function replay(run) {
   return s;
 }
 export function validateState(s) {
+  if(s?.reference)return validateReferenceState(s);
   if(!s||s.schema!=='ss14.prison.run.v1')throw new Error('这不是监狱实验场存档');
   if(s.foodChain!==undefined&&s.foodChain!==FOOD_CHAIN_VERSION)throw new Error('吞噬规则版本无效');
   validateConfig(s.config);
@@ -325,14 +339,21 @@ export function importRun(payload) {
   if(!payload||payload.schema!=='ss14.prison.export.v1'||payload.version!==DEFAULT_CONFIG.version)throw new Error('存档格式或规则版本不兼容');
   if(!Array.isArray(payload.actions)||payload.actions.length>10000)throw new Error('操作记录过大或无效');
   validateState(payload.initial);validateState(payload.current);
+  if(!!payload.initial.reference!==!!payload.current.reference)throw new Error('资料练习与旧实验存档模式不一致');
   const rebuilt=replay(payload);
   const canonical=value=>Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonical(value[k])])):value;
+  if(isReference(payload.initial)){
+    if(payload.initial.reference.preset!==payload.current.reference.preset)throw new Error('资料练习场面版本不一致');
+    const expected=createReferenceGame(payload.initial.seed,payload.initial.config,payload.initial.reference.preset,payload.initial.reference.version);
+    if(JSON.stringify(canonical(expected))!==JSON.stringify(canonical(payload.initial)))throw new Error('资料练习初始场面必须与版本固定开局一致');
+  }
   if(JSON.stringify(canonical(rebuilt))!==JSON.stringify(canonical(payload.current)))throw new Error('存档与操作记录不一致，无法可靠重放');
   return {initial:structuredClone(payload.initial),current:rebuilt};
 }
 
 // Guidance ranks visible opportunities only. It does not peek at unopened rooms or predict live profit.
 export function recommend(s) {
+  if(isReference(s))return recommendReference(s);
   const actions=legalActions(s);
   return actions.map(action=>{
     let score=0,label='',reason='';

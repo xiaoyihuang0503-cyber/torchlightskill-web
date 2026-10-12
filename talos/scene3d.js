@@ -166,7 +166,21 @@ export class PrisonScene3D {
     if(action.type==='visit'&&before.rooms[action.room]?.status==='closed'){
       await this.tween(380,t=>this.asset.setDoor(action.room,t),()=>this.asset.setDoor(action.room,1));
     }else if(action.type==='eat'){
-      const prey=this.cells[action.prey];if(!prey)return;const ghost=new THREE.Sprite(prey.portrait.material.clone());ghost.material.depthTest=false;ghost.renderOrder=10;ghost.scale.copy(prey.portrait.scale);
+      const prey=this.cells[action.prey];if(!prey)return;
+      if(!before.rooms[action.prey]?.prisoner){
+        // Pulse the cage and visible eater without creating a concealed animal sprite.
+        const accent=prey.accent,previous=accent?{group:accent.group.visible,fill:accent.fill.visible,fillOpacity:accent.fillMaterial.opacity,edgeOpacity:accent.edgeMaterial.opacity}:null;
+        if(accent){accent.group.visible=true;accent.fill.visible=true;}
+        await this.tween(340,t=>{
+          const pulse=Math.sin(Math.PI*t),size=PORTRAIT_SIZE*(1+pulse*.12);cell.portrait.scale.set(size,size,1);
+          if(accent){accent.fillMaterial.opacity=.075+pulse*.17;accent.edgeMaterial.opacity=.75+pulse*.25;}
+        },()=>{
+          cell.portrait.scale.set(PORTRAIT_SIZE,PORTRAIT_SIZE,1);
+          if(accent){accent.group.visible=previous.group;accent.fill.visible=previous.fill;accent.fillMaterial.opacity=previous.fillOpacity;accent.edgeMaterial.opacity=previous.edgeOpacity;}
+        });
+        return;
+      }
+      const ghost=new THREE.Sprite(prey.portrait.material.clone());ghost.material.depthTest=false;ghost.renderOrder=10;ghost.scale.copy(prey.portrait.scale);
       const start=prey.portrait.getWorldPosition(new THREE.Vector3()),end=cell.portrait.getWorldPosition(new THREE.Vector3());ghost.position.copy(start);this.scene.add(ghost);this.ghosts??=new Set();this.ghosts.add(ghost);
       await this.tween(380,t=>{ghost.position.lerpVectors(start,end,t);ghost.position.y+=Math.sin(Math.PI*t)*1.25;ghost.scale.set(PORTRAIT_SIZE*(1-t*.86),PORTRAIT_SIZE*(1-t*.86),1);ghost.material.opacity=1-t*.7;prey.portrait.material.opacity=1-t;cell.portrait.scale.set(PORTRAIT_SIZE*(1+Math.sin(Math.PI*t)*.12),PORTRAIT_SIZE*(1+Math.sin(Math.PI*t)*.12),1);},()=>{ghost.removeFromParent();ghost.material.dispose();this.ghosts.delete(ghost);prey.portrait.material.opacity=1;cell.portrait.scale.set(PORTRAIT_SIZE,PORTRAIT_SIZE,1);});
     }else if(action.type==='reroll'){

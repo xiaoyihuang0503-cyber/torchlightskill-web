@@ -1,4 +1,4 @@
-import {applyAction,editRoom,addTool} from './session-engine.js?v=0.6.8-1';
+import {applyAction,editRoom,addTool} from './session-engine.js?v=0.6.12-1';
 import {SPECIES,RARITIES,TOOLS,GIFTS} from './rules.js?v=0.6.8-1';
 
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -141,6 +141,7 @@ const beastSilhouettes={
   rat:'M9 23C5 23 3 25 3 27C3 29 6 30 9 28L11 26L11 29C7 31 1 30 1 26C1 22 4 20 7 20C5 16 6 12 10 10C8 6 10 2 14 2C18 2 20 6 18 10C23 10 25 13 26 15L30 18Q31 19 30 21L24 24L22 27H12L10 25ZM12 6a2 2 0 1 0 4 0 2 2 0 1 0-4 0ZM22 15a1.2 1.2 0 1 0 2.4 0 1.2 1.2 0 1 0-2.4 0Z',
 };
 function railIconMarkup(icon){return `<span class="journal-symbol journal-symbol-${escape(icon.code)}" aria-hidden="true"><svg viewBox="0 0 32 32" focusable="false" aria-hidden="true"><path fill-rule="evenodd" d="${beastSilhouettes[icon.code]??''}"/></svg></span>`;}
+export function journalSpeciesSymbol(code){return species(code)?railIconMarkup({code}):'';}
 function entryMarkup(entry){
   const detail=[`第 ${entry.day} 日 · ${entry.summary}`,...entry.details].join('\n');
   return `<li class="journal-entry" data-journal-entry="${escape(entry.id)}"><button type="button" class="journal-entry-trigger" data-journal-detail="${escape(entry.id)}" aria-label="${escape(detail)}"><span class="journal-entry-icons" aria-hidden="true">${entry.icons.length?entry.icons.slice(0,2).map(railIconMarkup).join(''):'<span class="journal-operation-mark">◆</span>'}</span><span class="journal-entry-verb">${escape(entry.verb)}</span></button></li>`;

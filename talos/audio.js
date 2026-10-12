@@ -295,7 +295,8 @@ export class PrisonAudio {
     const rainbow=after.rainbow.some(p=>!rainbowIds.has(p.id));
     const upgraded=population(after).some(p=>oldById.has(p.id)&&p.tier>oldById.get(p.id));
     const goal=after.goalIndex>before.goalIndex;
-    const day=after.day>before.day,riot=after.phase==='riot'&&before.phase!=='riot',finished=after.phase==='finished'&&before.phase!=='finished';
+    const day=after.day>before.day,enterRiot=after.phase==='riot'&&before.phase!=='riot',finished=after.phase==='finished'&&before.phase!=='finished';
+    const handoff=enterRiot&&['public-preview-v1','public-preview-v2'].includes(after.reference?.version),riot=enterRiot&&!handoff;
     if(after.stats.eaten>before.stats.eaten&&!token?.devourHandled){
       if(action.type==='eat')this.devour(before.rooms[action.room]?.prisoner?.code);else this.play('devour');
     }
@@ -304,7 +305,7 @@ export class PrisonAudio {
     if(action.type==='choose'||action.type==='deliver')this.play('reward');
     if(day)this.play('day');
     if(riot)this.play('riot');
-    const result=finished?['voice_end',6]:rainbow?['voice_rainbow',5]:goal?['voice_goal',4]:riot?['voice_riot',4]:action.type==='choose'?['voice_reward',3]:day?['voice_day',2]:null;
+    const result=finished||handoff?['voice_end',6]:rainbow?['voice_rainbow',5]:goal?['voice_goal',4]:riot?['voice_riot',4]:action.type==='choose'?['voice_reward',3]:day?['voice_day',2]:null;
     if(result)this.voice(result[0],{priority:result[1],replace:true});
   }
   getStatus(){
