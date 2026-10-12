@@ -143,3 +143,23 @@ GitHub Pages 不能保存跨设备共享投票。本次演示不提供公共计�
 - 免费计划的实时峰值连接数和总消息数都有限，初期需监控 Realtime 用量；匿名账号可以通过清除浏览器数据重建，不能宣称做到一个自然人只能投一票。
 
 服务器端迁移、字段、权限和回归步骤详见 `council/supabase/README.md`。
+
+## v2 正式上线（2026-10-12）
+
+本次首页完全采用 `council/v2-app.js` 和 `council/v2.css`；启动入口 `live-bootstrap.js` 负责先装载 Supabase，然后再启动新 UI。原有 `app.js`、静态 CSS 仍保留作回滚参考，但不再作为当前入口。
+
+1. **英雄实时排行**：从 `public.council_choices` 真值排序，真实 0 票显示 0；相同票数按 manifest 原始 position 稳定排序；PC Top 6、手机 Top 4。排名交换 FLIP 动效、真实事件 Emoji 气泡，严格没有自动模拟 +1。英雄池默认收起，展开后的 28 个英雄按票数或名字排序、可搜索、投票和分享。
+2. **四题同一模块**：`mode_reduction`、`ember_drop_data`、`reward_access`、`legacy_friction`，每题 4 个选项。完整标题、选项和圆桌追问使用用户原文。焦点模块左四题切换、右侧选项，手机二列题签；追问默认折叠，投票可改选。所有结果来自 Supabase RPC / Realtime。
+3. **真实策划圆桌**：桌面围桌 8 把椅子：4 个焦点官方追问、最多 3 个已审核的玩家提问与 1 个空椅子。数据不足时玩家席显示候补空位，点击可提问。移动端展示重点椅子并提供横滑完整席位。点击座位右侧出现问题详情，可一键支持或分享；支持数由 `council_seat_stats` 实时读取。
+4. **席位支持后端**：迁移 `create_council_v2_roundtable_seat_supports` 建立独立计数、私密支持者表、匿名事件与权限校验 RPC；`council_support_seat()` 按 Supabase Auth UUID 每席只能支持一次，24 小时最多支持 20 个不同席位。未审核问题无法接受支持；公开事件不含用户身份或问题原文。
+5. **问题提交**：8–160 字，经匿名身份 RPC 提交默认 `pending`；未审核正文仅提交者可见，审核通过才进入公开圆桌。关键词按全部真实投稿的已知分类统计（含待审核），不能解释为官方验证意见。
+6. **分享**：`/council/share/?kind=topic&topic=<topic_id>&choice=<choice_id>` 可直接投新议题；`kind=seat&seat=topic:<id>` 或 `question:<uuid>` 可直接支持某席，用户问题正文只有审核通过才读取。`hero`、`lottery`、`ranking` 原功能保留；旧 `maze` 和 `roundtable` 链接引导新版，不自动换票。
+7. **广告和内部材料**：广告两侧结构依旧隐藏，导师源码隐藏，头像与来源继续从 manifest 精确按 `type+id+trait` 匹配，公开页面不渲染来源清单。
+
+Supabase 额外迁移 `council_v2_focus_topics_and_legacy_archival` 记录四题与 16 个选项，停用旧二选迷城与圆桌方向问题（只停用，不删除历史数据）；所有新题原始票数为 0。
+
+### 核验与风险
+
+- 完成：GitHub 代码静态语法、页面 DOM 引用、假数据清理、客户端模拟事件与投票、席位支持、四题与分享链接准确性；数据库 RLS、RPC 授权、选项数量、初始 0 票、Supabase publication。
+- **待实际浏览器验收**：Chrome/Safari/iPhone 真机渲染、GitHub Pages 部署日志、匿名登录提供商端到端首次登录、双设备 Realtime 消息及 3:4 分享图片下载。任何静态/模拟测试不能冒充在线浏览器验收。
+- 本项目可免费运行，但 Supabase Free 有 Realtime 同时连接和消息配额；若有大量玩家访问需要增加流量监控/防刷（匿名账号并不等同每个自然人只能注册一次）。
