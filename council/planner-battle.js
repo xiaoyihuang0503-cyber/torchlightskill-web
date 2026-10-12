@@ -290,6 +290,18 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
       if(i===0)run();else window.setTimeout(run,i*75);
     }
   }
+  function playAmbient(){
+    if(reduced||document.hidden||state.busy)return;
+    const now=Date.now();
+    if(now-state.lastClick<4500||now-state.lastRemoteBomb<4000)return;
+    const stage=$("planner-stage");
+    const rect=stage?.getBoundingClientRect?.();
+    if(rect && Number.isFinite(window.innerHeight) && (rect.top>window.innerHeight+90||rect.bottom<0))return;
+    const top=state.ranked[0];
+    if(!top||nSupport(top.key)<1)return;
+    // Decorative reprise of a genuinely supported issue. NO ballot or click increment.
+    fireBomb(top.key,{real:false});
+  }
   function readClicks(){
     try{const v=Number(localStorage.getItem(STORAGE));state.localClicks=Number.isSafeInteger(v)&&v>=0?v:0;}
     catch(error){state.localClicks=0;}
@@ -380,6 +392,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
     }catch(error){/* A malformed link must not block the game. */}
     readClicks();
     syncRows();
+    window.setInterval(playAmbient,12000);
     $("petition-orb").addEventListener("click",tap);
     $("planner-target").addEventListener("click",tap);
     $("planner-vote").addEventListener("click",supportCurrent);
