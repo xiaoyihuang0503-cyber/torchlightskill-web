@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="./v04.css?v=20261012-1">
   <link rel="stylesheet" href="./share-layout.css?v=20261012-1">
   <link rel="stylesheet" href="./roundtable.css?v=20261012-1">
+  <link rel="stylesheet" href="./v2.css?v=20261012-1">
   <script type="module" src="./live-bootstrap.js?v=20261012-1"></script>
 </head>
 <body>
@@ -83,11 +84,16 @@
       </div>
     </section>
 
-    <section class="roster-section" id="all-heroes" aria-labelledby="roster-title">
+    <details class="roster-section roster-drawer" id="all-heroes">
+      <summary class="roster-drawer-toggle"><span class="roster-summary-icon">👥</span><strong>查看全部 28 个英雄</strong><small>没上榜的英雄也能投，实时排序</small><span class="roster-chevron">⌄</span></summary>
+      <div class="roster-drawer-body">
       <div class="section-heading">
         <div><span class="section-index">02 / 选择英雄</span><h2 id="roster-title">全部 28 个英雄特性</h2>
         <p>每张卡片都能投票。已经投过的英雄可以改选。</p></div>
-        <span class="roster-tally" id="hero-search-summary">正在加载…</span>
+        <div class="roster-tools"><span class="roster-tally" id="hero-search-summary">正在加载…</span>
+          <label for="hero-sort" class="roster-sort-label">排序
+            <select id="hero-sort"><option value="votes">按票数</option><option value="name">按英雄名</option></select>
+          </label></div>
       </div>
       <label class="search-box" for="hero-search"><span class="search-glass" aria-hidden="true">⌕</span>
         <input type="search" id="hero-search" placeholder="搜名字、特性或简称，比如宾2" autocomplete="off">
@@ -96,35 +102,68 @@
       <div id="hero-list" class="roster-grid" aria-label="全部英雄投票选项"><p class="loading-note">正在核对头像和英雄特性…</p></div>
       <p id="roster-empty" class="roster-empty" hidden>没找到这个英雄，换个名字试试。</p>
       <p class="roster-hint">点卡片投票，点右下角「分享」就能邀请朋友支持那个英雄。</p>
-    </section>
-
-    <section class="topics-section" id="topics" aria-labelledby="topics-title">
-      <div class="section-heading">
-        <div><span class="section-index">03 / 玩法投票</span><h2 id="topics-title">迷城燃料这次改动，你怎么看？</h2>
-          <p>你觉得调整合理，还是砍得太狠？</p></div>
-      </div>
-      <article class="topic-card pink maze-compact" aria-labelledby="maze-title">
-        <div class="maze-brief">
-          <span class="maze-category">玩法调整 · SS14</span>
-          <h3 id="maze-title">迷城燃料下调，你能接受吗？</h3>
-          <p>新赛季迷城燃料产量减少了。选一个你认同的看法。</p>
-          <a href="https://torchlight.xd.com/ss14pn" target="_blank" rel="noopener noreferrer">查看更新公告 ↗</a>
-        </div>
-        <div class="maze-vote-area">
-          <div id="maze-options" class="poll-options" aria-label="迷城调整投票"></div>
-          <div class="maze-bottom">
-            <span id="maze-summary">正在读取票数…</span>
-            <button type="button" class="module-share" id="share-maze">分享这道投票 ↗</button>
           </div>
+    </details>
+
+    <section class="council-v2-votes" id="topics" aria-labelledby="topics-title">
+      <div class="section-heading council-focus-heading">
+        <div><span class="section-index">02 / 火炬圆桌</span><h2 id="topics-title">围桌聊聊，这 4 件事你怎么看？</h2>
+          <p>点一把椅子，看对应问题。每题可以投一票，想换也能改。</p></div>
+        <span id="all-topic-total" class="topic-total-badge">4 个议题 · 实时投票</span>
+      </div>
+      <div class="council-v2-shell">
+        <div class="council-furniture" aria-label="四把椅子围绕着的火炬圆桌">
+          <span class="furniture-caption">点椅子选问题 👇</span>
+          <div class="table-round" aria-hidden="true">
+            <span class="table-center-icon">✳</span>
+            <strong>火炬圆桌</strong><small>四个问题 · 你坐哪边？</small>
+          </div>
+          <div role="tablist" class="chair-ring" aria-label="点击座位切换圆桌议题">
+            <button type="button" class="topic-chair chair-north" role="tab" aria-selected="true" aria-controls="active-topic-panel" id="chair-mode_reduction" data-topic="mode_reduction" tabindex="0">
+              <span class="chair-emoji">🪑</span><span class="chair-backrest"></span><span class="chair-cushion"><span>01</span></span>
+              <span class="chair-text">老玩法做减法</span><span class="chair-votes">0 票</span>
+            </button>
+            <button type="button" class="topic-chair chair-east" role="tab" aria-selected="false" aria-controls="active-topic-panel" id="chair-ember_drop_data" data-topic="ember_drop_data" tabindex="-1">
+              <span class="chair-emoji">🪑</span><span class="chair-backrest"></span><span class="chair-cushion"><span>02</span></span>
+              <span class="chair-text">初火掉率</span><span class="chair-votes">0 票</span>
+            </button>
+            <button type="button" class="topic-chair chair-south" role="tab" aria-selected="false" aria-controls="active-topic-panel" id="chair-reward_access" data-topic="reward_access" tabindex="-1">
+              <span class="chair-emoji">🪑</span><span class="chair-backrest"></span><span class="chair-cushion"><span>03</span></span>
+              <span class="chair-text">自由刷图</span><span class="chair-votes">0 票</span>
+            </button>
+            <button type="button" class="topic-chair chair-west" role="tab" aria-selected="false" aria-controls="active-topic-panel" id="chair-legacy_friction" data-topic="legacy_friction" tabindex="-1">
+              <span class="chair-emoji">🪑</span><span class="chair-backrest"></span><span class="chair-cushion"><span>04</span></span>
+              <span class="chair-text">重复劳动</span><span class="chair-votes">0 票</span>
+            </button>
+          </div>
+          <p class="chair-hint" id="chair-hint" aria-live="polite">已选第 1 席 · 老玩法做减法</p>
         </div>
-      </article>
+        <article class="focus-topic" role="tabpanel" id="active-topic-panel" aria-labelledby="chair-mode_reduction">
+          <div class="focus-topic-head"><span id="focus-topic-index" class="focus-topic-index">席位 01 / 04</span>
+            <span id="focus-topic-total" class="focus-topic-count">🗳️ 0 票</span></div>
+          <h3 id="focus-topic-title">新玩法不断加，老玩法什么时候做减法？</h3>
+          <p id="focus-topic-question">你最支持哪种调整？</p>
+          <div id="focus-topic-options" class="focus-topic-options" aria-label="当前圆桌问题的投票选项">
+            <p class="loading-note">正在读取真实票数…</p>
+          </div>
+          <div class="focus-topic-footer">
+            <details class="followup-details" id="topic-followup">
+              <summary>💬 圆桌追问 <span>展开查看</span></summary>
+              <p id="focus-followup-text"></p>
+              <a href="#roundtable" id="followup-to-question">我也要问策划 ↗</a>
+            </details>
+            <button type="button" class="focus-topic-share" id="share-active-topic">📣 分享这题 ↗</button>
+          </div>
+          <p class="focus-topic-live" id="focus-topic-live" role="status" aria-live="polite">⏳ 正在连接实时投票</p>
+        </article>
+      </div>
     </section>
 
     <section class="roundtable-section" id="roundtable" aria-labelledby="roundtable-title">
       <div class="section-heading">
-        <div><span class="section-index">04 / 玩家提问</span><h2 id="roundtable-title">策划圆桌，你想问什么？</h2>
-          <p>10 月 14 日 20:00。把你最想问的写下来，也能看看问题集中在哪些方面。</p></div>
-        <button type="button" class="roundtable-top-share" id="share-roundtable">分享圆桌提问 ↗</button>
+        <div><span class="section-index">03 / 玩家追问</span><h2 id="roundtable-title">你还有什么想问策划的？</h2>
+          <p>点击上面的椅子可查看官方议题，这里可以提交你自己的问题。</p></div>
+        <button type="button" class="roundtable-top-share" id="share-roundtable">📣 分享圆桌提问 ↗</button>
       </div>
       <div class="roundtable-layout">
         <div class="roundtable-compose">
@@ -132,33 +171,20 @@
           <h3>你最想让策划回答哪件事？</h3>
           <form id="roundtable-question-form">
             <label class="question-label" for="roundtable-question-input">写下具体问题</label>
-            <textarea id="roundtable-question-input" rows="4" minlength="8" maxlength="160" placeholder="例如：迷城燃料下调之后，前期刷图收益要怎么平衡？" required></textarea>
-            <div class="compose-bottom">
-              <span id="question-length">0 / 160 字</span>
-              <button type="submit" class="submit-question" id="submit-roundtable-question">提交问题 ↗</button>
-            </div>
+            <textarea id="roundtable-question-input" rows="4" minlength="8" maxlength="160" placeholder="例如：迷城燃料减少以后，前期刷图收益怎么平衡？" required></textarea>
+            <div class="compose-bottom"><span id="question-length">0 / 160 字</span>
+              <button type="submit" class="submit-question" id="submit-roundtable-question">提交问题 ↗</button></div>
           </form>
-          <p class="question-notice" id="roundtable-submit-feedback" role="status" aria-live="polite">问题匿名提交后进入待审核，关键词计数会实时更新。请勿填写手机号等个人信息。</p>
+          <p class="question-notice" id="roundtable-submit-feedback" role="status" aria-live="polite">问题提交后先进入审核，关键词会计入实时汇总。</p>
         </div>
         <div class="roundtable-trends">
-          <div class="trends-heading">
-            <div><span class="roundtable-kicker">问题热词</span><h3>大家都在关心什么？</h3></div>
-            <span class="trends-local" id="keyword-status">实时统计连接中</span>
-          </div>
-          <p>玩家提问后的关键词会实时汇总，问题正文审核后才会公开。</p>
-          <div id="keyword-cloud" class="keyword-cloud" aria-live="polite"><span class="keyword-empty">还没有提交的问题</span></div>
-          <div class="recent-questions">
-            <div class="recent-heading"><strong>最近提交</strong><span id="question-total">0 条</span></div>
-            <ul id="roundtable-question-list"><li class="question-empty">等你提交第一个问题</li></ul>
-          </div>
+          <div class="trends-heading"><div><span class="roundtable-kicker">问题热词</span><h3>大家都在关心什么？</h3></div>
+            <span class="trends-local" id="keyword-status">连接中</span></div>
+          <p>关键词来自玩家真实提问；问题正文审核后公开。</p>
+          <div id="keyword-cloud" class="keyword-cloud" aria-live="polite"><span class="keyword-empty">正在读取关键词…</span></div>
+          <div class="recent-questions"><div class="recent-heading"><strong>最近公开的问题</strong><span id="question-total">加载中</span></div>
+            <ul id="roundtable-question-list"><li class="question-empty">正在读取问题…</li></ul></div>
         </div>
-      </div>
-      <div class="roundtable-quick">
-        <div class="roundtable-quick-head">
-          <div><strong>不想打字？也可以直接选一个方向。</strong><small>投票计入全站真实票数，选择可以修改。</small></div>
-          <span id="roundtable-summary">正在读取票数…</span>
-        </div>
-        <div id="roundtable-options" class="poll-options roundtable-poll-options" aria-label="圆桌关注方向投票"></div>
       </div>
     </section>
 
