@@ -43,7 +43,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
   function tierFor(key){
     const place=state.ranked.findIndex(row=>row.key===key);
     const votes=nSupport(key);
-    // Higher recorded and queued click counts unlock stronger visual firepower.
+    // More clicks unlock stronger visual firepower. This is not a unique-person ballot.
     if(place===0&&votes>=30)return 3;
     if(votes>=10||(place===0&&votes>=5))return 2;
     return 1;
@@ -113,7 +113,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
       });
     }
     const countEl=$("planner-pool-count"),more=$("planner-more");
-    if(countEl)countEl.textContent=all.length+" 道已审核/预置问题 · 按真实支持数排序";
+    if(countEl)countEl.textContent=all.length+" 道已审核/预置问题 · 按点击次数追逐排序";
     if(more){more.hidden=all.length<=8;more.textContent=state.expanded?"↑ 收起，仅看前 8":"↓ 查看更多 "+(all.length-8)+" 道问题";}
     if(!order.some(row=>row.key===state.selected))state.selected=order[0]?.key||"topic:mode_reduction";
     refreshSelected();
