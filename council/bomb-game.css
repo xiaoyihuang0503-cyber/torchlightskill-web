@@ -188,3 +188,30 @@
  .planner-share-button{min-height:46px;margin-top:9px;font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){.planner-battle-board .planner-row-fill:after{animation:none!important}}
+
+
+/* Real-support growth: cards expand as actual supporters accumulate, no synthetic votes. */
+.bomb-game-body .planner-battle-board .planner-issue{
+ min-height:calc(57px + var(--issue-grow,0px));transition:min-height .48s ease,background .2s ease,box-shadow .2s ease;
+}
+.bomb-game-body .planner-battle-board .planner-issue.is-chaser{
+ min-height:calc(63px + var(--issue-grow,0px));
+}
+.bomb-game-body .planner-battle-board .planner-issue.is-leader{
+ min-height:calc(72px + var(--issue-grow,0px));
+}
+.bomb-game-body .planner-battle-board .planner-issue.is-burning .planner-row-fill{
+ background:linear-gradient(90deg,#ff9532,#f24928,#ff6d30);
+ box-shadow:0 -1px 8px rgba(255,104,42,.24);
+}
+.bomb-game-body .planner-battle-board .planner-issue.is-heavy{
+ border-color:#a84521;background:#ffe9b5;
+}
+.bomb-game-body .planner-battle-board .planner-issue.is-heavy .planner-row-title{font-weight:920}
+@media(max-width:700px){
+ .bomb-game-body .planner-battle-board .planner-issue{min-height:calc(56px + var(--issue-grow,0px))}
+ .bomb-game-body .planner-battle-board .planner-issue.is-leader{min-height:calc(66px + var(--issue-grow,0px))}
+}
+@media(prefers-reduced-motion:reduce){
+ .bomb-game-body .planner-battle-board .planner-issue{transition:none}
+}
