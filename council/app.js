@@ -318,7 +318,7 @@ function bubble(hero,label,simulation){
 }
 function tickDemo(){
  if(!loaded||!state.motion||isHeroClosed()||document.hidden)return;
- const top=sorted().slice(0,Math.min(7,heroes.length));
+ const top=sorted().slice(0,Math.min(mobile?4:6,heroes.length));
  const candidate=top[random(top.length)];
  state.simulated[candidate.id]=(state.simulated[candidate.id]||0)+1;
  chart();updateRoster();bubble(candidate,"",true);
