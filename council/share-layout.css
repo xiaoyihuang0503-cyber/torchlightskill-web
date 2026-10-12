@@ -2,7 +2,7 @@
 /* Council v0.5: narrow editorial column and reserved ad rails. No ad scripts are loaded. */
 .council-shell{width:min(100%,1352px);padding:0 16px;margin:0 auto;display:grid;grid-template-columns:160px minmax(0,916px) 160px;gap:24px;align-items:start;justify-content:center}
 .council-shell>.page{grid-column:2;grid-row:1;max-width:none;width:100%;min-width:0;padding:0 6px;margin:0}
-.ad-rail{grid-row:1;min-width:0;align-self:stretch;pointer-events:none;padding-top:286px}
+.ad-rail{grid-row:1;min-width:0;align-self:stretch;padding-top:286px}
 .ad-rail-left{grid-column:1}
 .ad-rail-right{grid-column:3}
 .ad-space{position:sticky;top:28px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:9px;height:600px;width:160px;border:1.5px dashed #bcb09a;border-radius:12px;background:rgba(255,253,247,.45);color:#9e907c;text-align:center;letter-spacing:.04em}
