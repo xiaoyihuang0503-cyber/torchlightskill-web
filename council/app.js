@@ -69,22 +69,8 @@ function random(n){
 }
 function sampleOne(items){return items[random(items.length)];}
 function safeChoice(id){return LEGACY[id]||id;}
-function readChoice(){
- try{
-  const data=JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}");
-  if(heroMap.has(safeChoice(data.hero)))state.hero=safeChoice(data.hero);
-  polling.forEach(topic=>{
-   // Compatibility with the previous preview options, preserving meaningful choices.
-   const previous={maze:{agree:"support",disagree:"oppose"},roundtable:{}};
-   const opt=previous[topic.id]?.[data[topic.id]]||data[topic.id];
-   if(topic.choices.some(choice=>choice[0]===opt))state[topic.id]=opt;
-  });
- }catch(error){ /* Storage may be denied in privacy mode. */ }
-}
-function saveChoice(){
- try{localStorage.setItem(STORAGE_KEY,JSON.stringify({hero:state.hero,maze:state.maze,roundtable:state.roundtable}));}
- catch(error){toast("浏览器未允许保存选择，刷新后可能丢失");}
-}
+function readChoice(){ /* Live votes are restored by Supabase Auth only. */ }
+function saveChoice(){ /* No legacy demo localStorage writes. */ }
 function toast(text){
  let node=$("tc-toast");
  if(!node){node=document.createElement("div");node.id="tc-toast";node.className="toast";node.setAttribute("role","status");document.body.appendChild(node);}
