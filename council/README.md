@@ -128,3 +128,18 @@ GitHub Pages 不能保存跨设备共享投票。本次演示不提供公共计�
 
 静态通过：JavaScript 语法、页面 ID 引用、CSS 括号匹配、匿名本机提问与立即更新关键词（模拟 DOM）、重复过滤、删除、单条问题深链接、未审核提示，以及广告/素材区隐藏检查。
 未运行：真实手机浏览器视觉回归、服务器 Supabase 数据互通、真实跨玩家关键词、线上 Pages 发布状态核验。
+
+## v0.7 — 独立 Supabase Free + Realtime（2026-10-12）
+
+已建立的独立项目：`eflkiihedqlcaibpyoqr`，组织 `Torchlight Council`（Free），新加坡 ap-southeast-1。**不涉及旧项目 `kqpttcuvhgwlwavweyzc`。**
+
+- 后端表、RLS、服务端 RPC、Realtime publication 和 28 条精准 trait 投票选项已部署；初始真实票数为零。
+- 主站与 `/council/share/` 前端现通过新模块 `live-core.js` 接入 Supabase Auth 的匿名账号、公开票数和事件。分享页投票也由数据库 RPC 计数。
+- 公开 Supabase `sb_publishable_` 客户端 Key 只是预期公开的客户端凭据；不包含服务端 secret/service_role 或数据库密码。切勿将任何更高权限 Key 放进 GitHub Pages。
+- 投票账号唯一规则由后端 `(topic_id,voter_id)` 联合主键约束，改选由安全 RPC 原子处理；历史模拟 localStorage 选择不导入真实计票。
+- 真正来自 `council_vote_events` 的 INSERT 事件驱动头像 +1 气泡，允许榜单外候选投票也展示动态；失去 Realtime 时每 12 秒拉取汇总。
+- 圆桌 `council_submit_question` RPC 实施匿名身份、1 分钟间隔、24h 最多 5 问、8–160 字限制；状态默认 pending。关键词从后端已提交的问题即时统计（含待审核），文字仅被本人或审核后公开。
+- **上线前必要条件：** 项目 Dashboard > Authentication > Providers > Anonymous Sign-Ins 需要由用户手动启用；否则真实投票和提交问题会失败。静态/模拟测试不代表 Auth Provider 已可用。
+- 免费计划的实时峰值连接数和总消息数都有限，初期需监控 Realtime 用量；匿名账号可以通过清除浏览器数据重建，不能宣称做到一个自然人只能投一票。
+
+服务器端迁移、字段、权限和回归步骤详见 `council/supabase/README.md`。
