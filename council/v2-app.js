@@ -761,9 +761,14 @@ function share(kind,args={}){
  }else if(kind==="seat"){
   url.searchParams.set("kind","seat");
   const seat=args.seat||state.selectedSeat;
-  const chair=state.chairs.find(c=>c.key===seat);
-  if(chair){url.searchParams.set("seat",seat);heading="🪑 我想让策划回答："+chair.body;}
-  else heading="🪑 你最想让策划回答什么？";
+  const chair=state.chairs.find(c=>c.key===seat&&c.kind!=="empty");
+  const official=FOCUS.find(t=>seat==="topic:"+t.id);
+  const player=(LIVE?.getQuestions?.()||[]).find(q=>q.status==="approved"&&seat==="question:"+q.id);
+  const body=chair?.body||official?.followup||player?.text;
+  if(body){
+   url.searchParams.set("seat",seat);
+   heading="💣 帮我把这道问题顶上去："+body;
+  }else heading="💣 你最想让策划回答什么？";
  }else{
   url.searchParams.set("kind","ranking");heading="开荒选谁？让朋友也投一票";
  }
@@ -817,6 +822,7 @@ function bind(){
   $("roundtable").scrollIntoView({behavior:reduced?"auto":"smooth",block:"start"});
  });
  $("share-roundtable").addEventListener("click",()=>share("seat"));
+ $("planner-share").addEventListener("click",()=>share("seat",{seat:plannerGame.getState().selected}));
  $("seat-support").addEventListener("click",supportSeat);
  $("seat-share").addEventListener("click",()=>share("seat"));
  $("seat-ask-back").addEventListener("click",()=>selectSeat("topic:mode_reduction",false));
