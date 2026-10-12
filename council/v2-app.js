@@ -1,4 +1,5 @@
 import { createHeatEngine } from "./heat-engine.js";
+import { createPlannerBattle } from "./planner-battle.js";
 /* Torchlight Council v2 — browser UI. All public counts and events come from Supabase. */
 (function(){
 "use strict";
@@ -46,121 +47,7 @@ const state={
 };
 let heroLoadPromise=null;
 /* Infinite local petition: repeated clicks are NOT votes and never reach Supabase. */
-const PETITION_KEY="torchlight-council-petition-local-v1";
-const petition={total:0,combo:0,lastTap:0,lastPersist:0,comboTimer:0,partyTimer:0,pending:0,syncTimer:0,syncing:false,limited:false,globalSeen:false};
-function persistPetition(){
- try{localStorage.setItem(PETITION_KEY,String(petition.total));petition.lastPersist=Date.now();}
- catch(error){/* Some private browsers disable localStorage; tapping still works. */}
-}
-function loadPetition(){
- try{
-  const stored=Number(localStorage.getItem(PETITION_KEY)||0);
-  petition.total=Number.isSafeInteger(stored)&&stored>=0?stored:0;
- }catch(error){petition.total=0;}
- $("petition-total").textContent=fmt(petition.total);
- $("petition-combo").textContent="0 连击";
-}
-function showGlobalPetition(data){
- const value=Number(data?.total);
- if(!Number.isFinite(value)||value<0)return;
- petition.globalSeen=true;
- $("petition-global").textContent="🌍 全站真实累计 "+fmt(value)+" 次";
-}
-function queuePetitionFlush(wait=3600){
- if(petition.limited||petition.syncing||petition.pending<=0||petition.syncTimer)return;
- petition.syncTimer=window.setTimeout(()=>{
-  petition.syncTimer=0;
-  flushPetition().catch(error=>console.warn("Petition batch not synced",error));
- },wait);
-}
-async function flushPetition(){
- if(petition.syncing||petition.limited||petition.pending<=0)return;
- if(!LIVE?.isReady?.()||document.hidden){queuePetitionFlush(6000);return;}
- const batch=Math.min(25,petition.pending);
- petition.syncing=true;
- try{
-  const result=await LIVE.addPetition(batch);
-  const accepted=Math.max(0,Math.min(batch,Number(result?.accepted)||0));
-  petition.pending=Math.max(0,petition.pending-accepted);
-  showGlobalPetition(result);
-  if(result?.reason==="daily_limit"||Number(result?.remaining)===0){
-    petition.limited=true;petition.pending=0;
-    $("petition-global").textContent+=" · 今日计数已满";
-  }
- }catch(error){
-  // The local button stays playable even when Supabase is offline.
-  if(!petition.globalSeen)$("petition-global").textContent="🌍 全站真实累计 · 暂时无法同步";
-  console.warn("Petition network batch delayed",error);
- }finally{
-  petition.syncing=false;
-  if(petition.pending>0&&!petition.limited)queuePetitionFlush(4000);
- }
-}
-function petitionSpark(text,isMilestone=false){
- if(reduced||document.hidden)return;
- const container=$("petition-effects");
- if(!container)return;
- while(container.children.length>=11)container.firstElementChild?.remove();
- const node=document.createElement("span");
- node.className="petition-spark"+(text.startsWith("+")?" is-plus":"");
- node.textContent=text;
- const rand=Math.random;
- node.style.setProperty("--spark-x",(25+rand()*45).toFixed(1)+"%");
- node.style.setProperty("--spark-y",(19+rand()*41).toFixed(1)+"%");
- node.style.setProperty("--spark-dx",Math.round((rand()-.5)*95)+"px");
- node.style.setProperty("--spark-dy",Math.round((rand()-.5)*26)+"px");
- node.style.setProperty("--spark-size",isMilestone?"26px":"20px");
- container.appendChild(node);
- window.setTimeout(()=>node.remove(),1120);
-}
-function petitionTap(){
- const now=Date.now();
- petition.combo=now-petition.lastTap<1100?petition.combo+1:1;
- petition.lastTap=now;
- petition.total=Math.min(Number.MAX_SAFE_INTEGER,petition.total+1);
- $("petition-total").textContent=fmt(petition.total);
- $("petition-combo").textContent="🔥 "+fmt(petition.combo)+" 连击";
- const orb=$("petition-orb");
- if(!reduced && typeof orb.animate==="function"){
-  orb.animate([{transform:"scale(1)"},{transform:"scale(.91)"},{transform:"scale(1.065)"},{transform:"scale(1)"}],
-   {duration:220,easing:"ease-out"});
- }
- const emoji=["🔥","⚡","🙏","💥","✨"];
- const milestone=petition.combo===10||petition.combo===30||petition.combo===100||petition.total%100===0;
- petitionSpark(milestone?"🎉":emoji[petition.total%emoji.length],milestone);
- if(petition.combo>=2)petitionSpark("+1");
- let message="🔥 再求一次！";
- if(petition.combo===10)message="⚡ 10 连击！策划快看！";
- else if(petition.combo===30)message="💥 30 连击！全桌都听见了！";
- else if(petition.combo===100)message="👑 100 连击！火炬都快点燃了！";
- else if(petition.total%100===0)message="🎉 本机累计 "+fmt(petition.total)+" 次求回应！";
- else if(petition.combo>=5)message="🔥 "+fmt(petition.combo)+" 连击！继续点！";
- $("petition-feedback").textContent=message;
- if(milestone){
-  const card=$("petition-orb").closest(".petition-card");
-  card?.classList.add("petition-party");
-  window.clearTimeout(petition.partyTimer);
-  petition.partyTimer=window.setTimeout(()=>card?.classList.remove("petition-party"),900);
-  for(let i=0;i<5;i++)petitionSpark(["🎉","🔥","✨","🙏","⚡"][i],true);
- }
- if(petition.total%5===0||now-petition.lastPersist>1100)persistPetition();
- petition.pending=Math.min(10000,petition.pending+1);
- queuePetitionFlush(3600);
- window.clearTimeout(petition.comboTimer);
- petition.comboTimer=window.setTimeout(()=>{
-  petition.combo=0;
-  $("petition-combo").textContent="0 连击";
- },1850);
-}
-function initPetition(){
- loadPetition();
- $("petition-orb").addEventListener("click",petitionTap);
- window.addEventListener("pagehide",persistPetition);
- document.addEventListener("visibilitychange",()=>{
-  if(document.hidden)persistPetition();
-  else if(petition.pending>0)queuePetitionFlush(1200);
- });
-}
+const plannerGame=createPlannerBattle({LIVE,FOCUS,reduced,toast});
 const labelHero=hero=>hero.name+" · "+hero.trait;
 const fmt=v=>new Intl.NumberFormat("zh-CN").format(Number(v)||0);
 const emojiByPosition=i=>["👑","🔥","⚡","🚀","✨","💪"][i%6];
@@ -554,6 +441,7 @@ async function voteFocus(topic,choice){
  try{
   await LIVE.vote(topic.id,choice);
   state.selected[topic.id]=choice;
+  plannerGame.onFormalVote(topic.id);
   if(state.demoOn)setDemoMode(false);
   updateFocusCounts();
   const label=topic.options.find(c=>c[0]===choice)?.[1]||"选项";
@@ -897,7 +785,7 @@ async function nativeShare(){
  await copyShare();
 }
 function bind(){
- initPetition();
+ plannerGame.mount();
  $("open-hero-pool").addEventListener("click",()=>{
   $("all-heroes").open=true;$("all-heroes").scrollIntoView({behavior:reduced?"auto":"smooth",block:"start"});
   arrangeCards();
@@ -961,7 +849,7 @@ function bind(){
 function wireLive(){
  LIVE.hooks.onCounts=()=>{
   state.ready=true;
-  if(petition.pending>0)queuePetitionFlush(1200);
+  plannerGame.notifyReady();
   syncSlotVoteAction();
   if(state.slotResult&&!isClosed())$("lottery-result-sub").textContent="可以将抽签结果投进实时榜单，也可以分享";
   updateHeroChart();updateCards();updateFocusCounts();
@@ -986,15 +874,16 @@ function wireLive(){
  };
  LIVE.hooks.onSeatStats=()=>{
   updateSeatNumbers();
+  plannerGame.refreshSeats();
  };
- LIVE.hooks.onMySeats=()=>updateSeatDetail();
+ LIVE.hooks.onMySeats=()=>{updateSeatDetail();plannerGame.refreshSeats();};
  LIVE.hooks.onSeatEvent=event=>{
-  if(!state.motion||state.demoOn)return;
-  if(event.seat===state.selectedSeat)toast("🔥 这把椅子刚刚多了一票真实支持");
+  plannerGame.onSeatEvent(event);
+  if(state.motion&&event.seat===state.selectedSeat)toast("🔥 这把椅子刚刚多了一票真实支持");
  };
- LIVE.hooks.onQuestions=()=>renderRoundQuestions();
+ LIVE.hooks.onQuestions=()=>{renderRoundQuestions();plannerGame.updateQuestions();};
  LIVE.hooks.onKeywordStats=()=>renderRoundQuestions();
- LIVE.hooks.onPetition=showGlobalPetition;
+ LIVE.hooks.onPetition=plannerGame.onGlobalCount;
  LIVE.hooks.onStatus=message=>{
   refreshHeatLabels(message?.state);
   if(message?.message){
