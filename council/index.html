@@ -19,7 +19,8 @@
   <link rel="stylesheet" href="./mobile-fixes.css?v=20261012-2">
   <link rel="stylesheet" href="./heat-scene.css?v=20261012-1">
   <link rel="stylesheet" href="./bomb-game.css?v=20261013-issues20">
-  <script type="module" src="./live-bootstrap.js?v=20261013-issues20"></script>
+  <link rel="stylesheet" href="./mobile-bomb-dock.css?v=20261013-1">
+  <script type="module" src="./live-bootstrap.js?v=20261013-fixed1"></script>
 </head>
 <body>
 <div class="council-shell">
@@ -320,5 +321,18 @@
     <p id="share-tip" class="share-tip" role="status" aria-live="polite">链接可以直接发送到聊天群。</p>
   </div>
 </dialog>
+
+<!-- Phone-only controls live outside the clipped arena; only shown during bomb gameplay. -->
+<aside id="mobile-bomb-dock" class="mobile-bomb-dock" hidden aria-label="炸策划大会固定操作栏">
+  <div class="mobile-bomb-dock-summary">
+    <span id="mobile-bomb-title">💣 选择一个问题开始炸</span>
+    <span id="mobile-bomb-combo">连击 0</span>
+  </div>
+  <div class="mobile-bomb-dock-actions">
+    <button type="button" id="mobile-bomb-fire" class="mobile-bomb-fire">💣 扔炸弹 <strong>+1</strong></button>
+    <button type="button" id="mobile-bomb-repeat" class="mobile-bomb-repeat">🔥 再炸一次 <strong>+1</strong></button>
+  </div>
+</aside>
+<div id="mobile-bomb-fx" class="mobile-bomb-fx" aria-hidden="true"></div>
 </body>
 </html>
