@@ -8,7 +8,7 @@ export function createCouncilLive(createClient) {
     auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false},
     realtime:{params:{eventsPerSecond:5}}
   });
-  const counts={hero:{},maze:{},roundtable:{}};
+  const counts={hero:{},maze:{},roundtable:{},mode_reduction:{},ember_drop_data:{},reward_access:{},legacy_friction:{}};
   const ownVotes={};
   let keywordRows=[];
   let questions=[];
@@ -82,7 +82,7 @@ export function createCouncilLive(createClient) {
     return true;
   }
   async function vote(topic,choice){
-    if(!["hero","maze","roundtable"].includes(topic)||!/^[a-z0-9_]{2,40}$/.test(choice))throw Error("投票选项不正确");
+    if(!["hero","maze","roundtable","mode_reduction","ember_drop_data","reward_access","legacy_friction"].includes(topic)||!/^[a-z0-9_]{2,40}$/.test(choice))throw Error("投票选项不正确");
     await ensureAnonymousAuth();
     const {data,error}=await client.rpc("council_cast_vote",{p_topic:topic,p_choice:choice});
     if(error)throw Error(errText(error,"提交投票"));
@@ -125,7 +125,7 @@ export function createCouncilLive(createClient) {
       })
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"council_vote_events"},payload=>{
         const row=payload?.new;
-        if(!row||!["hero","maze","roundtable"].includes(row.topic_id))return;
+        if(!row||!["hero","maze","roundtable","mode_reduction","ember_drop_data","reward_access","legacy_friction"].includes(row.topic_id))return;
         const id=Number(row.id)||0;
         if(id>0&&id<=lastEvent)return;
         if(id>0)lastEvent=id;
