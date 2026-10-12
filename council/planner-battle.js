@@ -16,7 +16,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
     selected:"topic:mode_reduction",questions:[],pending:[],
     ranked:[],localClicks:0,pendingClicks:0,combo:0,lastClick:0,lastSave:0,
     timer:0,flushTimer:0,busy:false,dailyLimit:false,totalKnown:false,
-    activeBombs:0,lastRemoteBomb:0,submitBusy:false,submitting:false
+    activeBombs:0,lastRemoteBomb:0,submitBusy:false,submitting:false,reactionTimer:0
   };
   const STORAGE="torchlight-council-petition-local-v1";
   const fmt=n=>new Intl.NumberFormat("zh-CN").format(Math.max(0,Number(n)||0));
@@ -41,7 +41,10 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
   function tierFor(key){
     const place=state.ranked.findIndex(row=>row.key===key);
     const votes=nSupport(key);
-    return place===0 && votes>0?3:place>=0&&place<=2&&votes>0?2:1;
+    // Higher REAL support numbers unlock stronger firepower.
+    if(place===0&&votes>=30)return 3;
+    if(votes>=10||(place===0&&votes>=5))return 2;
+    return 1;
   }
   function isSupported(key){return Boolean(LIVE?.hasSupported?.(key));}
   function makeRow(row){
@@ -121,7 +124,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
     const bomb=$("petition-orb");
     if(bomb){
       const mini=bomb.querySelector(".petition-orb-mini");
-      if(mini)mini.textContent=(tier===3?"👑 榜首重炮":tier===2?"⚡ 双重炸弹":"💣 普通炸弹")+" · 无限点";
+      if(mini)mini.textContent=(tier===3?"👑 30+ 票重炮":tier===2?"⚡ 高票双响炮":"💣 小炸弹")+" · 无限点";
     }
     const vote=$("planner-vote");
     if(vote){
@@ -192,7 +195,30 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
     const b=node.getBoundingClientRect(),c=container.getBoundingClientRect();
     return{x:b.left-c.left+b.width/2,y:b.top-c.top+b.height/2};
   }
+  function reactToImpact(tier,real){
+    const sprite=$("planner-mascot"),stage=$("planner-stage"),status=$("planner-status");
+    const reaction=tier>=3?"knockout":tier===2?"hit":"shock";
+    if(sprite){
+      sprite.dataset.reaction=reaction;
+      sprite.classList.remove("reaction-shake");
+      void sprite.offsetWidth;
+      sprite.classList.add("reaction-shake");
+    }
+    if(stage&&tier>=3)stage.classList.add("planner-finale");
+    if(status){
+      status.textContent=tier>=3?"策划：我人都被炸扁啦！😵":
+        tier===2?"策划：怎么还有双响炮？！💫":
+        real?"策划：收到真实支持了！💥":"策划：这问题又炸来啦！";
+    }
+    window.clearTimeout(state.reactionTimer);
+    state.reactionTimer=window.setTimeout(()=>{
+      if(sprite){sprite.dataset.reaction="normal";sprite.classList.remove("reaction-shake");}
+      stage?.classList.remove("planner-finale");
+      if(status)status.textContent="策划：我会认真看问题的…";
+    },tier>=3?1850:tier===2?1280:850);
+  }
   function impact(tier,real){
+    reactToImpact(tier,real);
     if(reduced||document.hidden)return;
     const layer=$("planner-fx-layer"),card=$("planner-stage"),target=$("planner-target");
     if(!layer||!target||!card)return;
@@ -228,7 +254,8 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
     layer.appendChild(label);window.setTimeout(()=>label.remove(),1050);
   }
   function fireBomb(key=state.selected,{real=false,force=false}={}){
-    if(reduced||document.hidden)return;
+    if(document.hidden)return;
+    if(reduced){impact(tierFor(key),real);return;}
     const layer=$("planner-fx-layer"),stage=$("planner-stage"),target=$("planner-target");
     if(!layer||!stage||!target)return;
     if(layer.querySelectorAll(".planner-projectile").length>=10)return;
