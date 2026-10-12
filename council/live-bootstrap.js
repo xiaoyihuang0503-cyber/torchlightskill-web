@@ -44,8 +44,9 @@ window.TorchCouncilLive={
  },
  async vote(...args){return (await connected()).vote(...args);},
  async supportSeat(...args){return (await connected()).supportSeat(...args);},
+ async bombIssue(...args){return (await connected()).bombIssue(...args);},
  async addPetition(...args){return (await connected()).addPetition(...args);},
  async submitQuestion(...args){return (await connected()).submitQuestion(...args);},
  async getApprovedQuestion(...args){return (await connected()).getApprovedQuestion(...args);}
 };
-await import("./v2-app.js?v=20261012-bombv3");
+await import("./v2-app.js?v=20261013-clicks1");
