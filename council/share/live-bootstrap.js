@@ -1,6 +1,10 @@
 import { createCouncilLive } from "../live-core.js";
 try {
-  const library=await import("https://esm.sh/@supabase/supabase-js@2.57.0?bundle");
+  let library;
+  try { library=await import("https://esm.sh/@supabase/supabase-js@2.57.0?bundle"); }
+  catch(firstError) {
+    library=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/+esm");
+  }
   if(typeof library.createClient!=="function")throw new Error("Supabase SDK missing createClient");
   window.TorchCouncilLive=createCouncilLive(library.createClient);
 } catch (error) {
