@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fff4dd">
+<meta name="description" content="火炬议会分享页：朋友的 SS14 开荒选择、随机英雄以及迷城和圆桌投票。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="火炬议会 Torchlight Council">
+<meta property="og:title" content="火炬议会 · SS14 开荒投票">
+<meta property="og:description" content="SS14 你准备玩谁？朋友发来一份英雄或玩法投票，点开直接参与。">
+<meta property="og:url" content="https://torchlightskill.com/council/share/">
+<title>朋友邀请你投一票 · 火炬议会</title>
+<link rel="icon" type="image/svg+xml" href="../icon.svg">
+<link rel="stylesheet" href="../v04.css?v=20261012-1">
+<link rel="stylesheet" href="../share-layout.css?v=20261012-1">
+<link rel="stylesheet" href="./style.css?v=20261012-1">
+<script defer src="./app.js?v=20261012-1"></script>
+</head>
+<body>
+<div class="council-shell">
+  <aside class="ad-rail ad-rail-left" aria-label="左侧广告预留区域"><div class="ad-space" aria-hidden="true"><span>AD SPACE</span><strong>广告位</strong><small>160 × 600</small></div></aside>
+  <div class="page share-page">
+    <header class="site-header">
+      <a class="logo" href="../" aria-label="返回火炬议会"><span class="logo-glyph" aria-hidden="true">✳</span><span class="logo-copy"><strong>火炬议会</strong><small>TORCHLIGHT COUNCIL</small></span></a>
+      <a class="sticker-nav" href="../">返回投票页 ↗</a>
+    </header>
+    <main>
+      <section class="share-intro">
+        <p class="share-eyebrow"><span class="share-asterisk" aria-hidden="true">✳</span> 朋友给你发来一份 SS14 投票</p>
+        <h1>你会怎么选？</h1>
+        <p>看看朋友的选择，也投上你的一票。想抽签的话也能直接去抽。</p>
+      </section>
+      <article class="invite-card" id="invite-card" aria-labelledby="invite-title">
+        <div class="invite-top"><span id="invite-kind">SS14 · 开荒英雄</span><span class="preview-pill">互动演示版</span></div>
+        <div class="invite-content">
+          <div class="invite-copy">
+            <span id="invite-overline">开荒选择</span>
+            <h2 id="invite-title">正在读取分享内容…</h2>
+            <p id="invite-description">马上就能看到朋友发来的选择。</p>
+          </div>
+          <div class="invite-portrait" id="invite-portrait" hidden aria-label="被分享的英雄头像">
+            <div class="invite-portrait-ring" id="invite-portrait-ring">✳</div>
+            <span id="invite-portrait-caption"></span>
+          </div>
+        </div>
+        <p class="choice-tag" id="choice-tag" hidden></p>
+        <div id="share-poll-options" class="share-poll-options" hidden aria-label="直接选择你的立场"></div>
+        <div class="invite-buttons">
+          <button type="button" id="primary-action" class="button primary" disabled>我也选这个 ↗</button>
+          <a id="secondary-action" href="../#all-heroes" class="button secondary">我选别的 ↗</a>
+        </div>
+        <p id="join-feedback" class="join-feedback" role="status" aria-live="polite"></p>
+        <div class="invite-footer"><span>投票目前只记录在各自的浏览器里，暂未开放全站实时统计。</span><a href="../#all-heroes">查看开荒排行榜 ↗</a></div>
+      </article>
+      <section class="share-export" aria-labelledby="send-title">
+        <div class="share-export-heading"><div><span class="section-index">发给更多朋友</span><h2 id="send-title">让朋友也来选</h2><p>复制链接发群里，或者保存图片发到社交平台。</p></div></div>
+        <div class="share-export-actions">
+          <button type="button" id="copy-link" class="export-button export-copy"><span aria-hidden="true">↗</span><strong>复制链接</strong><small>直接发给朋友</small></button>
+          <button type="button" id="share-system" class="export-button export-system"><span aria-hidden="true">↗</span><strong>系统分享</strong><small>手机可直接选 App</small></button>
+          <button type="button" id="save-poster" class="export-button export-poster"><span aria-hidden="true">▧</span><strong>保存分享图片</strong><small>竖版 3:4 海报</small></button>
+        </div>
+        <p id="export-feedback" class="export-feedback" role="status" aria-live="polite">不同邀请链接会打开对应的英雄或投票题目。图片里的数字仅作演示。</p>
+      </section>
+      <section class="share-more">
+        <div><h2>其他英雄也能选</h2><p>完整的 28 个英雄特性都在投票页。犹豫不决就抽一个。</p></div>
+        <div class="share-more-actions"><a href="../#all-heroes" class="sticker-nav">看全部英雄 ↗</a><a href="../?open=lottery#top" class="sticker-nav sunny">随机抽一个 ↗</a></div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="footer-logo">✳ <strong>火炬议会</strong> <small>TORCHLIGHT COUNCIL</small></div>
+      <p>玩家独立制作的非官方互动页面。头像来源与 SS14 立绘待确认说明见 <a href="../#avatar-sources">素材清单</a>。当前投票和分享统计均为演示。</p>
+      <div><span>© 2026 Torchlight Council</span><a href="../">进入火炬议会 ↗</a></div>
+    </footer>
+  </div>
+  <aside class="ad-rail ad-rail-right" aria-label="右侧广告预留区域"><div class="ad-space" aria-hidden="true"><span>AD SPACE</span><strong>广告位</strong><small>160 × 600</small></div></aside>
+</div>
+<canvas id="poster-canvas" width="1080" height="1440" hidden aria-hidden="true"></canvas>
+</body>
+</html>

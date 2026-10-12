@@ -219,8 +219,9 @@ function chart(){
  }
 }
 function makeRosterHero(hero){
- const b=document.createElement("button");b.type="button";b.className="roster-card";b.dataset.hero=hero.id;
- b.style.setProperty("--hero-color",hero.color);
+ const card=document.createElement("article");card.className="roster-card";card.dataset.hero=hero.id;
+ card.style.setProperty("--hero-color",hero.color);
+ const action=document.createElement("button");action.type="button";action.className="roster-vote";action.dataset.hero=hero.id;
  const face=portrait(hero,false);
  const info=document.createElement("span");info.className="roster-info";
  const heroName=document.createElement("strong");heroName.textContent=hero.name;
@@ -231,10 +232,15 @@ function makeRosterHero(hero){
  const votes=document.createElement("strong");const tick=document.createElement("span");tick.className="roster-check";tick.textContent="投票";
  right.append(votes,tick);
  const meter=document.createElement("span");meter.className="roster-meter";const meterValue=document.createElement("span");meter.append(meterValue);
- b.append(face,info,right,meter);
- b.addEventListener("click",()=>voteHero(hero.id,b));
- rosterCards.set(hero.id,{button:b,votes,check:tick,meter:meterValue});
- return b;
+ action.append(face,info,right,meter);
+ action.addEventListener("click",()=>voteHero(hero.id,card));
+ const shareButton=document.createElement("button");
+ shareButton.type="button";shareButton.className="roster-share";shareButton.textContent="分享 ↗";
+ shareButton.setAttribute("aria-label","分享 "+sourceName(hero)+" 的开荒投票");
+ shareButton.addEventListener("click",()=>share("hero",hero.id));
+ card.append(action,shareButton);
+ rosterCards.set(hero.id,{button:card,action:action,shareButton:shareButton,votes,check:tick,meter:meterValue});
+ return card;
 }
 function buildRoster(){
  const frag=document.createDocumentFragment();
@@ -251,9 +257,9 @@ function updateRoster(){
   ref.votes.textContent=fmt(v);
   ref.check.textContent=state.hero===id?"已投":"投票";
   ref.button.classList.toggle("selected",state.hero===id);
-  ref.button.disabled=isHeroClosed();
-  ref.button.setAttribute("aria-pressed",String(state.hero===id));
-  ref.button.setAttribute("aria-label",sourceName(h)+"，模拟"+v+"票，"+(state.hero===id?"已投":"投票"));
+  ref.action.disabled=isHeroClosed();
+  ref.action.setAttribute("aria-pressed",String(state.hero===id));
+  ref.action.setAttribute("aria-label",sourceName(h)+"，模拟"+v+"票，"+(state.hero===id?"已投":"投票"));
   ref.meter.style.width=Math.round(v/max*100)+"%";
  });
  searchRoster();
@@ -288,7 +294,7 @@ function voteHero(id,clicked){
  const newNode=chartCards.get(id)?.button;
  if(newNode&&newNode.isConnected)bubble(h,"你投了 +1",false);
  showActivity("你投给了 "+sourceName(h)+" · "+(was?"已从 "+sourceName(was)+" 改选":"投票成功"),false);
- toast("已投给 "+sourceName(h)+(was?" · 可以继续改选":""));
+ toast("已投给 "+sourceName(h)+(was?" · 可以继续改选":"")+"，可以分享给朋友");
 }
 function showActivity(value,simulated){
  lastActivity=value;
@@ -355,6 +361,8 @@ function renderTopic(topic){
   b.disabled=isTopicClosed(topic);
  });
  $(topic.summary).textContent= (isTopicClosed(topic)?"已结束 · ":"") + fmt(totals.reduce((a,b)=>a+b,0))+" 张模拟票";
+ const shareButton=$(topic.id==="maze"?"share-maze":"share-roundtable");
+ if(shareButton)shareButton.textContent=state[topic.id]?"分享我的选择 ↗":"分享这道投票 ↗";
 }
 function voteTopic(topic,id){
  if(isTopicClosed(topic)){toast("这道题投票已结束");return;}
@@ -432,17 +440,76 @@ function spin(){
  };
  tick();
 }
-function shareUrl(hero){
- const url=new URL("https://torchlightskill.com/council/");
- if(hero)url.searchParams.set("hero",hero.id);
- return url.toString();
+function shareEntry(kind,heroId){
+ const url=new URL("https://torchlightskill.com/council/share/");
+ const hero=heroMap.get(heroId);
+ let caption="",title="";
+ switch(kind){
+  case "hero":
+  case "vote":
+   if(hero||state.hero&&heroMap.has(state.hero)){
+    const selected=hero||heroMap.get(state.hero);
+    url.searchParams.set("kind","hero");
+    url.searchParams.set("hero",selected.id);
+    title="我准备玩 "+sourceName(selected)+"，你呢？";
+    caption="朋友点开可以直接选这个英雄，或者换一个。";
+   }else{
+    url.searchParams.set("kind","ranking");
+    title="SS14 开荒你玩谁？";
+    caption="发给朋友，让他们来选自己的英雄。";
+   }
+   break;
+  case "slot":
+  case "lottery":
+   url.searchParams.set("kind","lottery");
+   if(hero||state.slotResult){
+    const selected=hero||state.slotResult;
+    url.searchParams.set("hero",selected.id);
+    title="我随机抽到了 "+sourceName(selected)+"！";
+    caption="朋友可以自己再抽一次，也可以投给你抽中的英雄。";
+   }else{
+    title="不知道用谁开荒？随机抽一个。";
+    caption="朋友点开就能去玩开荒老虎机。";
+   }
+   break;
+  case "maze":
+   url.searchParams.set("kind","maze");
+   if(state.maze)url.searchParams.set("choice",state.maze);
+   title=state.maze==="support"?"我觉得迷城这次调整还能接受，你呢？":state.maze==="oppose"?"迷城这次砍得太狠了，你觉得呢？":"迷城燃料被砍，你能接受吗？";
+   caption="朋友可以在分享页直接选择自己的立场。";
+   break;
+  case "roundtable":
+   url.searchParams.set("kind","roundtable");
+   if(state.roundtable)url.searchParams.set("choice",state.roundtable);
+   const topic=polling.find(t=>t.id==="roundtable");
+   const answer=topic.choices.find(c=>c[0]===state.roundtable);
+   title=answer?"圆桌会谈，我最想问："+answer[1]+"。你想问什么？":"官方圆桌会谈，你最想让策划回答什么？";
+   caption="朋友可以直接投票，选出最关心的话题。";
+   break;
+  default:
+   url.searchParams.set("kind","ranking");
+   title="SS14 开荒，你玩谁？";
+   caption="邀请朋友一起来选开荒英雄。";
+ }
+ return {url:url.toString(),title,caption,kind};
 }
-async function share(kind){
- const hero=kind==="slot"?state.slotResult:heroMap.get(state.hero);
- const url=shareUrl(hero);
- const text=hero?(kind==="slot"?"我随机抽到了 "+sourceName(hero)+"，你也来抽个开荒英雄。":"我开荒准备玩 "+sourceName(hero)+"，你选谁？"):"SS14 你准备玩哪个英雄？来火炬议会投票。";
- if(navigator.share){try{await navigator.share({title:"火炬议会",text,url});return;}catch(e){if(e.name==="AbortError")return;}}
- $("share-link").value=url;$("share-tip").textContent=text;openModal($("share-dialog"));
+function share(kind,heroId){
+ const item=shareEntry(kind,heroId);
+ $("share-link").value=item.url;
+ $("share-preview-text").textContent=item.title;
+ $("open-share-page").href=item.url;
+ $("share-tip").textContent=item.caption+" 当前是演示版，投票只保存在各自浏览器。";
+ $("share-dialog").dataset.shareTitle=item.title;
+ openModal($("share-dialog"));
+}
+async function nativeShare(){
+ const url=$("share-link").value;
+ const title=$("share-dialog").dataset.shareTitle||"火炬议会";
+ if(navigator.share){
+  try { await navigator.share({title:"火炬议会",text:title,url});return; }
+  catch(error){if(error?.name==="AbortError")return;}
+ }
+ await copyLink();
 }
 async function copyLink(){
  const inp=$("share-link");
@@ -460,9 +527,13 @@ function setUp(){
   document.getElementById("all-heroes").scrollIntoView({behavior:reducedMotion?"auto":"smooth"});
  });
  $("lottery-share").addEventListener("click",()=>share("slot"));
+ $("share-lottery-game").addEventListener("click",()=>share("lottery"));
  $("lottery-choose").addEventListener("click",()=>closeModal($("lottery-dialog")));
  $("copy-share").addEventListener("click",copyLink);
  $("share-arena").addEventListener("click",()=>share("vote"));
+ $("share-maze").addEventListener("click",()=>share("maze"));
+ $("share-roundtable").addEventListener("click",()=>share("roundtable"));
+ $("native-share").addEventListener("click",nativeShare);
  $("simulate-btn").addEventListener("click",()=>{
   if(!loaded||isHeroClosed())return;
   const prev=state.motion;state.motion=true;tickDemo();state.motion=prev;
@@ -487,6 +558,27 @@ async function init(){
   await getManifest();
   readChoice();loaded=true;
   buildRoster();chart();
+  const incoming=new URLSearchParams(location.search);
+  const sharedHero=heroMap.get(safeChoice(incoming.get("hero")));
+  if(sharedHero){
+   const ref=rosterCards.get(sharedHero.id);
+   if(ref)ref.button.classList.add("invited");
+   $("my-camp").textContent="朋友邀请你支持 "+sourceName(sharedHero)+"。可以直接点击下方卡片投票。";
+   const hash=location.hash;
+   if(hash==="#all-heroes"){
+    $("hero-search").value=sharedHero.alias;
+    searchRoster();
+   }
+  }
+  const pollId=incoming.get("poll"),choice=incoming.get("choice");
+  const topic=polling.find(t=>t.id===pollId);
+  if(topic&&topic.choices.some(option=>option[0]===choice)){
+    const target=document.querySelector('#'+topic.host+' [data-option="'+choice+'"]');
+    if(target)target.classList.add("invited");
+  }
+  if(incoming.get("open")==="lottery"){
+   window.setTimeout(()=>{if(!isHeroClosed())openSlot();},220);
+  }
   $("open-lottery").disabled=isHeroClosed();
   $("simulate-btn").disabled=isHeroClosed();
   showActivity("模拟有人投票时，会冒出 +1 气泡",true);
