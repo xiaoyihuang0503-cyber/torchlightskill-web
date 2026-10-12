@@ -161,8 +161,8 @@ function setupTopic(){
 async function setupSeat(){
  const seat=seatId;
  if(!/^(topic:[a-z0-9_]+|question:[0-9a-f-]{36})$/.test(seat)){
-  display("策划圆桌","问题席位","来圆桌占个座","每把椅子代表一道追问，支持你最想让策划回答的问题。");
-  $("primary-action").textContent="🪑 打开策划圆桌";$("primary-action").disabled=false;
+  display("炸策划大会","问题席位","来圆桌占个座","每把椅子代表一道追问，支持你最想让策划回答的问题。");
+  $("primary-action").textContent="💣 打开炸策划大会";$("primary-action").disabled=false;
   $("primary-action").onclick=()=>route("../#roundtable");
   setLink("../?open=ask#roundtable","➕ 我也要提问 ↗");return;
  }
@@ -173,28 +173,34 @@ async function setupSeat(){
   const question=await LIVE?.getApprovedQuestion?.(seat.slice(9));
   if(question){title=question.text;body="这是一位玩家提交并通过审核的问题。";}
   else{
-   display("策划圆桌","这张椅子暂时空着","这条问题还不能公开","玩家问题审核通过后才会出现在圆桌上。");
-   $("primary-action").textContent="🪑 去看圆桌";$("primary-action").disabled=false;$("primary-action").onclick=()=>route("../#roundtable");
+   display("炸策划大会","这个问题暂时未公开","这条问题还不能公开","玩家问题审核通过后才会出现在圆桌上。");
+   $("primary-action").textContent="💣 去看圆桌";$("primary-action").disabled=false;$("primary-action").onclick=()=>route("../#roundtable");
    setLink("../?open=ask#roundtable","我来提一个问题 ↗");return;
   }
  }
  state.seat=seat;
- display("策划圆桌 / 问题席位","🪑 你支持这道问题吗？",title,body);
+ display("炸策划大会 / 当前问题","💣 每点一次就能再炸一下！",title,body);
  $("choice-tag").hidden=false;
- $("choice-tag").textContent="🔥 当前 "+(LIVE?.getSeatCount?.(seat)||0)+" 人支持";
+ const refresh=()=>{$("choice-tag").textContent="💣 当前累计 "+(LIVE?.getSeatCount?.(seat)||0)+" 次点击";};
+ refresh();
  const button=$("primary-action");
- button.textContent=LIVE?.hasSupported?.(seat)?"✅ 已支持":"🔥 我也想让策划回答";
- button.disabled=!state.ready||!!LIVE?.hasSupported?.(seat);
+ button.textContent="💣 再炸策划一下 +1";
+ button.disabled=!state.ready;
  button.onclick=async()=>{
+  if(button.disabled)return;
   button.disabled=true;
   try{
    const result=await LIVE.supportSeat(seat);
-   $("choice-tag").textContent="🔥 当前 "+(LIVE.getSeatCount(seat)||0)+" 人支持";
-   button.textContent="✅ 已支持";
-   note(result?.changed?"🔥 已支持！这道问题的热度 +1":"这道问题你已支持过。");
-  }catch(error){note(String(error?.message||error));button.disabled=false;}
+   refresh();
+   if(Number(result?.accepted)>0){
+     note("💥 又炸了一下！当前问题热度 +1，可以继续点击。");
+   }else{
+     note("点击太快了，稍等一下再继续炸！");
+   }
+  }catch(error){note(String(error?.message||error));}
+  finally{button.disabled=!state.ready;}
  };
- setLink("../?seat="+encodeURIComponent(seat)+"#roundtable","查看更多圆桌椅子 ↗");
+ setLink("../?seat="+encodeURIComponent(seat)+"#topics","去炸策划大会给它加火力 ↗");
 }
 function setupLegacy(){
  display("旧版投票","议题已经更新",kind==="maze"?"迷城燃料问题已进入新版焦点投票":"策划圆桌现在可以点椅子提问",

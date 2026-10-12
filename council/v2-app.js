@@ -1,5 +1,4 @@
-import { createHeatEngine } from "./heat-engine.js";
-import { createPlannerBattle } from "./planner-battle.js";
+import { createPlannerBattle } from "./planner-battle.js?v=20261013-clicks1";
 /* Torchlight Council v2 — browser UI. All public counts and events come from Supabase. */
 (function(){
 "use strict";
@@ -43,7 +42,7 @@ const state={
  slotResult:null,spinning:false,slotTimer:null,toastTimer:null,eventIds:new Set(),
  recentRank:[],rankInitialized:false,lastEmoji:0,lastActivity:0,
  incomingHero:null,
- demoOn:true,heat:null
+ demoOn:false,heat:null
 };
 let heroLoadPromise=null;
 /* Infinite local petition: repeated clicks are NOT votes and never reach Supabase. */
@@ -310,7 +309,7 @@ function refreshHeatLabels(connection){
   :"实时记录每一张真实选票，排名可随玩家投票变化。";
 }
 function setDemoMode(enabled){
- state.demoOn=!!enabled;
+ state.demoOn=false; // The hero board cannot switch to synthetic vote numbers.
  refreshHeatLabels();
  if(!state.loaded)return;
  updateHeroChart();updateCards();updateFocusCounts();updateSeatNumbers();
@@ -904,9 +903,8 @@ async function init(){
  if(Date.now()>=ASK_CLOSE_AT){$("submit-roundtable-question").disabled=true;$("roundtable-question-input").disabled=true;}
  try{
   await ensureHeroes();
-  state.heat=createHeatEngine(state.heroes,FOCUS,FOCUS.map(t=>"topic:"+t.id),Math.floor(Date.now()/3600000));
+  // Hero rankings always use authentic Supabase ballot counts. No simulated hot-race values.
   refreshHeatLabels();
-  window.setInterval(runHeatTick,3200);
   const group=document.createDocumentFragment();
   state.heroes.forEach(h=>group.appendChild(makeHeroCard(h)));
   $("hero-list").replaceChildren(group);
@@ -920,7 +918,7 @@ async function init(){
   if(location.hash==="#all-heroes"||state.incomingHero&&location.hash.includes("heroes")){
    $("all-heroes").open=true;arrangeCards();
   }
-  if(!LIVE?.available){refreshHeatLabels("error");statusText("🧪 热场演示可以继续玩；实时投票服务暂不可用");return;}
+  if(!LIVE?.available){refreshHeatLabels("error");statusText("实时投票暂不可用；炸策划点击可稍后同步");return;}
   wireLive();await LIVE.start();
   if(query.get("open")==="lottery"&&!isClosed())window.setTimeout(openLottery,200);
   const seat=decodeURIComponent(query.get("seat")||"");

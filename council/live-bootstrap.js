@@ -1,6 +1,6 @@
 /* Load local UI immediately. Supabase SDK is fetched in the background so slow
    mobile CDN connections cannot prevent the lottery from opening. */
-import { createCouncilLive } from "./live-core.js";
+import { createCouncilLive } from "./live-core.js?v=20261013-clicks1";
 
 let delegate=null;
 const blankVotes={};
@@ -44,8 +44,9 @@ window.TorchCouncilLive={
  },
  async vote(...args){return (await connected()).vote(...args);},
  async supportSeat(...args){return (await connected()).supportSeat(...args);},
+ async bombIssue(...args){return (await connected()).bombIssue(...args);},
  async addPetition(...args){return (await connected()).addPetition(...args);},
  async submitQuestion(...args){return (await connected()).submitQuestion(...args);},
  async getApprovedQuestion(...args){return (await connected()).getApprovedQuestion(...args);}
 };
-await import("./v2-app.js?v=20261012-bombv3");
+await import("./v2-app.js?v=20261013-clicks1");

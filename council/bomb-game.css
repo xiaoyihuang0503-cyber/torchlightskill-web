@@ -215,3 +215,32 @@
 @media(prefers-reduced-motion:reduce){
  .bomb-game-body .planner-battle-board .planner-issue{transition:none}
 }
+
+
+/* v3.2 keeps the original cream/sticker palette; the largest number is a confirmed
+   server-side planner hit count, not a fabricated count or a once-per-user vote. */
+.bomb-game-body .petition-stats .planner-global-headline {
+ grid-column:1/-1;
+ display:flex;align-items:baseline;justify-content:center;gap:14px;
+ flex-wrap:wrap;padding:11px 8px;border-radius:10px;
+ background:#fff5dc;border:1.5px solid #d4aa73;
+ color:var(--ink);text-align:center;
+}
+.bomb-game-body .petition-stats .planner-global-headline strong {
+ font:850 clamp(38px,5vw,58px)/1 var(--display);
+ color:#a5411e;letter-spacing:-.025em;
+ font-variant-numeric:tabular-nums;
+}
+.bomb-game-body .petition-stats .planner-global-headline>span {
+ color:#795539;font-weight:800;font-size:13px;line-height:1.4;
+}
+.bomb-game-body .petition-stats #petition-global{
+ text-align:center;font-size:11px;color:#93522d;
+}
+@media(max-width:700px){
+ .bomb-game-body .petition-stats .planner-global-headline {
+  justify-content:flex-start;gap:8px;min-height:76px;
+ }
+ .bomb-game-body .petition-stats .planner-global-headline strong {font-size:45px}
+ .bomb-game-body .petition-stats .planner-global-headline>span{font-size:11px}
+}
