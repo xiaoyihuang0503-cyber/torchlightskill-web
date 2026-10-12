@@ -1,4 +1,5 @@
-import { createPlannerBattle } from "./planner-battle.js?v=20261013-clicks1";
+import { createPlannerBattle } from "./planner-battle.js?v=20261013-issues20";
+import { BOMB_ISSUES } from "./bomb-issues.js?v=20261013-issues20";
 /* Torchlight Council v2 — browser UI. All public counts and events come from Supabase. */
 (function(){
 "use strict";
@@ -46,7 +47,7 @@ const state={
 };
 let heroLoadPromise=null;
 /* Infinite local petition: repeated clicks are NOT votes and never reach Supabase. */
-const plannerGame=createPlannerBattle({LIVE,FOCUS,reduced,toast});
+const plannerGame=createPlannerBattle({LIVE,FOCUS,ISSUES:BOMB_ISSUES,reduced,toast});
 const labelHero=hero=>hero.name+" · "+hero.trait;
 const fmt=v=>new Intl.NumberFormat("zh-CN").format(Number(v)||0);
 const emojiByPosition=i=>["👑","🔥","⚡","🚀","✨","💪"][i%6];
@@ -762,8 +763,9 @@ function share(kind,args={}){
   const seat=args.seat||state.selectedSeat;
   const chair=state.chairs.find(c=>c.key===seat&&c.kind!=="empty");
   const official=FOCUS.find(t=>seat==="topic:"+t.id);
+  const newIssue=BOMB_ISSUES.find(t=>seat==="topic:"+t.id);
   const player=(LIVE?.getQuestions?.()||[]).find(q=>q.status==="approved"&&seat==="question:"+q.id);
-  const body=chair?.body||official?.followup||player?.text;
+  const body=newIssue?.title||chair?.body||official?.followup||player?.text;
   if(body){
    url.searchParams.set("seat",seat);
    heading="💣 帮我把这道问题顶上去："+body;

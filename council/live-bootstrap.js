@@ -49,4 +49,4 @@ window.TorchCouncilLive={
  async submitQuestion(...args){return (await connected()).submitQuestion(...args);},
  async getApprovedQuestion(...args){return (await connected()).getApprovedQuestion(...args);}
 };
-await import("./v2-app.js?v=20261013-clicks1");
+await import("./v2-app.js?v=20261013-issues20");
