@@ -444,7 +444,10 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
     try{
       const seat=new URLSearchParams(location.search).get("seat");
       if(seat && /^(topic:[a-z0-9_]+|question:[0-9a-f-]{36})$/.test(seat)){
-        state.pendingSelect=seat;state.expanded=true;
+        state.expanded=true;
+        // Seed issue deep links resolve immediately even before the database loads.
+        if(ISSUES.some(issue=>seat==="topic:"+issue.id))state.selected=seat;
+        else state.pendingSelect=seat;
       }
     }catch(error){/* A malformed link must not block the game. */}
     readClicks();
