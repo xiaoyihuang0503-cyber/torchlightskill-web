@@ -2,18 +2,12 @@
  * Real "supports" are authenticated Supabase RPC (one per identity/seat).
  * Infinite bombs are decorative clicks, NOT votes. Pending text stays private.
  */
-export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
+export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()=>{}}){
   const $=id=>document.getElementById(id);
-  const issuePrompts=new Map([
-    ["mode_reduction","老玩法到底改不改？"],
-    ["ember_drop_data","初火掉率能不能说清楚？"],
-    ["reward_access","养成材料能不能自由刷？"],
-    ["legacy_friction","重复劳动能不能减一减？"]
-  ]);
   const fields=new Map();
   const history=new Map();
   const state={
-    selected:"topic:mode_reduction",questions:[],pending:[],
+    selected:"topic:bomb_01",questions:[],pending:[],batchKeys:[],
     ranked:[],localClicks:0,pendingClicks:0,pendingBySeat:new Map(),combo:0,lastClick:0,lastSave:0,
     timer:0,flushTimer:0,busy:false,totalKnown:false,lastGlobal:0,
     activeBombs:0,lastRemoteBomb:0,submitBusy:false,submitting:false,reactionTimer:0,expanded:false,ambientTimer:0,pendingSelect:null
@@ -21,24 +15,39 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
   const STORAGE="torchlight-council-petition-local-v1";
   const QUEUE_STORAGE="torchlight-council-pending-bomb-clicks-v2";
   const fmt=n=>new Intl.NumberFormat("zh-CN").format(Math.max(0,Number(n)||0));
-  const official=new Map(FOCUS.map(t=>["topic:"+t.id,t]));
-  const approvedQ=key=>state.questions.find(q=>"question:"+q.id===key);
   const confirmed=key=>Math.max(0,Number(LIVE?.getSeatCount?.(key))||0);
   const nSupport=key=>confirmed(key)+Math.max(0,state.pendingBySeat.get(key)||0);
   function candidates(){
-    const rows=FOCUS.map((t,i)=>({
-      key:"topic:"+t.id,title:issuePrompts.get(t.id)||t.short,
-      full:t.followup||t.title,kind:"official",emoji:t.emoji||"🛠️",time:0,order:i
+    const rows=ISSUES.map((issue,i)=>({
+      key:"topic:"+issue.id,title:issue.title,full:issue.title,
+      kind:"official",emoji:issue.emoji||"💣",time:0,order:i
     }));
     const approved=state.questions.filter(q=>q.status==="approved");
     approved.forEach((q,i)=>rows.push({
       key:"question:"+q.id,title:q.text,full:q.text,kind:"player",
-      emoji:"💬",time:Number(q.at)||0,order:FOCUS.length+i
+      emoji:"💬",time:Number(q.at)||0,order:ISSUES.length+i
     }));
-    rows.sort((a,b)=>nSupport(b.key)-nSupport(a.key)
-      ||(a.kind==="official"?0:1)-(b.kind==="official"?0:1)
+    return rows.sort((a,b)=>nSupport(b.key)-nSupport(a.key)
       ||b.time-a.time||a.order-b.order);
-    return rows;
+  }
+  function randomizeBatch(all){
+    const pool=all.slice();
+    // Fisher-Yates: every question can be shown, and switches retain recorded heat.
+    for(let i=pool.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [pool[i],pool[j]]=[pool[j],pool[i]];
+    }
+    state.batchKeys=pool.slice(0,8).map(row=>row.key);
+  }
+  function nextBatch(){
+    const all=candidates();
+    if(all.length<=8){state.batchKeys=all.map(row=>row.key);syncRows();return;}
+    const previous=state.batchKeys.join(",");
+    randomizeBatch(all);
+    // Best-effort ensure the next group differs from the previous one.
+    for(let attempt=0;state.batchKeys.join(",")===previous&&attempt<4;attempt++)randomizeBatch(all);
+    state.expanded=false;
+    syncRows();
   }
   function tierFor(key){
     const place=state.ranked.findIndex(row=>row.key===key);
@@ -68,7 +77,10 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
   }
   function syncRows(){
     const host=$("planner-issue-grid");if(!host)return;
-    const all=candidates(),order=all.slice(0,state.expanded?40:8),before=new Map();
+    const all=candidates(),before=new Map();
+    if(!state.batchKeys.length)randomizeBatch(all);
+    const group=new Set(state.batchKeys);
+    const order=(state.expanded?all:all.filter(row=>group.has(row.key))).slice(0,state.expanded?100:8);
     host.querySelectorAll("[data-planner-seat]").forEach(b=>{
       before.set(b.dataset.plannerSeat,b.getBoundingClientRect());
     });
@@ -82,7 +94,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
       history.set(row.key,count);
       node.number.textContent=index===0&&count>0?"👑":"#"+String(index+1).padStart(2,"0");
       node.title.textContent=row.title;
-      node.extra.textContent=row.kind==="player"?"玩家提问 · 已审核":"本周焦点追问";
+      node.extra.textContent=row.kind==="player"?"玩家提问 · 已审核":"预置议题 · #"+String(row.order+1).padStart(2,"0");
       const pending=state.pendingBySeat.get(row.key)||0;
       node.votes.textContent="💣 "+fmt(count)+" 次点击"+(pending>0?" · 同步中":"");
       node.fill.style.width=(count>0?Math.max(6,Math.round(count/max*100)):0)+"%";
@@ -113,9 +125,12 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
       });
     }
     const countEl=$("planner-pool-count"),more=$("planner-more");
-    if(countEl)countEl.textContent=all.length+" 道已审核/预置问题 · 按点击次数追逐排序";
-    if(more){more.hidden=all.length<=8;more.textContent=state.expanded?"↑ 收起，仅看前 8":"↓ 查看更多 "+(all.length-8)+" 道问题";}
-    if(!order.some(row=>row.key===state.selected))state.selected=order[0]?.key||"topic:mode_reduction";
+    if(countEl)countEl.textContent=state.expanded
+      ?"全部 "+all.length+" 道题 · 按累计点击热度排序"
+      :"本批 "+order.length+" / "+all.length+" 道题 · 按累计点击热度排序";
+    if(more){more.hidden=all.length<=8;more.textContent=state.expanded?"↑ 收起，返回随机八题":"↓ 展开全部 "+all.length+" 道题";}
+    const shuffle=$("planner-shuffle");if(shuffle)shuffle.disabled=all.length<=8;
+    if(!order.some(row=>row.key===state.selected))state.selected=order[0]?.key||"topic:bomb_01";
     refreshSelected();
     const pending=$("planner-pending-count");
     if(pending){
@@ -428,7 +443,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
   function mount(){
     try{
       const seat=new URLSearchParams(location.search).get("seat");
-      if(seat && /^(topic:[a-z_]+|question:[0-9a-f-]{36})$/.test(seat)){
+      if(seat && /^(topic:[a-z0-9_]+|question:[0-9a-f-]{36})$/.test(seat)){
         state.pendingSelect=seat;state.expanded=true;
       }
     }catch(error){/* A malformed link must not block the game. */}
@@ -439,6 +454,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
     $("planner-target").addEventListener("click",tap);
     $("planner-vote").addEventListener("click",supportCurrent);
     $("planner-more").addEventListener("click",()=>{state.expanded=!state.expanded;syncRows();});
+    $("planner-shuffle").addEventListener("click",nextBatch);
     $("planner-write").addEventListener("click",()=>openForm($("planner-question-form").hidden));
     $("planner-question-cancel").addEventListener("click",()=>openForm(false));
     $("planner-question-input").addEventListener("input",e=>{
