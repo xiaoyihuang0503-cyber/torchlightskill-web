@@ -12,12 +12,13 @@ export function createCouncilLive(createClient) {
   const ownVotes={};
   let keywordRows=[];
   let questions=[];
+  let petitionTotal=0;
   let seatStats={};
   let mySeats=[];
   let channel=null,started=false,ready=false,refreshTimer=null,refreshing=false,lastEvent=0;
   const hooks={
     onCounts:null,onKeywordStats:null,onQuestions:null,onVoteEvent:null,
-    onOwnVotes:null,onStatus:null,onSeatStats:null,onMySeats:null,onSeatEvent:null
+    onOwnVotes:null,onStatus:null,onSeatStats:null,onMySeats:null,onSeatEvent:null,onPetition:null
   };
   function call(kind,payload){if(typeof hooks[kind]==="function")try{hooks[kind](payload);}catch(error){console.warn("council update handler",error);}}
   function errText(error,action){
@@ -145,11 +146,30 @@ export function createCouncilLive(createClient) {
     if(error)return null;
     return data&&data.status==="approved"?{id:data.id,text:data.body,status:data.status,at:Date.parse(data.created_at)||Date.now()}:null;
   }
+  async function refreshPetition(){
+    const {data,error}=await client.from("council_petition_totals")
+      .select("total_clicks").eq("id","ask_official").maybeSingle();
+    if(error)throw Error(errText(error,"读取全站回应数"));
+    petitionTotal=Math.max(0,Number(data?.total_clicks)||0);
+    call("onPetition",{total:petitionTotal});
+    return petitionTotal;
+  }
+  async function addPetition(clicks){
+    if(!Number.isInteger(clicks)||clicks<1||clicks>25)throw Error("点击数量不正确");
+    await ensureAnonymousAuth();
+    const {data,error}=await client.rpc("council_add_petition",{p_clicks:clicks});
+    if(error)throw Error(errText(error,"同步火苗"));
+    if(data&&Number.isFinite(Number(data.total))){
+      petitionTotal=Math.max(0,Number(data.total));
+      call("onPetition",{total:petitionTotal});
+    }
+    return data;
+  }
   async function refreshAll(){
     if(refreshing)return;
     refreshing=true;
     try{
-      const results=await Promise.allSettled([refreshChoices(),refreshKeywordStats(),refreshQuestions(),refreshSeatStats()]);
+      const results=await Promise.allSettled([refreshChoices(),refreshKeywordStats(),refreshQuestions(),refreshSeatStats(),refreshPetition()]);
       if(results[0].status==="rejected")throw results[0].reason;
       if(!ready)throw Error("统计还未加载");
       call("onStatus",{state:"ready",message:"已连接真实投票"});
@@ -190,6 +210,12 @@ export function createCouncilLive(createClient) {
         const row=payload?.new;
         if(row?.seat_key)call("onSeatEvent",{seat:row.seat_key,id:Number(row.id)||0});
       })
+      .on("postgres_changes",{event:"UPDATE",schema:"public",table:"council_petition_totals"},payload=>{
+        const row=payload?.new;
+        if(row?.id!=="ask_official")return;
+        petitionTotal=Math.max(0,Number(row.total_clicks)||0);
+        call("onPetition",{total:petitionTotal});
+      })
       .subscribe(status=>{
         if(status==="SUBSCRIBED")call("onStatus",{state:"ready",message:"实时更新已连接"});
         if(status==="CHANNEL_ERROR"||status==="TIMED_OUT")
@@ -211,10 +237,11 @@ export function createCouncilLive(createClient) {
     started=false;
   }
   return {
-    available:true,hooks,counts,ownVotes,start,stop,vote,submitQuestion,supportSeat,getApprovedQuestion,refreshSeatStats,refreshMySeats,
+    available:true,hooks,counts,ownVotes,start,stop,vote,submitQuestion,supportSeat,getApprovedQuestion,refreshSeatStats,refreshMySeats,refreshPetition,addPetition,
     refreshAll,refreshChoices,refreshQuestions,refreshKeywordStats,refreshOwnVotes,
     getCount:(topic,choice)=>Number(counts[topic]?.[choice]||0),
     isReady:()=>ready,
+    getPetitionTotal:()=>petitionTotal,
     getSeatCount:(seat)=>Number(seatStats[seat]||0),
     hasSupported:(seat)=>mySeats.includes(seat),
     getSeatStats:()=>({...seatStats}),
