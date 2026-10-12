@@ -3,7 +3,6 @@
 const $=id=>document.getElementById(id);
 const SS14_OPEN=Date.parse("2026-10-16T10:00:00+08:00");
 const ROUNDTABLE_END=Date.parse("2026-10-14T20:00:00+08:00");
-const STORAGE_KEY="torchlight-council-preview-choice-v1";
 const MANIFEST_URL="/assets/torchlight-mentor-avatars/manifest.json";
 const ALIASES={
   youga_1:"时空1",youga_2:"时空2",youga_3:"时空3",
@@ -14,15 +13,6 @@ const ALIASES={
   rehan_1:"狂1",rehan_2:"狂2",iris_1:"魔灵1",iris_2:"魔灵2",
   rosa_1:"罗莎1",rosa_2:"罗莎2",thea_1:"希雅1",thea_2:"希雅2",thea_3:"希雅3",
   moto_1:"莫托1",moto_2:"莫托2",sage_1:"药娘"
-};
-const PREVIEW_COUNTS={
-  youga_3:202,bing_2:184,selena_2:163,carino_2:149,
-  erika_2:133,gemma_2:115,iris_2:103,rehan_2:100,
-  carino_1:96,carino_3:91,erika_1:88,erika_3:83,
-  bing_1:79,gemma_1:76,gemma_4:73,thea_1:70,
-  thea_2:67,thea_3:64,youga_1:61,youga_2:59,
-  moto_1:57,moto_2:54,rosa_1:51,rosa_2:49,
-  iris_1:47,selena_1:45,rehan_1:42,sage_1:40
 };
 const LEGACY={
   yuga3:"youga_3",yuga1:"youga_1",yuga2:"youga_2",
@@ -39,7 +29,7 @@ const heroMap=new Map();
 const heroes=[];
 const rosterCards=new Map();
 const chartCards=new Map();
-const state={hero:null,maze:null,roundtable:null,simulated:{},motion:true,slotResult:null,spinning:false};
+const state={hero:null,maze:null,roundtable:null,motion:true,slotResult:null,spinning:false};
 const LIVE=window.TorchCouncilLive;
 const polling=[
  {id:"maze",host:"maze-options",summary:"maze-summary",closedAt:null,choices:[["support","可以接受",0],["oppose","改得太狠了",0]]},
@@ -69,8 +59,6 @@ function random(n){
 }
 function sampleOne(items){return items[random(items.length)];}
 function safeChoice(id){return LEGACY[id]||id;}
-function readChoice(){ /* Live votes are restored by Supabase Auth only. */ }
-function saveChoice(){ /* No legacy demo localStorage writes. */ }
 function toast(text){
  let node=$("tc-toast");
  if(!node){node=document.createElement("div");node.id="tc-toast";node.className="toast";node.setAttribute("role","status");document.body.appendChild(node);}
@@ -277,7 +265,7 @@ function showActivity(value,simulated){
  lastActivity=value;
  const now=new Date();
  const stamp=new Intl.DateTimeFormat("zh-CN",{timeZone:"Asia/Shanghai",hour:"2-digit",minute:"2-digit",hour12:false}).format(now);
- $("activity-line").textContent=stamp+" · "+(simulated?"模拟：":"")+value;
+ $("activity-line").textContent=stamp+" · "+value;
 }
 function bubble(hero,label,simulation){
  const item=chartCards.get(hero.id);
@@ -299,7 +287,6 @@ function bubble(hero,label,simulation){
  $("bubble-layer").appendChild(bubble);
  setTimeout(()=>bubble.remove(),1900);
 }
-function tickDemo(){ /* Artificial votes are forbidden after Supabase activation. */ }
 function toggleMotion(){
  state.motion=!state.motion;
  $("motion-toggle").textContent=state.motion?"隐藏气泡":"显示气泡";
@@ -307,7 +294,7 @@ function toggleMotion(){
  showActivity(state.motion?"继续显示真实投票气泡":"气泡已隐藏，票数仍会实时刷新",false);
 }
 
-/* 策划圆桌：匿名问题与关键词本机即时预览。等 Supabase 连接后替换为后端聚合数据。 */
+/* 策划圆桌关键词经服务端汇总，只公开经过审核的玩家提问。 */
 /* Public keyword totals are aggregated in Postgres.
  * Pending question text is readable only by its creator until approved.
  */
@@ -571,7 +558,7 @@ function share(kind,heroId){
  $("share-link").value=item.url;
  $("share-preview-text").textContent=item.title;
  $("open-share-page").href=item.url;
- $("share-tip").textContent=item.caption+" 当前是演示版，投票只保存在各自浏览器。";
+ $("share-tip").textContent=item.caption+" 朋友投票后会计入全站真实票数。";
  $("share-dialog").dataset.shareTitle=item.title;
  openModal($("share-dialog"));
 }
@@ -652,7 +639,6 @@ async function init(){
     window.setTimeout(()=>{if(!isHeroClosed())openSlot();},220);
   }
   $("open-lottery").disabled=isHeroClosed();
-  $("simulate-btn").disabled=true;
   if(!LIVE?.available){
     $("vote-source-label").textContent="实时服务连接失败";
     showActivity("无法加载实时投票模块，请刷新页面重试",false);
