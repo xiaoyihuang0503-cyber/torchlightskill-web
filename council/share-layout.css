@@ -1,0 +1,61 @@
+@charset "UTF-8";
+/* Council v0.5: narrow editorial column and reserved ad rails. No ad scripts are loaded. */
+.council-shell{width:min(100%,1352px);padding:0 16px;margin:0 auto;display:grid;grid-template-columns:160px minmax(0,916px) 160px;gap:24px;align-items:start;justify-content:center}
+.council-shell>.page{grid-column:2;grid-row:1;max-width:none;width:100%;min-width:0;padding:0 6px;margin:0}
+.ad-rail{grid-row:1;min-width:0;align-self:stretch;pointer-events:none;padding-top:286px}
+.ad-rail-left{grid-column:1}
+.ad-rail-right{grid-column:3}
+.ad-space{position:sticky;top:28px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:9px;height:600px;width:160px;border:1.5px dashed #bcb09a;border-radius:12px;background:rgba(255,253,247,.45);color:#9e907c;text-align:center;letter-spacing:.04em}
+.ad-space span{font:700 10px ui-monospace,monospace;letter-spacing:.13em}
+.ad-space strong{font-size:14px;font-weight:650}
+.ad-space small{font:12px ui-monospace,monospace}
+.arena-actions .lottery-main-action{min-width:0;display:flex;flex-direction:column;gap:5px}
+.arena-actions .lottery-main-action .button{flex:0 0 auto}
+.minor-share{align-self:flex-end;background:none;border:0;padding:7px 4px;color:#6b5140;text-decoration:underline;text-underline-offset:3px;font-size:12px;font-weight:650}
+.minor-share:hover{color:#b93f1a}
+.roster-hint{color:#817361;font-size:12px;margin:16px 0 0}
+/* Entire card is an article so vote and share actions remain two distinct accessible buttons. */
+.roster-grid .roster-card{display:block;position:relative;padding:0;min-width:0;min-height:138px;overflow:hidden}
+.roster-vote{display:flex;align-items:flex-start;gap:9px;position:relative;border:0;text-align:left;background:transparent;color:var(--ink);width:100%;height:100%;min-height:138px;padding:15px 10px 42px;cursor:pointer}
+.roster-card.selected .roster-vote{background:rgba(255,216,77,.13)}
+.roster-card .roster-count{bottom:auto;top:10px;right:10px;align-items:flex-end;flex-direction:column;gap:2px}
+.roster-card .roster-count strong{line-height:1.2}
+.roster-share{display:inline-flex;align-items:center;justify-content:center;position:absolute;right:7px;bottom:13px;z-index:3;min-width:61px;min-height:33px;padding:5px 9px;background:#fffdf7;border:1.5px solid var(--ink);border-radius:999px;color:#6d3b1f;font-size:11px;font-weight:800;box-shadow:1.5px 1.5px 0 var(--ink)}
+.roster-share:hover{background:var(--yellow);color:var(--ink)}
+.roster-vote:focus-visible,.roster-share:focus-visible{outline:3px solid var(--orange);outline-offset:-3px}
+.roster-card.invited{background:#ffeab5;outline:3px solid var(--orange);outline-offset:1px}
+.roster-card .roster-vote .roster-info{padding-right:25px}
+.topic-bottom .module-share{display:inline-flex;align-items:center;justify-content:center;min-height:35px;padding:5px 12px;margin-top:5px;flex-basis:100%;font-size:12px;font-weight:800;border:1.5px solid var(--ink);background:var(--card);border-radius:99px;box-shadow:2px 2px 0 var(--ink)}
+.topic-bottom .module-share:hover{background:var(--yellow)}
+.poll-button.invited{outline:3px solid var(--orange);outline-offset:2px}
+.share-quick-preview{background:#fff0bd;border:2px solid var(--ink);border-radius:12px;padding:13px 16px;margin:17px 0 8px;line-height:1.6;font-weight:750;font-size:16px}
+.share-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:12px}
+.share-modal-actions .button{margin:0!important;font-size:14px;min-height:48px}
+.share-page-link{display:flex;justify-content:center;align-items:center;text-align:center;margin-top:18px;padding:10px 14px;background:var(--pink);border:2px solid var(--ink);border-radius:99px;box-shadow:3px 3px 0 var(--ink);font-weight:800;font-size:13px}
+.share-page-link:hover{background:var(--blue);color:var(--ink)}
+/* Separate, quiet placement; advertisers can replace only the two reserved asides. */
+@media(max-width:1280px){
+ .council-shell{display:block;max-width:940px;padding:0 16px}
+ .council-shell>.page{max-width:940px;margin:0 auto;padding:0 14px}
+ .ad-rail{display:none}
+}
+@media(max-width:950px){
+ .council-shell{max-width:860px}
+ .council-shell>.page{padding:0 9px}
+}
+@media(max-width:700px){
+ .council-shell{padding:0 15px}
+ .council-shell>.page{padding:0}
+ .roster-grid .roster-card{min-height:171px}
+ .roster-vote{flex-direction:column;gap:7px;min-height:171px;padding:12px 10px 43px}
+ .roster-card .roster-count{top:12px;right:10px}
+ .roster-card .roster-vote .roster-info{padding-right:0}
+ .roster-share{bottom:11px;min-height:33px}
+ .share-modal-actions{grid-template-columns:1fr}
+ .topic-bottom .module-share{flex-basis:100%}
+}
+@media(max-width:370px){
+ .council-shell{padding:0 12px}
+ .roster-vote{padding:11px 9px 43px}
+ .roster-share{right:5px;padding-inline:8px}
+}
