@@ -50,6 +50,7 @@ let activeTopicId=polling[0].id;
 let renderedTopicId=null;
 let rosterSort="votes";
 let previousLeader=null;
+let previousRankIds=[];
 let hadRealCountSnapshot=false;
 const reducedMotion=!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 let loaded=false;
@@ -310,6 +311,8 @@ function bubble(hero,label,simulation){
  const target=visible?item.avatar.getBoundingClientRect():null;
  const x=visible?Math.max(74,Math.min(area.width-74,target.left+target.width/2-area.left)):area.width/2;
  const y=visible?Math.max(63,target.top-area.top-4):86;
+ const bucket=$("bubble-layer");
+ while(bucket.children.length>=2)bucket.removeChild(bucket.firstElementChild);
  const bubble=document.createElement("div");bubble.className="vote-bubble";
  bubble.style.left=x+"px";bubble.style.top=y+"px";
  const image=newPortrait(hero.asset,"","bubble-avatar");image.src=hero.asset.site_url;
@@ -318,7 +321,7 @@ function bubble(hero,label,simulation){
  const lineBottom=document.createElement("small");lineBottom.textContent=sourceName(hero);
  line.append(lineTop,lineBottom);
  bubble.append(image,line);
- $("bubble-layer").appendChild(bubble);
+ bucket.appendChild(bubble);
  setTimeout(()=>bubble.remove(),1900);
 }
 function toggleMotion(){
@@ -795,7 +798,7 @@ async function init(){
    }
    LIVE.hooks.onCounts=()=>{
      const previouslyHadData=hadRealCountSnapshot;
-     const previousRanked=previouslyHadData?sorted():[];
+     const previousRankIdsSnapshot=previousRankIds.slice();
      remoteReady=true;
      polling.forEach(topic=>topic.choices.forEach(choice=>{
        choice[2]=LIVE.getCount(topic.id,choice[0]);
@@ -809,12 +812,13 @@ async function init(){
        }else if(leader&&!oldTop){
          showActivity("👑 "+sourceName(leader)+" 收到第一票",false);
        }else{
-         const prevRank=new Map(previousRanked.map((h,i)=>[h.id,i+1]));
+         const prevRank=new Map(previousRankIdsSnapshot.map((id,i)=>[id,i+1]));
          const rose=rankedNow.find((h,i)=>count(h)>0&&prevRank.has(h.id)&&prevRank.get(h.id)>i+1);
          if(rose)showActivity("🚀 "+sourceName(rose)+" 升到第 "+(rankedNow.indexOf(rose)+1)+" 名",false);
        }
      }
      previousLeader=leader?leader.id:null;
+     previousRankIds=rankedNow.map(h=>h.id);
      hadRealCountSnapshot=true;
      $("vote-source-label").textContent="真实投票 · 实时更新";
    };
