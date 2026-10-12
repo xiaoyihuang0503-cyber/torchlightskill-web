@@ -1,0 +1,22 @@
+@charset "UTF-8";
+/* V2 share cards: long player-written poll options remain legible, mobile-first. */
+.share-poll-options.quad .share-answer{
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+  gap:6px;text-align:left;min-width:0;min-height:76px;padding:12px 13px;
+  white-space:normal;overflow-wrap:anywhere;
+}
+.share-poll-options.quad .share-answer strong{
+  font:750 13px/1.5 var(--sans);color:var(--ink);
+}
+.share-poll-options.quad .share-answer small{
+  font:750 11px ui-monospace,monospace;color:#87512e;
+}
+.share-poll-options.quad .share-answer.marked{background:var(--yellow)}
+.invite-copy h2{overflow-wrap:anywhere}
+.invite-copy p{white-space:pre-wrap;overflow-wrap:anywhere}
+.share-page .choice-tag{max-width:calc(100% - 48px);white-space:normal;overflow-wrap:anywhere;line-height:1.45}
+@media(max-width:700px){
+ .share-poll-options.quad{grid-template-columns:1fr}
+ .share-poll-options.quad .share-answer{min-height:58px}
+ .share-page .choice-tag{max-width:calc(100% - 30px)}
+}
