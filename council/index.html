@@ -14,11 +14,12 @@
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="stylesheet" href="./v04.css?v=20261012-1">
   <link rel="stylesheet" href="./share-layout.css?v=20261012-1">
-  <script defer src="./app.js?v=20261012-5"></script>
+  <link rel="stylesheet" href="./roundtable.css?v=20261012-1">
+  <script defer src="./app.js?v=20261012-6"></script>
 </head>
 <body>
 <div class="council-shell">
-  <aside class="ad-rail ad-rail-left" aria-label="左侧广告预留区域"><div class="ad-space" aria-hidden="true"><span>AD SPACE</span><strong>广告位</strong><small>160 × 600</small></div></aside>
+  <aside class="ad-rail ad-rail-left" aria-label="左侧广告预留区域" hidden></aside>
 <div class="page" id="top">
   <header class="site-header">
     <a class="logo" href="#top" aria-label="火炬议会">
@@ -98,25 +99,66 @@
     </section>
 
     <section class="topics-section" id="topics" aria-labelledby="topics-title">
-      <div class="section-heading"><div><span class="section-index">03 / 玩家投票</span><h2 id="topics-title">这两件事，你怎么看？</h2>
-        <p>选你更认同的一项，投完可以修改。</p></div></div>
-      <div class="topics-grid">
-        <article class="topic-card pink" aria-labelledby="maze-title">
-          <div class="topic-head"><span>话题 01</span><span class="topic-tag">玩法调整</span></div>
-          <div class="topic-icon" aria-hidden="true">⌘</div>
-          <h3 id="maze-title">迷城燃料被砍，<br>你能接受吗？</h3>
-          <p>新赛季迷城燃料产量下调。你觉得这次改动怎么样？</p>
+      <div class="section-heading">
+        <div><span class="section-index">03 / 玩法投票</span><h2 id="topics-title">迷城燃料这次改动，你怎么看？</h2>
+          <p>你觉得调整合理，还是砍得太狠？</p></div>
+      </div>
+      <article class="topic-card pink maze-compact" aria-labelledby="maze-title">
+        <div class="maze-brief">
+          <span class="maze-category">玩法调整 · SS14</span>
+          <h3 id="maze-title">迷城燃料下调，你能接受吗？</h3>
+          <p>新赛季迷城燃料产量减少了。选一个你认同的看法。</p>
+          <a href="https://torchlight.xd.com/ss14pn" target="_blank" rel="noopener noreferrer">查看更新公告 ↗</a>
+        </div>
+        <div class="maze-vote-area">
           <div id="maze-options" class="poll-options" aria-label="迷城调整投票"></div>
-          <div class="topic-bottom"><span id="maze-summary">演示票数</span><a href="https://torchlight.xd.com/ss14pn" target="_blank" rel="noopener noreferrer">查看更新公告 ↗</a><button type="button" class="module-share" id="share-maze">分享这道投票 ↗</button></div>
-        </article>
-        <article class="topic-card blue" aria-labelledby="roundtable-title">
-          <div class="topic-head"><span>话题 02</span><span class="topic-tag">策划圆桌</span></div>
-          <div class="topic-icon" aria-hidden="true">?</div>
-          <h3 id="roundtable-title">10 月 14 日圆桌，<br>你最想问什么？</h3>
-          <p>掉落、英雄、契灵、赛季玩法。只能选最在意的一项。</p>
-          <div id="roundtable-options" class="poll-options" aria-label="圆桌提问投票"></div>
-          <div class="topic-bottom"><span id="roundtable-summary">演示票数</span><span>10 月 14 日 20:00</span><button type="button" class="module-share" id="share-roundtable">分享这道投票 ↗</button></div>
-        </article>
+          <div class="maze-bottom">
+            <span id="maze-summary">演示票数</span>
+            <button type="button" class="module-share" id="share-maze">分享这道投票 ↗</button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="roundtable-section" id="roundtable" aria-labelledby="roundtable-title">
+      <div class="section-heading">
+        <div><span class="section-index">04 / 玩家提问</span><h2 id="roundtable-title">策划圆桌，你想问什么？</h2>
+          <p>10 月 14 日 20:00。把你最想问的写下来，也能看看问题集中在哪些方面。</p></div>
+        <button type="button" class="roundtable-top-share" id="share-roundtable">分享圆桌提问 ↗</button>
+      </div>
+      <div class="roundtable-layout">
+        <div class="roundtable-compose">
+          <span class="roundtable-kicker">写给策划的问题</span>
+          <h3>你最想让策划回答哪件事？</h3>
+          <form id="roundtable-question-form">
+            <label class="question-label" for="roundtable-question-input">写下具体问题</label>
+            <textarea id="roundtable-question-input" rows="4" minlength="8" maxlength="160" placeholder="例如：迷城燃料下调之后，前期刷图收益要怎么平衡？" required></textarea>
+            <div class="compose-bottom">
+              <span id="question-length">0 / 160 字</span>
+              <button type="submit" class="submit-question" id="submit-roundtable-question">提交问题 ↗</button>
+            </div>
+          </form>
+          <p class="question-notice" id="roundtable-submit-feedback" role="status" aria-live="polite">当前为本机预览。正式公开提交与全站统计将在接入 Supabase 后开启。</p>
+        </div>
+        <div class="roundtable-trends">
+          <div class="trends-heading">
+            <div><span class="roundtable-kicker">问题热词</span><h3>大家都在关心什么？</h3></div>
+            <span class="trends-local" id="keyword-status">本机预览</span>
+          </div>
+          <p>提交问题后，这里的关键词会立即更新。全站统计上线前只显示本机内容。</p>
+          <div id="keyword-cloud" class="keyword-cloud" aria-live="polite"><span class="keyword-empty">还没有提交的问题</span></div>
+          <div class="recent-questions">
+            <div class="recent-heading"><strong>最近提交</strong><span id="question-total">0 条（本机）</span></div>
+            <ul id="roundtable-question-list"><li class="question-empty">等你提交第一个问题</li></ul>
+          </div>
+        </div>
+      </div>
+      <div class="roundtable-quick">
+        <div class="roundtable-quick-head">
+          <div><strong>不想打字？也可以直接选一个方向。</strong><small>当前仍为演示投票，选择可以修改。</small></div>
+          <span id="roundtable-summary">演示票数</span>
+        </div>
+        <div id="roundtable-options" class="poll-options roundtable-poll-options" aria-label="圆桌关注方向投票"></div>
       </div>
     </section>
 
@@ -132,20 +174,13 @@
 
   </main>
 
-  <details class="source-details" id="avatar-sources">
-    <summary>头像来源与 SS14 立绘说明</summary>
-    <p id="avatar-source-status">正在读取素材来源…</p>
-    <p>英雄头像按 <code>type</code>、<code>id</code> 和 <code>trait</code> 精确匹配。旧赛季的头像仅作角色识别参考，部分新赛季立绘尚待确认，部分角色形象有遮面。图片版权仍归各权利方；清单不代表获得额外授权。导师素材的原始授权尚未独立核实。</p>
-    <ul id="avatar-source-list"><li>正在读取来源…</li></ul>
-    <a href="/assets/torchlight-mentor-avatars/manifest.json" target="_blank" rel="noopener noreferrer">查看完整素材清单 ↗</a>
-  </details>
   <footer class="site-footer">
     <div class="footer-logo">✳ <strong>火炬议会</strong> <small>TORCHLIGHT COUNCIL</small></div>
     <p>玩家制作的免费投票页面，与《火炬之光：无限》官方没有隶属关系。当前是演示数据，尚未开放跨玩家计票。</p>
     <div><span>© 2026 Torchlight Council</span><a href="https://torchlightskill.com/" target="_blank" rel="noopener noreferrer">刷宝游戏工具箱 ↗</a></div>
   </footer>
 </div>
-  <aside class="ad-rail ad-rail-right" aria-label="右侧广告预留区域"><div class="ad-space" aria-hidden="true"><span>AD SPACE</span><strong>广告位</strong><small>160 × 600</small></div></aside>
+  <aside class="ad-rail ad-rail-right" aria-label="右侧广告预留区域" hidden></aside>
 </div>
 
 <dialog id="lottery-dialog" class="modal" aria-labelledby="lottery-title">
