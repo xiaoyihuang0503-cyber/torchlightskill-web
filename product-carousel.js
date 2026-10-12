@@ -191,8 +191,12 @@
     cancelAnimationFrame(resizeFrame);
     resizeFrame = requestAnimationFrame(() => { geometry(); go(active, true); });
   };
-  if (window.ResizeObserver) new ResizeObserver(layout).observe(viewport);
-  else window.addEventListener('resize', layout);
+  window.addEventListener('resize', layout);
+  if (window.ResizeObserver) {
+    const observer = new ResizeObserver(layout);
+    try { observer.observe(viewport, { box: 'border-box' }); }
+    catch { observer.observe(viewport); }
+  }
   root.classList.add('is-enhanced');
   geometry();
   go(active, true);
