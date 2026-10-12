@@ -16,8 +16,9 @@
 <link rel="stylesheet" href="../share-layout.css?v=20261012-1">
 <link rel="stylesheet" href="./style.css?v=20261012-1">
 <link rel="stylesheet" href="./v2-share.css?v=20261012-1">
+<link rel="stylesheet" href="./poster-qr.css?v=20261012-1">
 <link rel="stylesheet" href="../roundtable.css?v=20261012-1">
-<script type="module" src="./live-bootstrap.js?v=20261012-1"></script>
+<script type="module" src="./live-bootstrap.js?v=20261012-poster1"></script>
 </head>
 <body>
 <div class="council-shell">
@@ -60,9 +61,15 @@
         <div class="share-export-actions">
           <button type="button" id="copy-link" class="export-button export-copy"><span aria-hidden="true">↗</span><strong>复制链接</strong><small>直接发给朋友</small></button>
           <button type="button" id="share-system" class="export-button export-system"><span aria-hidden="true">↗</span><strong>系统分享</strong><small>手机可直接选 App</small></button>
-          <button type="button" id="save-poster" class="export-button export-poster"><span aria-hidden="true">▧</span><strong>保存分享图片</strong><small>竖版 3:4 海报</small></button>
+          <button type="button" id="save-poster" class="export-button export-poster"><span aria-hidden="true">▦</span><strong>生成二维码海报</strong><small>模块文案 · 扫码进网站</small></button>
         </div>
-        <p id="export-feedback" class="export-feedback" role="status" aria-live="polite">不同邀请链接会直接打开对应英雄或话题，投票会计入全站统计。</p>
+        <p id="export-feedback" class="export-feedback" role="status" aria-live="polite">海报二维码统一进入火炬议会首页。分享专属投票请使用上面的「复制链接」。</p>
+        <div id="poster-preview-panel" class="poster-preview-panel" hidden>
+          <p><strong>🖼️ 二维码海报已生成</strong> · 扫码进入火炬议会首页</p>
+          <img id="poster-preview-image" alt="火炬议会二维码海报" width="270" height="360">
+          <a id="poster-preview-download" class="button primary" download="火炬议会-二维码海报.png">下载 PNG 图片 ↗</a>
+          <small>手机长按图片可保存。二维码统一跳转 torchlightskill.com/council/</small>
+        </div>
       </section>
       <section class="share-more">
         <div><h2>其他英雄也能选</h2><p>完整的 28 个英雄特性都在投票页。犹豫不决就抽一个。</p></div>
