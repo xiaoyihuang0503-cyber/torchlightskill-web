@@ -4,7 +4,7 @@
  * Desktop and official hero voting layout are unchanged. */
 .mobile-bomb-dock,.mobile-bomb-fx{display:none}
 @media (max-width:700px){
- body.bomb-dock-ready .bomb-game-body .planner-action-row{display:none}
+ body.bomb-dock-visible .bomb-game-body .planner-action-row{display:none}
  .mobile-bomb-dock:not([hidden]){
   position:fixed;bottom:0;left:0;right:0;z-index:990;
   display:flex;flex-direction:column;gap:6px;
@@ -67,7 +67,7 @@
  .mobile-bomb-fx .planner-impact-3{font-size:94px}
  .mobile-bomb-fx .planner-debris{font-size:17px}
  #planner-stage{scroll-margin-top:13px}
- body.bomb-dock-ready .bomb-game-body .planner-action-row{display:none}
+ body.bomb-dock-visible .bomb-game-body .planner-action-row{display:none}
  body.bomb-dock-ready .bomb-game-body .planner-battle-board{
   padding-bottom:calc(var(--bomb-dock-height,106px) + 9px);
  }
