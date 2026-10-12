@@ -361,6 +361,8 @@ function renderTopic(topic){
   b.disabled=isTopicClosed(topic);
  });
  $(topic.summary).textContent= (isTopicClosed(topic)?"已结束 · ":"") + fmt(totals.reduce((a,b)=>a+b,0))+" 张模拟票";
+ const shareButton=$(topic.id==="maze"?"share-maze":"share-roundtable");
+ if(shareButton)shareButton.textContent=state[topic.id]?"分享我的选择 ↗":"分享这道投票 ↗";
 }
 function voteTopic(topic,id){
  if(isTopicClosed(topic)){toast("这道题投票已结束");return;}
