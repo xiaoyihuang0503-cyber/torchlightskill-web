@@ -402,7 +402,10 @@ function renderRoundQuestions(){
     saveRoundQuestions();renderRoundQuestions();
     $("roundtable-submit-feedback").textContent="已从当前浏览器删除这条问题。";
    });
-   bottom.append(date,remove);li.append(text,bottom);frag.appendChild(li);
+   const shareQuestion=document.createElement("button");shareQuestion.type="button";shareQuestion.className="share-local-question";shareQuestion.textContent="分享";
+   shareQuestion.setAttribute("aria-label","分享这条圆桌问题："+q.text.slice(0,18));
+   shareQuestion.addEventListener("click",()=>share("roundtable-question",q.text));
+   bottom.append(date,shareQuestion,remove);li.append(text,bottom);frag.appendChild(li);
   });
  }
  list.replaceChildren(frag);
@@ -593,6 +596,18 @@ function shareEntry(kind,heroId){
    if(state.maze)url.searchParams.set("choice",state.maze);
    title=state.maze==="support"?"我觉得迷城这次调整还能接受，你呢？":state.maze==="oppose"?"迷城这次砍得太狠了，你觉得呢？":"迷城燃料被砍，你能接受吗？";
    caption="朋友可以在分享页直接选择自己的立场。";
+   break;
+  case "roundtable-question":
+   url.searchParams.set("kind","roundtable");
+   const question=typeof heroId==="string"?heroId.trim().slice(0,160):"";
+   if(question.length>=8){
+    url.searchParams.set("question",question);
+    title="我想问策划："+question;
+    caption="朋友可以阅读你的问题，也能提交自己的问题。";
+   }else{
+    title="10 月 14 日策划圆桌，你想问什么？";
+    caption="朋友可以直接提问。";
+   }
    break;
   case "roundtable":
    url.searchParams.set("kind","roundtable");
