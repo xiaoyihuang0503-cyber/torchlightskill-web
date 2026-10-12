@@ -16,7 +16,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
     selected:"topic:mode_reduction",questions:[],pending:[],
     ranked:[],localClicks:0,pendingClicks:0,combo:0,lastClick:0,lastSave:0,
     timer:0,flushTimer:0,busy:false,dailyLimit:false,totalKnown:false,
-    activeBombs:0,lastRemoteBomb:0,submitBusy:false,submitting:false,reactionTimer:0,expanded:false,ambientTimer:0
+    activeBombs:0,lastRemoteBomb:0,submitBusy:false,submitting:false,reactionTimer:0,expanded:false,ambientTimer:0,pendingSelect:null
   };
   const STORAGE="torchlight-council-petition-local-v1";
   const fmt=n=>new Intl.NumberFormat("zh-CN").format(Math.max(0,Number(n)||0));
@@ -367,6 +367,9 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
   function updateQuestions(){
     state.questions=(LIVE?.getQuestions?.()||[]).filter(q=>q.status==="approved");
     state.pending=(LIVE?.getQuestions?.()||[]).filter(q=>q.status==="pending");
+    if(state.pendingSelect && candidates().some(row=>row.key===state.pendingSelect)){
+      state.selected=state.pendingSelect;state.expanded=true;state.pendingSelect=null;
+    }
     syncRows();
   }
   function refreshSeats(){syncRows();}
@@ -387,7 +390,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
     try{
       const seat=new URLSearchParams(location.search).get("seat");
       if(seat && /^(topic:[a-z_]+|question:[0-9a-f-]{36})$/.test(seat)){
-        state.selected=seat;state.expanded=true;
+        state.pendingSelect=seat;state.expanded=true;
       }
     }catch(error){/* A malformed link must not block the game. */}
     readClicks();
