@@ -24,7 +24,6 @@ function labelHero(hero){return hero.name+" · "+hero.trait_name;}
 function feedback(text){$("export-feedback").textContent=text;}
 function joinFeedback(text){$("join-feedback").textContent=text;}
 function navigation(target){location.href=target;}
-function pollEnd(){return kind==="roundtable" && Date.now()>=ROUNDTABLE_END;}
 function heroEnd(){return Date.now()>=HERO_END;}
 function snapshot(){
  return LIVE?.ownVotes||{};
@@ -116,63 +115,58 @@ function setupRanking(){
  primary.onclick=()=>navigation("../#all-heroes");
  setLink("secondary-action","../?open=lottery#top","随机抽一个 ↗");
 }
-function setupPoll(type){
- const poll=POLLS[type];
- $("invite-kind").textContent=type==="maze"?"SS14 / 迷城调整":"SS14 / 策划圆桌";
- const chosen=poll.choices.find(c=>c[0]===sharedChoice)||null;
- state.choice=chosen?chosen[0]:null;
- let heading="";
- if(type==="maze"){
-  heading=chosen?chosen[0]==="support"?"我觉得迷城这次调整还能接受，你呢？":"我觉得迷城这次改得太狠，你呢？":"迷城燃料被砍，你能接受吗？";
- }else{
-  heading=chosen?"我最想问策划："+chosen[1]+"。你呢？":"你最想让策划回答哪件事？";
+function setupFocusTopicShare(topic){
+ $("invite-kind").textContent="火炬圆桌 / 席位 "+String(topic.index).padStart(2,"0");
+ const chosen=topic.choices.find(row=>row[0]===sharedChoice);
+ state.choice=chosen?.[0]||null;
+ setHeading("第 "+topic.index+" 席 · "+topic.short,topic.title,topic.question);
+ if(chosen){
+   $("choice-tag").hidden=false;
+   $("choice-tag").textContent="朋友选择了："+chosen[1]+" · 你也可以改选";
  }
- if(type==="roundtable"&&sharedQuestion.length>=8)heading="我想问策划："+sharedQuestion;
- setHeading(type==="roundtable"&&sharedQuestion.length>=8?"朋友提出的问题":"看看你会选什么",heading,
- type==="maze"?"有人能接受，有人觉得砍得太狠。你选哪边？":sharedQuestion.length>=8?"这条问题来自朋友分享的链接，还没有经过审核。你也可以提交自己的问题。":"掉落、平衡、契灵、赛季玩法，选你最在意的一件事。");
- const answerHost=$("share-poll-options");
- answerHost.hidden=false;
- answerHost.classList.toggle("quad",poll.choices.length===4);
+ const host=$("share-poll-options");
+ host.hidden=false;host.classList.add("quad");
  const fragment=document.createDocumentFragment();
- poll.choices.forEach(choice=>{
-  const btn=document.createElement("button");btn.type="button";btn.className="share-answer";
-  btn.textContent=choice[1];
-  btn.dataset.choice=choice[0];
-  const own=snapshot()[type];
-  btn.classList.toggle("marked",own===choice[0]);
-  btn.setAttribute("aria-pressed",String(own===choice[0]));
-  btn.disabled=pollEnd();
-  btn.addEventListener("click",async()=>{
-   if(pollEnd()){joinFeedback("这道题已经结束投票。");return;}
-   const success=await persist(type,choice[0]);
-   if(success){
-    for(const sibling of answerHost.children){
-     const yes=sibling.dataset.choice===choice[0];
-     sibling.classList.toggle("marked",yes);
-     sibling.setAttribute("aria-pressed",String(yes));
-    }
-    joinFeedback("你选了「"+choice[1]+"」，已计入全站真实票数。");
-    $("primary-action").textContent="去看这道题 ↗";
-   }
-  });
-  fragment.appendChild(btn);
+ topic.choices.forEach(option=>{
+   const button=document.createElement("button");button.type="button";button.className="share-answer";
+   button.dataset.choice=option[0];button.textContent=option[1];
+   const mine=snapshot()[topic.id]===option[0];
+   button.classList.toggle("marked",mine);button.setAttribute("aria-pressed",String(mine));
+   button.disabled=!LIVE?.isReady();
+   button.addEventListener("click",async()=>{
+     if(!LIVE?.isReady()){joinFeedback("投票正在连接，请稍后再试");return;}
+     button.disabled=true;
+     const ok=await persist(topic.id,option[0]);
+     Array.from(host.children).forEach(child=>{
+       const selected=ok&&child.dataset.choice===option[0] || snapshot()[topic.id]===child.dataset.choice;
+       child.classList.toggle("marked",selected);
+       child.setAttribute("aria-pressed",String(selected));
+     });
+     button.disabled=false;
+     if(ok){joinFeedback("✅ 已投票，结果计入全站真实票数。📣 可以分享给朋友");}
+   });
+   fragment.append(button);
  });
- answerHost.replaceChildren(fragment);
- if(type==="roundtable"&&sharedQuestion.length>=8){
-  $("choice-tag").hidden=false;
-  $("choice-tag").textContent="分享者提出的问题 · 尚未审核";
- }else if(chosen){
-  $("choice-tag").hidden=false;
-  $("choice-tag").textContent="对方投给："+chosen[1];
+ host.replaceChildren(fragment);
+ const primary=$("primary-action");primary.disabled=false;
+ primary.textContent="🪑 回圆桌看看实时结果 ↗";
+ primary.onclick=()=>navigation("../?topic="+encodeURIComponent(topic.id)+(chosen?"&choice="+encodeURIComponent(chosen[0]):"")+"#topics");
+ setLink("secondary-action","../#topics","看看其他三把椅子 ↗");
+}
+function setupLegacyShare(){
+ const question=kind==="roundtable"?sharedQuestion:"";
+ $("invite-kind").textContent="火炬圆桌 / 历史链接";
+ if(question.length>=8){
+   setHeading("朋友提出的问题","我想问策划："+question,"这条玩家提问来自历史分享链接，未经官方核实。可以去新版圆桌继续提问。");
+   $("choice-tag").hidden=false;
+   $("choice-tag").textContent="玩家问题 · 未经官方核实";
+ }else{
+   setHeading("旧议题已调整","火炬议会现在有四把椅子。","每把椅子对应一道完整的圆桌问题，进去选一席就能投票。之前的投票不会自动转成新票。");
  }
- if(pollEnd())joinFeedback("本期圆桌投票已结束，还可以查看这道题。");
- const primary=$("primary-action");primary.textContent=type==="roundtable"?"我也要提问题 ↗":"去看这道题 ↗";primary.disabled=false;
- primary.onclick=()=>{
-  const chosenNow=snapshot()[type];
-  const query="?poll="+encodeURIComponent(type)+(chosenNow?"&choice="+encodeURIComponent(chosenNow):"");
-  navigation("../"+query+(type==="roundtable"?"#roundtable":"#topics"));
- };
- setLink("secondary-action",type==="roundtable"?"../#roundtable":"../#topics",type==="roundtable"?"看看大家关心什么 ↗":"看其他投票 ↗");
+ const primary=$("primary-action");primary.disabled=false;
+ primary.textContent="🪑 进入新版圆桌 ↗";
+ primary.onclick=()=>navigation(question.length>=8?"../#roundtable":"../#topics");
+ setLink("secondary-action","../#all-heroes","先看看开荒英雄 ↗");
 }
 function validateAsset(asset){
  if(!asset||asset.type!=="hero"||asset.id!==asset.trait||asset.id!==heroId||!asset.trait_name||!asset.name)return false;
@@ -183,7 +177,8 @@ function validateAsset(asset){
  }catch(error){return false;}
 }
 async function show(){
- if(kind==="maze"||kind==="roundtable"){setupPoll(kind);return;}
+ if(kind==="topic"){const topic=TOPICS[sharedTopicId];if(topic)setupFocusTopicShare(topic);else setupLegacyShare();return;}
+ if(kind==="maze"||kind==="roundtable"){setupLegacyShare();return;}
  if(kind==="ranking"||!heroId){kind==="lottery"?setupLottery(null):setupRanking();return;}
  try{
   const res=await fetch(MANIFEST,{cache:"no-cache"});
@@ -209,6 +204,7 @@ function shareText(){
  if(kind==="lottery")return "我刚随机抽了开荒英雄，你也来试试。";
  if(kind==="maze")return "迷城燃料这次调整，你站哪边？";
  if(kind==="roundtable")return "圆桌会谈，你最想问策划什么？";
+ if(kind==="topic"){const topic=TOPICS[sharedTopicId];return topic?topic.title:"火炬圆桌的四个问题";}
  return "SS14 开荒，你准备玩哪个英雄？";
 }
 async function copyLink(){
