@@ -304,3 +304,157 @@
  .planner-stage.is-hit .planner-target,.planner-stage.is-hit:after{animation:none!important}
  .planner-stage.is-hit:after{display:none!important}
 }
+
+
+/* v2.5 — The player-question chase board, real support numbers and ranked bomb physics. */
+.planner-board-heading{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:10px 0 7px}
+.planner-board-heading .planner-issue-prompt{flex:1;min-width:0;margin:0;font-size:11px}
+.planner-write{flex:0 0 auto;padding:6px 8px;min-height:34px;border:1.5px solid var(--ink);border-radius:8px;background:#fffdf7;color:#803c21;font-size:10px;font-weight:830}
+.planner-write:hover,.planner-write:focus-visible{background:#a5dcff}
+.planner-battle-board{
+ display:flex;flex-direction:column;gap:6px;max-height:236px;
+ overflow-y:auto;scrollbar-gutter:stable;overscroll-behavior-y:contain;
+ background:rgba(255,253,247,.55);border:1.5px solid #d4ad83;border-radius:9px;
+ padding:7px;min-width:0;
+}
+.planner-battle-board .planner-issue{
+ position:relative;display:flex;align-items:center;width:100%;min-width:0;
+ gap:7px;min-height:49px;flex-shrink:0;overflow:hidden;white-space:normal;
+ padding:6px 8px 9px;border:1.5px solid var(--ink);border-radius:9px;
+ background:#fffdf7;text-align:left;
+ transition:height .3s,background .15s,box-shadow .15s;
+}
+.planner-battle-board .planner-issue.is-leader{
+ min-height:60px;background:#ffe0a3;box-shadow:2px 2px 0 #e58d48;border-color:#a94c1d;
+}
+.planner-battle-board .planner-issue.is-chaser{background:#fff3cc}
+.planner-battle-board .planner-issue.selected{
+ background:#ffd84d;outline:2px solid #e3672c;outline-offset:-3px;
+}
+.planner-battle-board .planner-issue.selected.is-leader{background:#ffce8b}
+.planner-rank{position:relative;z-index:1;flex:0 0 28px;font:820 11px/1.2 ui-monospace,monospace;text-align:center}
+.planner-issue-copy{position:relative;z-index:1;display:flex;min-width:0;flex:1;flex-direction:column;gap:2px}
+.planner-row-title{
+ font:840 11px/1.36 var(--sans);color:#26201a;
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+ overflow:hidden;overflow-wrap:anywhere;
+}
+.planner-row-source{font-size:9px;line-height:1.3;color:#875f41}
+.planner-row-score{position:relative;z-index:1;flex:0 0 56px;text-align:right;font:850 10px/1.3 ui-monospace,monospace;color:#9f4420}
+.planner-row-meter{pointer-events:none;position:absolute;left:0;bottom:0;width:100%;height:5px;background:#f5e4cd;border-top:1px solid rgba(38,32,26,.25)}
+.planner-row-fill{display:block;height:100%;background:linear-gradient(90deg,#ff823a,#f74320);transition:width .55s cubic-bezier(.2,.8,.25,1)}
+.planner-board-loading{font-size:11px;color:#7f674d;padding:9px 3px}
+.planner-current{line-height:1.5}
+.planner-battle-note{
+ margin:6px 0 0;padding:0 1px;font:680 10px/1.55 var(--sans);
+ color:#87563c;
+}
+.planner-question-form{
+ display:flex;flex-direction:column;gap:7px;margin:9px 0 0;
+ padding:10px;background:#fffdf7;border:1.5px solid var(--ink);border-radius:10px;
+}
+.planner-question-form[hidden]{display:none!important}
+.planner-question-form label{font:830 11px/1.35 var(--sans)}
+.planner-question-form textarea{
+ min-height:72px;width:100%;max-width:100%;resize:vertical;
+ padding:8px;border:1.5px solid var(--ink);border-radius:7px;
+ background:#fffaf0;color:#26201a;font:13px/1.5 var(--sans);
+}
+.planner-compose-actions{display:flex;align-items:center;justify-content:space-between;gap:5px;flex-wrap:wrap}
+.planner-compose-actions>span{font-size:9px;color:#826649}
+.planner-compose-actions button{
+ min-height:36px;border:1.5px solid var(--ink);border-radius:7px;padding:6px 8px;
+ background:#ffd84d;font-size:11px;font-weight:800;
+}
+#planner-question-cancel{background:#fffdf7}
+.planner-question-status,.planner-pending-count{
+ margin:0;color:#894a30;font-size:10px;line-height:1.5;
+}
+.planner-pending-count{margin:5px 1px}
+.planner-vote-button:disabled{opacity:.65;cursor:default}
+.planner-fx-layer{position:absolute;inset:0;z-index:12;pointer-events:none;overflow:visible}
+.planner-projectile{
+ position:absolute;display:grid;place-items:center;width:30px;height:32px;
+ font-size:27px;line-height:1;pointer-events:none;z-index:5;
+ will-change:transform,opacity;
+ filter:drop-shadow(2px 4px 0 rgba(85,43,23,.6));
+}
+.planner-projectile:before{
+ content:"🔥";position:absolute;top:65%;left:-12px;font-size:14px;
+ transform:rotate(-40deg);z-index:-1;
+}
+.planner-projectile-2{font-size:32px}
+.planner-projectile-3{font-size:38px;filter:drop-shadow(0 0 7px #ffa633) drop-shadow(2px 3px 0 #9c3921)}
+.planner-impact{
+ position:absolute;pointer-events:none;z-index:9;
+ transform:translate(-50%,-50%);font-size:56px;
+ animation:plannerBigImpact .68s ease-out forwards;
+ filter:drop-shadow(0 0 9px #ff5a32) drop-shadow(0 3px 0 #7c2f1b);
+}
+.planner-impact-2{font-size:74px}
+.planner-impact-3{font-size:100px;filter:drop-shadow(0 0 15px #ffad3c) drop-shadow(0 0 22px #f24c24)}
+.planner-shockwave{
+ position:absolute;z-index:6;width:16px;height:16px;
+ border:5px solid #ffe09d;border-radius:50%;background:rgba(255,199,66,.32);
+ box-shadow:0 0 0 2px #ff662a,0 0 14px #ff9b52;
+ transform:translate(-50%,-50%) scale(.2);
+ animation:plannerShockwave .72s ease-out forwards;
+}
+.planner-shockwave-2{border-width:7px}
+.planner-shockwave-3{border-width:9px;box-shadow:0 0 0 4px #ff662a,0 0 25px #ff9b52}
+.planner-debris{
+ position:absolute;z-index:10;pointer-events:none;
+ font-size:18px;transform:translate(-50%,-50%);
+ animation:plannerDebris .96s cubic-bezier(.15,.6,.33,1) forwards;
+}
+.planner-combo-hit{
+ position:absolute;z-index:11;pointer-events:none;
+ font:920 17px/1.2 var(--sans);color:#fff5e2;
+ -webkit-text-stroke:1.3px #752b1f;
+ white-space:nowrap;text-shadow:2px 2px 0 #a33a1c;
+ transform:translate(-50%,-50%);
+ animation:plannerHitText 1s ease-out forwards;
+}
+.planner-stage.is-hit{
+ background:radial-gradient(ellipse at center,#ffeeb7 0,#ffc7a9 48%,#ffac69 100%);
+}
+.planner-stage.is-hit .planner-target{animation:plannerWobble .42s cubic-bezier(.2,.85,.35,1.25)}
+.planner-stage.is-hit:after{animation:plannerBoom .62s ease-out forwards}
+@keyframes plannerBigImpact{
+ 0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-18deg)}
+ 28%{opacity:1;transform:translate(-50%,-50%) scale(1.45) rotate(12deg)}
+ 63%{opacity:1;transform:translate(-50%,-50%) scale(1.12) rotate(-8deg)}
+ 100%{opacity:0;transform:translate(-50%,-67%) scale(1.75) rotate(12deg)}
+}
+@keyframes plannerShockwave{
+ 0%{opacity:1;transform:translate(-50%,-50%) scale(.2)}
+ 100%{opacity:0;transform:translate(-50%,-50%) scale(10)}
+}
+@keyframes plannerDebris{
+ 0%{opacity:0;transform:translate(-50%,-50%) scale(.4) rotate(0)}
+ 22%{opacity:1}
+ 100%{opacity:0;transform:translate(calc(-50% + var(--debris-x,0px)),calc(-50% + var(--debris-y,0px))) scale(.85) rotate(var(--debris-rotate,20deg))}
+}
+@keyframes plannerHitText{
+ 0%{opacity:0;transform:translate(-50%,-25%) scale(.6)}
+ 20%{opacity:1;transform:translate(-50%,-75%) scale(1.13)}
+ 80%{opacity:1}
+ 100%{opacity:0;transform:translate(-50%,-150%) scale(1)}
+}
+@media(max-width:700px){
+ .planner-battle-board{max-height:205px;padding:6px;gap:5px}
+ .planner-battle-board .planner-issue{min-height:50px;padding:7px 8px 10px}
+ .planner-battle-board .planner-issue.is-leader{min-height:58px}
+ .planner-row-title{font-size:11px}
+ .planner-row-score{flex-basis:61px;font-size:10px}
+ .planner-question-form textarea{font-size:16px}
+ .planner-compose-actions button{min-height:44px}
+ .planner-fx-layer{overflow:hidden;inset:-6px}
+ .planner-projectile-3{font-size:33px}
+ .planner-impact-3{font-size:73px}
+ .planner-debris{font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){
+ .planner-projectile,.planner-impact,.planner-shockwave,.planner-debris,.planner-combo-hit{display:none!important}
+ .planner-row-fill{transition:none!important}
+}
