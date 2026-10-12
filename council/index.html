@@ -17,7 +17,8 @@
   <link rel="stylesheet" href="./roundtable.css?v=20261012-1">
   <link rel="stylesheet" href="./v2.css?v=20261012-1">
   <link rel="stylesheet" href="./mobile-fixes.css?v=20261012-2">
-  <script type="module" src="./live-bootstrap.js?v=20261012-3"></script>
+  <link rel="stylesheet" href="./heat-scene.css?v=20261012-1">
+  <script type="module" src="./live-bootstrap.js?v=20261012-heat1"></script>
 </head>
 <body>
 <div class="council-shell">
@@ -53,14 +54,19 @@
       <div class="section-heading">
         <div><span class="section-index">01 / 英雄投票</span><h2 id="arena-title">英雄实时榜 👑</h2>
         <p id="hero-board-subtitle">真实票数决定排名，随时可能反超。</p></div>
-        <span class="sample-label" id="vote-source-label">真实票数 · 连接中</span>
+        <span class="sample-label is-demo" id="vote-source-label">🧪 热场演示 · 非真实票数</span>
       </div>
       <div class="arena-panel">
         <div class="arena-toolbar">
           <div class="arena-toolbar-label"><span class="live-indicator">●</span><strong>开荒排行榜</strong><span>TOP <span id="ranking-label">6</span></span></div>
-          <span class="arena-meta"><strong id="hero-total">28</strong> 个特性 · <strong id="demo-vote-total">—</strong> 张票</span>
+          <span class="arena-meta"><strong id="hero-total">28</strong> 个特性 · <strong id="demo-vote-total">—</strong><span id="board-count-unit"> 演示热度</span></span>
         </div>
-        <div class="arena-stage" id="arena-stage">
+        <div class="heat-disclosure" id="heat-disclosure">
+          <strong id="heat-mode-explain">🧪 正在播放模拟热场，数字与动效均为虚构示意</strong>
+          <span id="real-vote-count">真实投票 0 张</span>
+          <button type="button" class="heat-switch" id="heat-switch" aria-pressed="true">👁 查看真实结果</button>
+        </div>
+        <div class="arena-stage demo-playing" id="arena-stage">
           <span class="stage-stamp">SS14 / 2026</span>
           <div class="chart-guides" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
           <div class="chart" id="chart" aria-label="当前真实排行"><p class="loading-note">正在加载英雄头像…</p></div>
@@ -82,7 +88,7 @@
           <button id="open-hero-pool" type="button" class="button primary">查看全部 28 个英雄 <span aria-hidden="true">↓</span></button>
           <div class="lottery-main-action"><button type="button" id="open-lottery" class="button secondary">🎰 不知道选谁？抽一个 <span aria-hidden="true">↗</span></button><button type="button" class="minor-share" id="share-lottery-game">分享随机开荒玩法 ↗</button></div>
         </div>
-        <p class="demo-disclosure">排行榜显示数据库中的真实票数。点击投票会匿名创建账号，不需要填写手机号。每个匿名账号每题保留一票，改选会撤回旧票。</p>
+        <p class="demo-disclosure">🧪 热场演示仅用于展示页面氛围，不是真实玩家投票。切换「查看真实结果」可看到 Supabase 实际票数。真实投票匿名记录，每个匿名账号每题一票，改选会撤回旧票。</p>
       </div>
     </section>
 
@@ -110,11 +116,11 @@
       <div class="focus-board">
         <nav class="focus-tabs" id="topic-tabs" aria-label="选择焦点议题"></nav>
         <article class="focus-current">
-          <div class="focus-current-head"><span class="focus-step" id="focus-step">议题 01</span><span class="focus-live-count" id="focus-live-count">0 票</span></div>
+          <div class="focus-current-head"><span class="focus-step" id="focus-step">议题 01</span><span class="focus-live-count" id="focus-live-count">🧪 演示热度</span></div>
           <h3 id="focus-title">正在加载议题…</h3>
           <p class="focus-question" id="focus-prompt"></p>
           <div id="focus-options" class="focus-votes" role="group" aria-label="当前议题的四个选项"></div>
-          <p id="focus-activity" class="focus-activity" role="status" aria-live="polite">票数来自所有玩家的真实投票。</p>
+          <p id="focus-activity" class="focus-activity" role="status" aria-live="polite">🧪 当前展示演示热度；真实投票独立计数，不混入模拟票。</p>
           <details class="focus-followup" id="focus-followup"><summary>💬 圆桌追问 <span aria-hidden="true">⌄</span></summary><p id="focus-followup-body"></p>
             <button type="button" id="focus-ask" class="focus-ask">🪑 去圆桌支持这个问题 ↗</button></details>
           <div class="focus-actions">
@@ -199,7 +205,7 @@
 
   <footer class="site-footer">
     <div class="footer-logo">✳ <strong>火炬议会</strong> <small>TORCHLIGHT COUNCIL</small></div>
-    <p>玩家制作的免费投票页面，与《火炬之光：无限》官方没有隶属关系。投票数字来自独立数据库；玩家提问须审核后公开。</p>
+    <p>玩家制作的免费互动站，与《火炬之光：无限》官方无隶属关系。🧪 演示热度为虚构示意，不代表玩家票数；真实投票由独立数据库记录，玩家问题审核后公开。</p>
     <div><span>© 2026 Torchlight Council</span><a href="https://torchlightskill.com/" target="_blank" rel="noopener noreferrer">刷宝游戏工具箱 ↗</a></div>
   </footer>
 </div>
