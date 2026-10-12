@@ -126,18 +126,30 @@ export function createCouncilLive(createClient) {
     call("onMySeats",mySeats);
     return mySeats;
   }
-  async function supportSeat(seat){
-    if(typeof seat!=="string"||!/^topic:[a-z_]+$|^question:[0-9a-f-]{36}$/.test(seat))throw Error("席位不正确");
+  async function bombIssue(seat,clicks=1){
+    if(typeof seat!=="string"||
+       !/^(topic:[a-z0-9_]+|question:[0-9a-f-]{36})$/.test(seat))throw Error("问题编号不正确");
+    if(!Number.isInteger(clicks)||clicks<1||clicks>25)throw Error("单次点击批量需要 1～25 次");
     await ensureAnonymousAuth();
-    const {data,error}=await client.rpc("council_support_seat",{p_seat:seat});
-    if(error)throw Error(errText(error,"支持这个问题"));
+    const {data,error}=await client.rpc("council_bomb_issue",{p_seat:seat,p_clicks:clicks});
+    if(error)throw Error(errText(error,"统计炸弹点击"));
     if(data?.seat===seat){
-      seatStats={...seatStats,[seat]:Math.max(0,Number(data.count)||0)};
-      call("onSeatStats",seatStats);
+      const amount=Math.max(0,Number(data.accepted)||0);
+      if(Number.isFinite(Number(data.count))){
+        seatStats={...seatStats,[seat]:Math.max(0,Number(data.count))};
+        call("onSeatStats",seatStats);
+      }
+      if(Number.isFinite(Number(data.total))){
+        petitionTotal=Math.max(0,Number(data.total));
+        call("onPetition",{total:petitionTotal});
+      }
+      return {...data,changed:amount>0,accepted:amount};
     }
-    if(!mySeats.includes(seat))mySeats.push(seat);
-    call("onMySeats",mySeats);
-    return data||{seat,changed:false};
+    throw Error("炸弹点击未返回有效结果，请重试");
+  }
+  async function supportSeat(seat){
+    // Backward-compatible share-page method: every tap counts, no unique-user lock.
+    return bombIssue(seat,1);
   }
   async function getApprovedQuestion(id){
     if(!/^[0-9a-f-]{36}$/.test(String(id||"")))return null;
@@ -237,7 +249,7 @@ export function createCouncilLive(createClient) {
     started=false;
   }
   return {
-    available:true,hooks,counts,ownVotes,start,stop,vote,submitQuestion,supportSeat,getApprovedQuestion,refreshSeatStats,refreshMySeats,refreshPetition,addPetition,
+    available:true,hooks,counts,ownVotes,start,stop,vote,submitQuestion,supportSeat,bombIssue,getApprovedQuestion,refreshSeatStats,refreshMySeats,refreshPetition,addPetition,
     refreshAll,refreshChoices,refreshQuestions,refreshKeywordStats,refreshOwnVotes,
     getCount:(topic,choice)=>Number(counts[topic]?.[choice]||0),
     isReady:()=>ready,
