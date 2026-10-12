@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="./v04.css?v=20261012-1">
   <link rel="stylesheet" href="./share-layout.css?v=20261012-1">
   <link rel="stylesheet" href="./roundtable.css?v=20261012-1">
-  <script defer src="./app.js?v=20261012-6"></script>
+  <script type="module" src="./live-bootstrap.js?v=20261012-1"></script>
 </head>
 <body>
 <div class="council-shell">
@@ -50,12 +50,12 @@
       <div class="section-heading">
         <div><span class="section-index">01 / 英雄投票</span><h2 id="arena-title">现在谁排前面？</h2>
         <p>这里先看前六名。28 个英雄都在下面，直接点头像就能投。</p></div>
-        <span class="sample-label">模拟票数</span>
+        <span class="sample-label" id="vote-source-label">真实票数 · 连接中</span>
       </div>
       <div class="arena-panel">
         <div class="arena-toolbar">
           <div class="arena-toolbar-label"><span class="live-indicator">●</span><strong>开荒排行榜</strong><span>TOP <span id="ranking-label">6</span></span></div>
-          <span class="arena-meta"><strong id="hero-total">28</strong> 个特性 · <strong id="demo-vote-total">—</strong> 张模拟票</span>
+          <span class="arena-meta"><strong id="hero-total">28</strong> 个特性 · <strong id="demo-vote-total">—</strong> 张票</span>
         </div>
         <div class="arena-stage" id="arena-stage">
           <span class="stage-stamp">SS14 / 2026</span>
@@ -66,20 +66,20 @@
         <div class="activity-row">
           <div class="activity-main">
             <span class="activity-dot" aria-hidden="true"></span>
-            <span class="activity-heading">投票动态演示</span>
-            <span id="activity-line" class="activity-line" role="status" aria-live="polite">模拟有人投票时的效果，暂未连接真实玩家。</span>
+            <span class="activity-heading">真实投票动态</span>
+            <span id="activity-line" class="activity-line" role="status" aria-live="polite">正在连接投票服务…</span>
           </div>
-          <button type="button" class="inline-control" id="motion-toggle" aria-pressed="true">暂停演示</button>
+          <button type="button" class="inline-control" id="motion-toggle" aria-pressed="true">隐藏气泡</button>
         </div>
         <div class="arena-below">
           <div id="my-camp" aria-live="polite">还没投票，往下选一个英雄。</div>
-          <div class="mini-actions"><button type="button" class="inline-control" id="simulate-btn">模拟 +1</button><button type="button" class="inline-control" id="share-arena">分享投票 ↗</button></div>
+          <div class="mini-actions"><button type="button" class="inline-control" id="simulate-btn" hidden disabled>模拟 +1</button><button type="button" class="inline-control" id="share-arena">分享投票 ↗</button></div>
         </div>
         <div class="arena-actions">
           <a href="#all-heroes" class="button primary">选我的开荒英雄 <span aria-hidden="true">↓</span></a>
           <div class="lottery-main-action"><button type="button" id="open-lottery" class="button secondary" disabled>随机抽个开荒英雄 <span aria-hidden="true">↗</span></button><button type="button" class="minor-share" id="share-lottery-game">分享随机开荒玩法 ↗</button></div>
         </div>
-        <p class="demo-disclosure">当前是演示版：排行榜数字和自动出现的动态都是模拟的。你投的票仅保存在本机，其他玩家暂时看不到。</p>
+        <p class="demo-disclosure">排行榜显示数据库中的真实票数。点击投票会匿名创建账号，不需要填写手机号。每个匿名账号每题保留一票，改选会撤回旧票。</p>
       </div>
     </section>
 
@@ -138,17 +138,17 @@
               <button type="submit" class="submit-question" id="submit-roundtable-question">提交问题 ↗</button>
             </div>
           </form>
-          <p class="question-notice" id="roundtable-submit-feedback" role="status" aria-live="polite">当前为本机预览。正式公开提交与全站统计将在接入 Supabase 后开启。</p>
+          <p class="question-notice" id="roundtable-submit-feedback" role="status" aria-live="polite">问题匿名提交后进入待审核，关键词计数会实时更新。请勿填写手机号等个人信息。</p>
         </div>
         <div class="roundtable-trends">
           <div class="trends-heading">
             <div><span class="roundtable-kicker">问题热词</span><h3>大家都在关心什么？</h3></div>
-            <span class="trends-local" id="keyword-status">本机预览</span>
+            <span class="trends-local" id="keyword-status">实时统计连接中</span>
           </div>
           <p>提交问题后，这里的关键词会立即更新。全站统计上线前只显示本机内容。</p>
           <div id="keyword-cloud" class="keyword-cloud" aria-live="polite"><span class="keyword-empty">还没有提交的问题</span></div>
           <div class="recent-questions">
-            <div class="recent-heading"><strong>最近提交</strong><span id="question-total">0 条（本机）</span></div>
+            <div class="recent-heading"><strong>最近提交</strong><span id="question-total">0 条</span></div>
             <ul id="roundtable-question-list"><li class="question-empty">等你提交第一个问题</li></ul>
           </div>
         </div>
@@ -176,7 +176,7 @@
 
   <footer class="site-footer">
     <div class="footer-logo">✳ <strong>火炬议会</strong> <small>TORCHLIGHT COUNCIL</small></div>
-    <p>玩家制作的免费投票页面，与《火炬之光：无限》官方没有隶属关系。当前是演示数据，尚未开放跨玩家计票。</p>
+    <p>玩家制作的免费投票页面，与《火炬之光：无限》官方没有隶属关系。投票数字来自独立数据库；玩家提问须审核后公开。</p>
     <div><span>© 2026 Torchlight Council</span><a href="https://torchlightskill.com/" target="_blank" rel="noopener noreferrer">刷宝游戏工具箱 ↗</a></div>
   </footer>
 </div>
