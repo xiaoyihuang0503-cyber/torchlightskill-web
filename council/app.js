@@ -254,18 +254,22 @@ function animateTap(target){
  target.appendChild(plus);
  setTimeout(()=>plus.remove(),760);
 }
-function voteHero(id,clicked){
- if(!loaded)return;
- const h=heroMap.get(id);if(!h)return;
- if(isHeroClosed()){toast("这期开荒投票已经结束");return;}
- if(state.hero===id){toast("已经投给 "+sourceName(h)+" 了");return;}
- const was=heroMap.get(state.hero);
- state.hero=id;saveChoice();chart();updateRoster();
- if(clicked&&clicked.classList.contains("roster-card"))animateTap(clicked);
- const newNode=chartCards.get(id)?.button;
- if(newNode&&newNode.isConnected)bubble(h,"你投了 +1",false);
- showActivity("你投给了 "+sourceName(h)+" · "+(was?"已从 "+sourceName(was)+" 改选":"投票成功"),false);
- toast("已投给 "+sourceName(h)+(was?" · 可以继续改选":"")+"，可以分享给朋友");
+async function voteHero(id,clicked){
+ if(!loaded||!remoteReady){toast("正在连接投票服务，请稍后再试");return;}
+ const hero=heroMap.get(id);if(!hero)return;
+ if(isHeroClosed()){toast("本期投票已结束");return;}
+ if(state.hero===id){toast("你已经选了 "+sourceName(hero));return;}
+ const previous=heroMap.get(state.hero);
+ try {
+   await LIVE.vote("hero",id);
+   state.hero=id;
+   chart();updateRoster();
+   if(clicked&&clicked.classList.contains("roster-card"))animateTap(clicked);
+   showActivity("你投给了 "+sourceName(hero)+(previous?"（已改选）":""),false);
+   toast("已投给 "+sourceName(hero)+"，分享给朋友来支持吧");
+ } catch(error) {
+   toast(String(error?.message||error));
+ }
 }
 function showActivity(value,simulated){
  lastActivity=value;
