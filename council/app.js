@@ -40,12 +40,15 @@ const heroes=[];
 const rosterCards=new Map();
 const chartCards=new Map();
 const state={hero:null,maze:null,roundtable:null,simulated:{},motion:true,slotResult:null,spinning:false};
+const LIVE=window.TorchCouncilLive;
 const polling=[
- {id:"maze",host:"maze-options",summary:"maze-summary",closedAt:null,choices:[["support","可以接受",78],["oppose","改得太狠了",71]]},
- {id:"roundtable",host:"roundtable-options",summary:"roundtable-summary",closedAt:ROUNDTABLE_END,choices:[["drops","掉落和刷图收益",47],["balance","英雄和技能平衡",45],["pets","契灵氪金体验",43],["season","赛季玩法节奏",41]]}
+ {id:"maze",host:"maze-options",summary:"maze-summary",closedAt:null,choices:[["support","可以接受",0],["oppose","改得太狠了",0]]},
+ {id:"roundtable",host:"roundtable-options",summary:"roundtable-summary",closedAt:ROUNDTABLE_END,choices:[["drops","掉落和刷图收益",0],["balance","英雄和技能平衡",0],["pets","契灵氪金体验",0],["season","赛季玩法节奏",0]]}
 ];
 const reducedMotion=!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 let loaded=false;
+let remoteReady=false;
+let questionBusy=false;
 let mobile=window.innerWidth<=700;
 let lastToastTimer=0;
 let slotTimer=0;
@@ -55,8 +58,8 @@ const sourceName=hero=>hero.name+" · "+hero.trait;
 const isHeroClosed=()=>Date.now()>=SS14_OPEN;
 const isTopicClosed=topic=>topic.closedAt!==null&&Date.now()>=topic.closedAt;
 const fmt=value=>new Intl.NumberFormat("zh-CN").format(value);
-const count=hero=>hero.initial+(state.hero===hero.id?1:0)+(state.simulated[hero.id]||0);
-const sorted=()=>heroes.slice().sort((a,b)=>count(b)-count(a)||a.id.localeCompare(b.id));
+const count=hero=>LIVE?.getCount("hero",hero.id)||0;
+const sorted=()=>heroes.slice().sort((a,b)=>count(b)-count(a)||a.position-b.position);
 function random(n){
  if(!Number.isInteger(n)||n<1)throw new Error("没有可选英雄");
  if(!window.crypto||!window.crypto.getRandomValues)throw new Error("当前浏览器无法安全随机抽签");
@@ -130,7 +133,7 @@ async function getManifest(){
  const h=relevant.filter(a=>a.type==="hero"),mentors=relevant.filter(a=>a.type==="mentor");
  if(h.length!==28||mentors.length!==3||!["mia","shiyu","reina"].every(id=>mentors.some(a=>a.id===id)))throw new Error("英雄或导师头像数量有变化");
  h.forEach((a,i)=>{
-  const hero={id:a.id,name:a.name,trait:a.trait_name,alias:ALIASES[a.id]||a.name,asset:a,color:COLORS[i%COLORS.length],initial:PREVIEW_COUNTS[a.id]??30};
+  const hero={id:a.id,name:a.name,trait:a.trait_name,alias:ALIASES[a.id]||a.name,asset:a,color:COLORS[i%COLORS.length],initial:0,position:i};
   heroes.push(hero);heroMap.set(hero.id,hero);
  });
  // Hidden mentor section deliberately retains its implementation and source mapping.
@@ -175,9 +178,9 @@ function chart(){
   refs.bar.style.height=Math.max(4,Math.round(count(hero)/max*maxPixels))+"px";
   b.classList.toggle("leader",index===0);
   b.classList.toggle("mine",state.hero===hero.id);
-  b.disabled=isHeroClosed();
+  b.disabled=isHeroClosed()||!remoteReady;
   b.setAttribute("aria-pressed",String(state.hero===hero.id));
-  b.setAttribute("aria-label",sourceName(hero)+"，"+count(hero)+"张模拟票，排第"+(index+1)+"，"+(state.hero===hero.id?"已选":"点击投票"));
+  b.setAttribute("aria-label",sourceName(hero)+"，"+count(hero)+"张真实票，排第"+(index+1)+"，"+(state.hero===hero.id?"已选":"点击投票"));
   frag.appendChild(b);
  });
  stage.replaceChildren(frag);
@@ -193,7 +196,7 @@ function chart(){
  const mine=heroMap.get(state.hero);
  if(mine){
   const place=r.findIndex(h=>h.id===mine.id)+1;
-  $("my-camp").textContent="我选了 "+sourceName(mine)+" · 当前演示榜第 "+place+" 名";
+  $("my-camp").textContent="我选了 "+sourceName(mine)+" · 真实榜第 "+place+" 名";
  }else{
   const requested=new URLSearchParams(location.search).get("hero");
   const linked=heroMap.get(safeChoice(requested));
@@ -226,7 +229,7 @@ function makeRosterHero(hero){
 }
 function buildRoster(){
  const frag=document.createDocumentFragment();
- const order=heroes.slice().sort((a,b)=>b.initial-a.initial||a.id.localeCompare(b.id));
+ const order=heroes.slice().sort((a,b)=>a.position-b.position);
  order.forEach(h=>frag.appendChild(makeRosterHero(h)));
  $("hero-list").replaceChildren(frag);
  updateRoster();
@@ -239,9 +242,9 @@ function updateRoster(){
   ref.votes.textContent=fmt(v);
   ref.check.textContent=state.hero===id?"已投":"投票";
   ref.button.classList.toggle("selected",state.hero===id);
-  ref.action.disabled=isHeroClosed();
+  ref.action.disabled=isHeroClosed()||!remoteReady;
   ref.action.setAttribute("aria-pressed",String(state.hero===id));
-  ref.action.setAttribute("aria-label",sourceName(h)+"，模拟"+v+"票，"+(state.hero===id?"已投":"投票"));
+  ref.action.setAttribute("aria-label",sourceName(h)+"，真实"+v+"票，"+(state.hero===id?"已投":"投票"));
   ref.meter.style.width=Math.round(v/max*100)+"%";
  });
  searchRoster();
