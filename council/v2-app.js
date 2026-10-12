@@ -1,4 +1,4 @@
-import { createPlannerBattle } from "./planner-battle.js";
+import { createPlannerBattle } from "./planner-battle.js?v=20261013-clicks1";
 /* Torchlight Council v2 — browser UI. All public counts and events come from Supabase. */
 (function(){
 "use strict";
