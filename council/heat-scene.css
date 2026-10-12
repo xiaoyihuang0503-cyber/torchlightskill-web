@@ -106,3 +106,86 @@
  .seat-map .seat-chair.is-demo{animation:none!important}
  .heat-demo-particle{animation:none!important;display:none!important}
 }
+
+
+/* Infinite-tap petition: deliberate, clearly separated from the official vote. */
+.petition-card{
+ position:relative;isolation:isolate;overflow:hidden;
+ padding:16px 14px 13px;background:#fff2c8;
+}
+.petition-kicker{font:850 12px/1.4 var(--sans);letter-spacing:-.01em;color:#8a3920;margin-bottom:10px;text-align:center}
+.petition-play-area{display:flex;justify-content:center;align-items:center;gap:11px;position:relative;z-index:2}
+.petition-orb{
+ display:flex;flex:0 0 122px;flex-direction:column;align-items:center;justify-content:center;
+ width:122px;height:122px;border:3px solid var(--ink);border-radius:50%;
+ background:radial-gradient(circle at 36% 25%,#fff1a0 0,#ffb153 28%,#ff632e 64%,#d84d27 100%);
+ box-shadow:0 5px 0 #a73d24,4px 7px 0 var(--ink),inset 0 1px 6px #fff5b4;
+ color:#3a1a0c;cursor:pointer;position:relative;user-select:none;-webkit-user-select:none;
+ touch-action:manipulation;transition:transform .12s,filter .12s;
+}
+.petition-orb:before{
+ content:"";position:absolute;inset:-8px;border:2px dashed #ba5a29;border-radius:50%;
+ animation:petitionHalo 9s linear infinite;pointer-events:none;
+}
+.petition-orb:hover{filter:brightness(1.07)}
+.petition-orb:active{transform:translateY(4px) scale(.95);box-shadow:0 2px 0 #a73d24,2px 4px 0 var(--ink)}
+.petition-orb.petition-burst{animation:petitionTap .23s cubic-bezier(.2,.9,.3,1.4)}
+.petition-orb-emoji{font-size:42px;line-height:1;filter:drop-shadow(1px 1px 0 #762d20)}
+.petition-orb strong{font:850 16px/1.28 var(--sans);margin-top:4px;white-space:nowrap}
+.petition-orb-mini{font:800 10px/1.3 var(--sans);color:#78341e;margin-top:1px}
+.petition-stats{display:flex;flex:1;min-width:0;flex-direction:column;justify-content:center;gap:1px;align-items:flex-start}
+.petition-stats #petition-total{font:850 clamp(29px,3.3vw,36px)/1.07 var(--display);font-variant-numeric:tabular-nums}
+.petition-stats span{font:720 10px/1.4 var(--sans);color:#6e4e38}
+.petition-stats #petition-combo{font:850 15px/1.3 var(--sans);color:#bc4922;margin-top:6px}
+.petition-stats small{font:650 9px/1.4 var(--sans);color:#7b6853}
+.petition-hint{text-align:center;font-size:10px;line-height:1.55;color:#825238;margin:13px 0 6px}
+.petition-feedback{text-align:center;font:800 12px/1.45 var(--sans);color:#9f4829;min-height:19px;margin:5px 0}
+.petition-countdown{border-top:1.5px dashed #bb9e73;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:2px 9px;margin-top:9px;padding-top:9px}
+.petition-countdown .countdown-label{font-size:10px}
+.petition-countdown .countdown-time{display:block;font-size:19px;white-space:nowrap;margin:0;color:var(--ink)}
+.petition-countdown small{flex-basis:100%;text-align:right;color:var(--muted);font-size:9px}
+.petition-effects{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;border-radius:inherit}
+.petition-spark{
+ position:absolute;top:var(--spark-y,45%);left:var(--spark-x,40%);
+ z-index:3;font-size:var(--spark-size,19px);
+ transform:translate(-50%,-50%);
+ filter:drop-shadow(1px 1px 1px #ac562e);
+ animation:petitionSpark 1.05s cubic-bezier(.2,.7,.45,1) forwards;
+}
+.petition-spark.is-plus{font:900 19px/1.2 var(--sans);color:#a43719;background:#fffce9;border:1px solid #88421d;border-radius:7px;padding:1px 3px}
+.petition-card.petition-party .petition-orb{filter:saturate(1.32) brightness(1.09)}
+@keyframes petitionSpark{
+ 0%{opacity:0;transform:translate(-50%,5px) scale(.5)}
+ 17%{opacity:1;transform:translate(-50%,-7px) scale(1.3)}
+ 65%{opacity:1}
+ 100%{opacity:0;transform:translate(calc(-50% + var(--spark-dx,0px)),calc(-115px + var(--spark-dy,0px))) scale(.8)}
+}
+@keyframes petitionTap{0%{transform:scale(1)}38%{transform:scale(.88)}75%{transform:scale(1.07)}100%{transform:scale(1)}}
+@keyframes petitionHalo{to{transform:rotate(360deg)}}
+@media(max-width:700px){
+ .petition-card{display:block;padding:14px 13px 11px}
+ .petition-kicker{text-align:left;font-size:13px;margin-bottom:8px}
+ .petition-play-area{justify-content:flex-start;gap:22px;padding:4px 0 6px}
+ .petition-orb{flex-basis:132px;width:132px;height:132px}
+ .petition-orb strong{font-size:17px}
+ .petition-stats #petition-total{font-size:36px}
+ .petition-stats span{font-size:11px}
+ .petition-stats #petition-combo{font-size:17px}
+ .petition-stats small{font-size:10px}
+ .petition-hint{text-align:left;margin:10px 0 2px;font-size:11px}
+ .petition-feedback{text-align:left;margin:2px 0;min-height:18px;font-size:12px}
+ .petition-countdown{margin-top:7px}
+}
+@media(max-width:380px){
+ .petition-play-area{gap:15px}
+ .petition-orb{flex-basis:116px;width:116px;height:116px}
+ .petition-orb-emoji{font-size:36px}
+ .petition-orb strong{font-size:15px}
+ .petition-stats #petition-total{font-size:32px}
+ .petition-stats #petition-combo{font-size:15px}
+}
+@media(prefers-reduced-motion:reduce){
+ .petition-orb:before,.petition-orb.petition-burst,.petition-spark{animation:none!important}
+ .petition-orb:before{display:none}
+ .petition-spark{display:none!important}
+}
