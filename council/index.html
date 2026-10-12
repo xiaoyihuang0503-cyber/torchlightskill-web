@@ -31,8 +31,8 @@
     </a>
     <nav class="header-actions" aria-label="导航">
       <a class="sticker-nav" href="#hero-board">🔥 开荒榜</a>
-      <a class="sticker-nav" href="#topics">🗳️ 焦点投票</a>
-      <a class="sticker-nav" href="#roundtable">🪑 策划圆桌</a>
+      <a class="sticker-nav" href="#topics">💣 炸策划</a>
+      <a class="sticker-nav" href="#all-heroes">🎰 选英雄</a>
     </nav>
   </header>
 
@@ -43,58 +43,10 @@
         <h1 id="site-title">SS14 开荒，<br><em>你玩谁？</em></h1>
         <p class="intro-description">28 个英雄特性都能选。点一下投票，想换随时换。</p>
       </div>
-      <aside class="countdown-card petition-card" aria-label="虚拟策划吐槽互动，反复点击不会增加正式投票">
-        <div class="petition-kicker">💣 火炬议会 · 炸策划小游戏 <span class="planner-fiction">卡通虚拟策划</span></div>
-        <div class="planner-stage" id="planner-stage">
-          <div id="planner-status" class="planner-status" aria-hidden="true">策划：正在听取意见…</div>
-          <button type="button" id="planner-target" class="planner-target" aria-label="轻点卡通策划，发射一颗吐槽炸弹，不增加正式票数">
-            <span class="planner-hair" aria-hidden="true">〰️</span>
-            <span class="planner-head" aria-hidden="true">🧑‍💻</span>
-            <span class="planner-title" aria-hidden="true">策划</span>
-          </button>
-          <div id="petition-effects" class="petition-effects" aria-hidden="true"></div>
-        </div>
-        <div class="planner-board-heading">
-          <p class="planner-issue-prompt">🏆 问题攻防榜 · 真实支持数决定排名</p>
-          <button type="button" id="planner-write" class="planner-write">✍️ 我来写问题</button>
-        </div>
-        <div class="planner-issue-grid planner-battle-board" id="planner-issue-grid" role="group" aria-label="按真实支持人数排序的问题攻防榜">
-          <span class="planner-board-loading">加载真实问题排行中…</span>
-        </div>
-        <form id="planner-question-form" class="planner-question-form" hidden>
-          <label for="planner-question-input">你最想让策划回答什么？（8～160 字）</label>
-          <textarea id="planner-question-input" maxlength="160" minlength="8" rows="3" placeholder="例如：老玩法的重复操作到底什么时候减少？" required></textarea>
-          <div class="planner-compose-actions">
-            <span id="planner-question-length">0 / 160 字</span>
-            <button type="submit" id="planner-question-submit">提交上桌 ↗</button>
-            <button type="button" id="planner-question-cancel">取消</button>
-          </div>
-          <p id="planner-question-status" class="planner-question-status" role="status">玩家问题先审核，通过后进入排行榜。</p>
-        </form>
-        <p id="planner-pending-count" class="planner-pending-count" hidden></p>
-        <p id="planner-current" class="planner-current" aria-live="polite">🛠️ 老玩法到底改不改？</p>
-        <div class="planner-action-row">
-          <button id="petition-orb" class="petition-orb planner-bomb-button" type="button" aria-label="对当前选中的问题发射卡通炸弹，可连续点击" aria-describedby="petition-hint">
-            <span class="petition-orb-emoji" aria-hidden="true">💣</span>
-            <strong>扔炸弹</strong>
-            <span class="petition-orb-mini" aria-hidden="true">无限连击 · 不刷票</span>
-          </button>
-          <button id="planner-vote" class="planner-vote-button" type="button">🗳️ 支持这道问题 +1</button>
-        </div>
-        <p class="planner-battle-note">✅ 每个账号每题只能支持一次；点击投弹不限次数。真票更高的题，炸弹更强。</p>
-        <div class="planner-fx-layer" id="planner-fx-layer" aria-hidden="true"></div>
-        <div class="petition-stats">
-          <span><strong id="petition-total">0</strong> 本机已炸次数</span>
-          <span id="petition-combo">0 连击</span>
-          <span class="petition-global" id="petition-global">🌍 全站真实累计 · 连接中</span>
-        </div>
-        <p class="petition-feedback" id="petition-feedback" role="status" aria-live="polite">💥 点策划或炸弹，连续炸更有意思！</p>
-        <p class="petition-hint" id="petition-hint">炸策划是卡通互动，本机可反复点；每天最多 1,000 次计入全站点击数。正式投票仍每题一票。</p>
-        <div class="petition-countdown">
-          <span class="countdown-label">距离 SS14 开服</span>
-          <strong class="countdown-time" id="countdown">--</strong>
-          <small>10 月 16 日 10:00（北京）</small>
-        </div>
+      <aside class="countdown-card" aria-label="新赛季开服时间">
+        <span class="countdown-label">距离新赛季开服</span>
+        <strong class="countdown-time" id="countdown">--</strong>
+        <p class="countdown-caption">10 月 16 日 10:00（北京时间）</p>
       </aside>
     </section>
 
@@ -156,7 +108,69 @@
       <p class="roster-hint">这里始终显示真实票数。点卡片投票，右下角可分享对应英雄；顶部的演示热度不进入真实榜。</p>
     </div></details>
 
-    <section class="focus-section" id="topics" aria-labelledby="topics-title">
+    <section class="bomb-game-section" id="topics" aria-labelledby="bomb-game-title">
+      <span id="roundtable" class="bomb-legacy-anchor" aria-hidden="true"></span>
+      <div class="section-heading bomb-section-heading">
+        <div><span class="section-index">02 / 炸策划大会</span>
+          <h2 id="bomb-game-title">💣 把问题顶上去，炸策划！</h2>
+          <p>自己写问题、支持热门问题、看问题长大追榜。真票越高，炸弹越猛。</p>
+        </div>
+        <span class="bomb-section-disclosure">真实支持数 · 卡通互动 · 不伤真人</span>
+      </div>
+      <div class="bomb-game-body">
+        <aside class="countdown-card petition-card" aria-label="虚拟策划吐槽互动，反复点击不会增加正式投票">
+        <div class="petition-kicker">💣 火炬议会 · 炸策划小游戏 <span class="planner-fiction">卡通虚拟策划</span></div>
+        <div class="planner-stage" id="planner-stage">
+          <div id="planner-status" class="planner-status" aria-hidden="true">策划：正在听取意见…</div>
+          <button type="button" id="planner-target" class="planner-target" aria-label="轻点卡通策划，发射一颗吐槽炸弹，不增加正式票数">
+            <span class="planner-hair" aria-hidden="true">〰️</span>
+            <span class="planner-head" aria-hidden="true">🧑‍💻</span>
+            <span class="planner-title" aria-hidden="true">策划</span>
+          </button>
+          <div id="petition-effects" class="petition-effects" aria-hidden="true"></div>
+        </div>
+        <div class="planner-board-heading">
+          <p class="planner-issue-prompt">🏆 问题攻防榜 · 真实支持数决定排名</p>
+          <button type="button" id="planner-write" class="planner-write">✍️ 我来写问题</button>
+        </div>
+        <div class="planner-issue-grid planner-battle-board" id="planner-issue-grid" role="group" aria-label="按真实支持人数排序的问题攻防榜">
+          <span class="planner-board-loading">加载真实问题排行中…</span>
+        </div>
+        <form id="planner-question-form" class="planner-question-form" hidden>
+          <label for="planner-question-input">你最想让策划回答什么？（8～160 字）</label>
+          <textarea id="planner-question-input" maxlength="160" minlength="8" rows="3" placeholder="例如：老玩法的重复操作到底什么时候减少？" required></textarea>
+          <div class="planner-compose-actions">
+            <span id="planner-question-length">0 / 160 字</span>
+            <button type="submit" id="planner-question-submit">提交上桌 ↗</button>
+            <button type="button" id="planner-question-cancel">取消</button>
+          </div>
+          <p id="planner-question-status" class="planner-question-status" role="status">玩家问题先审核，通过后进入排行榜。</p>
+        </form>
+        <p id="planner-pending-count" class="planner-pending-count" hidden></p>
+        <p id="planner-current" class="planner-current" aria-live="polite">🛠️ 老玩法到底改不改？</p>
+        <div class="planner-action-row">
+          <button id="petition-orb" class="petition-orb planner-bomb-button" type="button" aria-label="对当前选中的问题发射卡通炸弹，可连续点击" aria-describedby="petition-hint">
+            <span class="petition-orb-emoji" aria-hidden="true">💣</span>
+            <strong>扔炸弹</strong>
+            <span class="petition-orb-mini" aria-hidden="true">无限连击 · 不刷票</span>
+          </button>
+          <button id="planner-vote" class="planner-vote-button" type="button">🗳️ 支持这道问题 +1</button>
+        </div>
+        <p class="planner-battle-note">✅ 每个账号每题只能支持一次；点击投弹不限次数。真票更高的题，炸弹更强。</p>
+        <div class="planner-fx-layer" id="planner-fx-layer" aria-hidden="true"></div>
+        <div class="petition-stats">
+          <span><strong id="petition-total">0</strong> 本机已炸次数</span>
+          <span id="petition-combo">0 连击</span>
+          <span class="petition-global" id="petition-global">🌍 全站真实累计 · 连接中</span>
+        </div>
+        <p class="petition-feedback" id="petition-feedback" role="status" aria-live="polite">💥 点策划或炸弹，连续炸更有意思！</p>
+        <p class="petition-hint" id="petition-hint">炸策划是卡通互动，本机可反复点；每天最多 1,000 次计入全站点击数。正式投票仍每题一票。</p>
+        </aside>
+      </div>
+      <p class="bomb-game-footer-note">玩家投稿审核通过后进入公开问题榜；每个匿名账号每题仅能支持一次。自由投弹只增加娱乐互动次数。</p>
+    </section>
+
+    <section class="focus-section legacy-v2-hidden" id="legacy-topics" hidden aria-hidden="true" aria-labelledby="topics-title">
       <div class="section-heading v2-heading">
         <div><span class="section-index">02 / 本周焦点投票</span><h2 id="topics-title">这四件事，你站哪边？ 🗳️</h2><p>每道题单独投票，想改随时改。</p></div>
         <span class="focus-meta">4 个议题 · 演示/真实可切换</span>
@@ -179,7 +193,7 @@
       </div>
     </section>
 
-    <section class="roundtable-section v2-roundtable" id="roundtable" aria-labelledby="roundtable-title">
+    <section class="roundtable-section v2-roundtable legacy-v2-hidden" id="legacy-roundtable" hidden aria-hidden="true" aria-labelledby="roundtable-title">
       <div class="section-heading v2-heading">
         <div><span class="section-index">03 / 策划圆桌</span><h2 id="roundtable-title">来圆桌给问题占个座 🪑</h2>
           <p>每把椅子代表一道问题。点一下，看详情、投支持票。</p></div>
