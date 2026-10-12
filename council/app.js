@@ -183,9 +183,9 @@ function chart(){
  Array.from(stage.querySelectorAll(".contender")).forEach(b=>oldRects.set(b.dataset.hero,b.getBoundingClientRect()));
  const frag=document.createDocumentFragment();
  r.slice(0,take).forEach((hero,index)=>{
-  const item=chartCards.get(hero.id)||chartCards.set(hero.id,{button:makeChartHero(hero)}).get(hero.id);
-  const b=item.button;
+  if(!chartCards.has(hero.id))makeChartHero(hero);
   const refs=chartCards.get(hero.id);
+  const b=refs.button;
   refs.rank.textContent=String(index+1).padStart(2,"0");
   refs.number.textContent=fmt(count(hero));
   // Use consistent zero baseline and a fixed chart height: no label overlap.
