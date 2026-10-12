@@ -193,7 +193,8 @@ function updateHeroChart(){
   const ref=state.rankNodes.get(hero.id),n=realCount(hero);
   ref.rank.textContent=max>0&&i===0?"👑 01":String(i+1).padStart(2,"0");
   ref.num.textContent=fmt(n);
-  ref.bar.style.height=(max>0?Math.max(4,Math.round(n/max*(window.innerWidth<=700?172:188))):4)+"px";
+  const barRange=window.innerWidth<=380?130:window.innerWidth<=700?140:188;
+  ref.bar.style.height=(max>0?Math.max(4,Math.round(n/max*barRange)):4)+"px";
   ref.b.classList.toggle("leader",max>0&&i===0);
   ref.b.classList.toggle("mine",state.selected.hero===hero.id);
   ref.b.disabled=!state.ready||isClosed();
