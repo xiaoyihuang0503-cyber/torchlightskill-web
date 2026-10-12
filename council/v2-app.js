@@ -404,6 +404,7 @@ function makeSeatButton(seat,index,mini){
  button.classList.toggle("main-empty",!!seat.main);
  button.classList.toggle("seat-official",seat.kind==="official");
  button.classList.toggle("selected",state.selectedSeat===seat.key);
+ button.classList.toggle("is-demo",state.demoOn&&seat.kind!=="empty");
  button.setAttribute("aria-pressed",String(state.selectedSeat===seat.key));
  if(!mini){
   button.style.setProperty("--seat-x",SEAT_POS[index][0]+"%");
@@ -412,7 +413,8 @@ function makeSeatButton(seat,index,mini){
  const icon=document.createElement("span");icon.className="seat-chair-emoji";icon.textContent=seat.emoji;
  const title=document.createElement(mini?"strong":"span");title.className=mini?"":"seat-chair-title";title.textContent=seat.title;
  const count=document.createElement(mini?"small":"span");count.className=mini?"":"seat-chair-count";
- count.textContent=seat.kind==="empty"?"点这里提问":fmt(LIVE?.getSeatCount?.(seat.key)||0)+" 人想问";
+ count.textContent=seat.kind==="empty"?"点这里提问":(state.demoOn?"🧪 "+fmt(shownSeatCount(seat.key))+" 示意热度":fmt(shownSeatCount(seat.key))+" 人想问");
+ count.classList.toggle("is-demo",seat.kind!=="empty"&&state.demoOn);
  button.append(icon,title,count);
  button.setAttribute("aria-label",seat.title+(seat.kind==="empty"?"，点击提交问题":"，"+count.textContent));
  button.addEventListener("click",()=>selectSeat(seat.key,true));
@@ -430,11 +432,12 @@ function renderSeatMap(){
  state.chairs.forEach((seat,i)=>{
   fragment.appendChild(makeSeatButton(seat,i,false));
   mini.appendChild(makeSeatButton(seat,i,true));
-  if(seat.kind!=="empty")total+=LIVE?.getSeatCount?.(seat.key)||0;
+  if(seat.kind!=="empty")total+=shownSeatCount(seat.key);
  });
  root.appendChild(fragment);strip.appendChild(mini);
  syncSeatNavigation(false);
- $("table-total").textContent=total?"🔥 "+fmt(total)+" 次问题支持":"🪑 支持喜欢的问题，帮它上桌";
+ $("table-total").textContent=state.demoOn?"🧪 演示热度 "+fmt(total):total?"🔥 "+fmt(total)+" 次真实支持":"🪑 等待第一票真实支持";
+ $("seat-map").querySelector(".table-center")?.classList.toggle("is-demo",state.demoOn);
  if(state.selectedSeat&&!state.chairs.some(x=>x.key===state.selectedSeat)){
   state.selectedSeat="topic:mode_reduction";
  }
@@ -442,14 +445,18 @@ function renderSeatMap(){
 }
 function updateSeatNumbers(){
  if(!state.chairs.length)return;
- const total=state.chairs.reduce((sum,seat)=>sum+(seat.kind==="empty"?0:LIVE?.getSeatCount?.(seat.key)||0),0);
- $("table-total").textContent=total?"🔥 "+fmt(total)+" 次问题支持":"🪑 等待第一票支持";
+ const total=state.chairs.reduce((sum,seat)=>sum+(seat.kind==="empty"?0:shownSeatCount(seat.key)),0);
+ $("table-total").textContent=state.demoOn?"🧪 演示热度 "+fmt(total):total?"🔥 "+fmt(total)+" 次真实支持":"🪑 等待第一票真实支持";
  for(const host of [$("seat-map"),$("seat-strip")]){
   host.querySelectorAll("[data-seat]").forEach(el=>{
    const seat=state.chairs.find(x=>x.key===el.dataset.seat);
    if(!seat)return;
    const number=el.querySelector(".seat-chair-count")||el.querySelector("small");
-   if(number)number.textContent=seat.kind==="empty"?"点这里提问":fmt(LIVE?.getSeatCount?.(seat.key)||0)+" 人想问";
+   if(number){
+     number.textContent=seat.kind==="empty"?"点这里提问":state.demoOn?"🧪 "+fmt(shownSeatCount(seat.key))+" 示意热度":fmt(shownSeatCount(seat.key))+" 人想问";
+     number.classList.toggle("is-demo",state.demoOn&&seat.kind!=="empty");
+   }
+   el.classList.toggle("is-demo",state.demoOn&&seat.kind!=="empty");
    el.classList.toggle("selected",state.selectedSeat===seat.key);
    el.setAttribute("aria-pressed",String(state.selectedSeat===seat.key));
   });
@@ -497,7 +504,7 @@ function updateSeatDetail(){
  $("seat-detail-title").textContent=seat.title;
  $("seat-detail-body").textContent=seat.body;
  const n=LIVE?.getSeatCount?.(seat.key)||0;
- $("seat-detail-count").textContent=n?"🔥 "+fmt(n)+" 人想让策划回答":"等第一位玩家支持";
+ $("seat-detail-count").textContent="🔥 真实支持 "+fmt(n)+" 人"+(state.demoOn?" · 🧪 虚构热度 "+fmt(shownSeatCount(seat.key)):"");
  const voted=!!LIVE?.hasSupported?.(seat.key);
  $("seat-support").textContent=voted?"✅ 你已经支持这道问题":"🔥 我也想问这个";
  $("seat-support").disabled=voted||!state.ready;
