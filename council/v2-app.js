@@ -392,6 +392,7 @@ function makeSeatButton(seat,index,mini){
  button.classList.toggle("main-empty",!!seat.main);
  button.classList.toggle("seat-official",seat.kind==="official");
  button.classList.toggle("selected",state.selectedSeat===seat.key);
+ button.setAttribute("aria-pressed",String(state.selectedSeat===seat.key));
  if(!mini){
   button.style.setProperty("--seat-x",SEAT_POS[index][0]+"%");
   button.style.setProperty("--seat-y",SEAT_POS[index][1]+"%");
@@ -420,6 +421,7 @@ function renderSeatMap(){
   if(seat.kind!=="empty")total+=LIVE?.getSeatCount?.(seat.key)||0;
  });
  root.appendChild(fragment);strip.appendChild(mini);
+ syncSeatNavigation(false);
  $("table-total").textContent=total?"🔥 "+fmt(total)+" 次问题支持":"🪑 支持喜欢的问题，帮它上桌";
  if(state.selectedSeat&&!state.chairs.some(x=>x.key===state.selectedSeat)){
   state.selectedSeat="topic:mode_reduction";
@@ -437,9 +439,28 @@ function updateSeatNumbers(){
    const number=el.querySelector(".seat-chair-count")||el.querySelector("small");
    if(number)number.textContent=seat.kind==="empty"?"点这里提问":fmt(LIVE?.getSeatCount?.(seat.key)||0)+" 人想问";
    el.classList.toggle("selected",state.selectedSeat===seat.key);
+   el.setAttribute("aria-pressed",String(state.selectedSeat===seat.key));
   });
  }
+ syncSeatNavigation(false);
  updateSeatDetail();
+}
+function syncSeatNavigation(scroll){
+ const total=state.chairs.length;
+ const index=state.chairs.findIndex(c=>c.key===state.selectedSeat);
+ const label=$("seat-position");
+ if(label)label.textContent=String(index<0?1:index+1).padStart(2,"0")+" / "+String(total||8).padStart(2,"0");
+ for(const id of ["seat-prev","seat-next"]){const button=$(id);if(button)button.disabled=total<2;}
+ if(scroll&&index>=0){
+  const selected=Array.from($("seat-strip").children).find(c=>c.dataset.seat===state.selectedSeat);
+  selected?.scrollIntoView?.({behavior:reduced?"auto":"smooth",inline:"center",block:"nearest"});
+ }
+}
+function moveSeat(direction){
+ if(!state.chairs.length)return;
+ const index=state.chairs.findIndex(c=>c.key===state.selectedSeat);
+ const next=(index+direction+state.chairs.length)%state.chairs.length;
+ selectSeat(state.chairs[next].key,true);
 }
 function selectSeat(key,scroll){
  const chair=state.chairs.find(s=>s.key===key);
@@ -450,6 +471,7 @@ function selectSeat(key,scroll){
  $("seat-ask-panel").hidden=!ask;
  updateSeatDetail();
  updateSeatNumbers();
+ syncSeatNavigation(scroll);
  if(scroll&&window.innerWidth<=700){
   const panel=$("seat-panel")||$("seat-detail");
   panel?.scrollIntoView?.({block:"nearest",behavior:reduced?"auto":"smooth"});
@@ -699,6 +721,8 @@ function bind(){
  $("seat-support").addEventListener("click",supportSeat);
  $("seat-share").addEventListener("click",()=>share("seat"));
  $("seat-ask-back").addEventListener("click",()=>selectSeat("topic:mode_reduction",false));
+ $("seat-prev").addEventListener("click",()=>moveSeat(-1));
+ $("seat-next").addEventListener("click",()=>moveSeat(1));
  $("roundtable-question-input").addEventListener("input",e=>{$("question-length").textContent=[...e.target.value].length+" / 160 字";});
  $("roundtable-question-form").addEventListener("submit",sendQuestion);
  $("motion-toggle").addEventListener("click",()=>{
