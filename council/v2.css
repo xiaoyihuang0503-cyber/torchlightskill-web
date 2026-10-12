@@ -206,3 +206,9 @@
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{transition:none!important;animation:none!important}
 }
+
+/* Deep-linked choices are pointed out, never auto-selected as a vote. */
+.focus-choice.invited{outline:3px dashed var(--orange);outline-offset:2px}
+.topic-chair.has-my-vote .chair-votes{color:#9b371a;font-weight:850}
+.topic-chair.has-my-vote .chair-votes:before{content:"✅ ";font-size:10px}
+@media(max-width:700px){.roster-drawer-toggle small{max-width:120px;white-space:normal;line-height:1.3}}
