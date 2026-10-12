@@ -1,4 +1,4 @@
-import { createCouncilLive } from "../live-core.js";
+import { createCouncilLive } from "../live-core.js?v=20261013-clicks1";
 try {
   let library;
   try { library=await import("https://esm.sh/@supabase/supabase-js@2.87.3?bundle"); }
@@ -12,4 +12,4 @@ try {
   window.TorchCouncilLive={available:false,isReady:()=>false,getCount:()=>0,
     hooks:{},start:async()=>{throw Error("实时服务连接失败，请刷新页面重试。");}};
 }
-await import("./v2-share-app.js?v=20261012-poster1");
+await import("./v2-share-app.js?v=20261013-clicks1");
