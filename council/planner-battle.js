@@ -14,15 +14,17 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
   const history=new Map();
   const state={
     selected:"topic:mode_reduction",questions:[],pending:[],
-    ranked:[],localClicks:0,pendingClicks:0,combo:0,lastClick:0,lastSave:0,
-    timer:0,flushTimer:0,busy:false,dailyLimit:false,totalKnown:false,
+    ranked:[],localClicks:0,pendingClicks:0,pendingBySeat:new Map(),combo:0,lastClick:0,lastSave:0,
+    timer:0,flushTimer:0,busy:false,totalKnown:false,
     activeBombs:0,lastRemoteBomb:0,submitBusy:false,submitting:false,reactionTimer:0,expanded:false,ambientTimer:0,pendingSelect:null
   };
   const STORAGE="torchlight-council-petition-local-v1";
+  const QUEUE_STORAGE="torchlight-council-pending-bomb-clicks-v2";
   const fmt=n=>new Intl.NumberFormat("zh-CN").format(Math.max(0,Number(n)||0));
   const official=new Map(FOCUS.map(t=>["topic:"+t.id,t]));
   const approvedQ=key=>state.questions.find(q=>"question:"+q.id===key);
-  const nSupport=key=>Math.max(0,Number(LIVE?.getSeatCount?.(key))||0);
+  const confirmed=key=>Math.max(0,Number(LIVE?.getSeatCount?.(key))||0);
+  const nSupport=key=>confirmed(key)+Math.max(0,state.pendingBySeat.get(key)||0);
   function candidates(){
     const rows=FOCUS.map((t,i)=>({
       key:"topic:"+t.id,title:issuePrompts.get(t.id)||t.short,
@@ -41,7 +43,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
   function tierFor(key){
     const place=state.ranked.findIndex(row=>row.key===key);
     const votes=nSupport(key);
-    // Higher REAL support numbers unlock stronger firepower.
+    // Higher recorded and queued click counts unlock stronger visual firepower.
     if(place===0&&votes>=30)return 3;
     if(votes>=10||(place===0&&votes>=5))return 2;
     return 1;
@@ -81,7 +83,8 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
       node.number.textContent=index===0&&count>0?"👑":"#"+String(index+1).padStart(2,"0");
       node.title.textContent=row.title;
       node.extra.textContent=row.kind==="player"?"玩家提问 · 已审核":"本周焦点追问";
-      node.votes.textContent="🔥 "+fmt(count)+" 支持";
+      const pending=state.pendingBySeat.get(row.key)||0;
+      node.votes.textContent="💣 "+fmt(count)+" 次点击"+(pending>0?" · 同步中":"");
       node.fill.style.width=(count>0?Math.max(6,Math.round(count/max*100)):0)+"%";
       node.button.style.setProperty("--issue-grow",Math.min(24,Math.floor(Math.log2(count+1)*5))+"px");
       node.button.classList.toggle("is-burning",count>=10);
@@ -91,7 +94,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
       node.button.classList.toggle("is-chaser",index>0&&index<3&&count>0);
       node.button.classList.toggle("is-grown",count>0);
       node.button.setAttribute("aria-pressed",String(row.key===state.selected));
-      node.button.setAttribute("aria-label","第"+(index+1)+"名："+row.title+"；真实支持"+count+"人");
+      node.button.setAttribute("aria-label","第"+(index+1)+"名："+row.title+"；策划被炸"+count+"次"+(pending>0?"，含"+pending+"次待同步":""));
       frag.appendChild(node.button);
       if(previous!==undefined&&count>previous&&!reduced&&node.button.animate){
         node.button.animate([{filter:"brightness(1.38)"},{filter:"brightness(1)"}],
@@ -126,7 +129,7 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
     const votes=nSupport(row.key);
     const tier=tierFor(row.key);
     const total=document.getElementById("planner-current");
-    if(total)total.textContent=row.emoji+" "+row.title+" · 🔥 "+fmt(votes)+" 人真实支持";
+    if(total)total.textContent=row.emoji+" "+row.title+" · 💣 "+fmt(votes)+" 次点击"+((state.pendingBySeat.get(row.key)||0)>0?"（同步中）":"");
     const bomb=$("petition-orb");
     if(bomb){
       const mini=bomb.querySelector(".petition-orb-mini");
@@ -134,8 +137,8 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
     }
     const vote=$("planner-vote");
     if(vote){
-      vote.disabled=isSupported(row.key)||!LIVE?.isReady?.()||state.busy;
-      vote.textContent=isSupported(row.key)?"✅ 这道问题你已支持":"🗳️ 支持这道问题 +1";
+      vote.disabled=false;
+      vote.textContent=LIVE?.isReady?.()?"💣 再炸一次 +1":"💣 点击 +1（稍后同步）";
     }
   }
   function select(key){
@@ -178,23 +181,11 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
     }catch(error){status.textContent=String(error?.message||error);}
     finally{state.submitBusy=false;button.disabled=false;}
   }
-  async function supportCurrent(){
-    if(state.busy)return;
+  function supportCurrent(){
     const row=state.ranked.find(x=>x.key===state.selected);
     if(!row)return;
-    if(isSupported(row.key)){toast("这道问题你已支持过啦");return;}
-    if(!LIVE?.isReady?.()){toast("真实支持服务正在连接，请稍后再投");return;}
-    state.busy=true;refreshSelected();
-    try{
-      const result=await LIVE.supportSeat(row.key);
-      refreshSeats();
-      if(result?.changed){
-        fireBomb(row.key,{real:true,force:true});
-        $("petition-feedback").textContent="✅ 真实支持 +1！"+row.title+" 升级火力 💥";
-        toast("💥 真实支持成功！这道问题的火力 +1");
-      }else toast("你已支持过此问题。");
-    }catch(error){toast(String(error?.message||error));}
-    finally{state.busy=false;refreshSelected();}
+    tap();
+    $("petition-feedback").textContent="💥 "+row.title+" · 又给策划来了一发！";
   }
   function framePoint(node,container){
     if(!node||!container)return null;
@@ -301,69 +292,102 @@ export function createPlannerBattle({LIVE,FOCUS,reduced=false,toast=()=>{}}){
     const rect=stage?.getBoundingClientRect?.();
     if(rect && Number.isFinite(window.innerHeight) && (rect.top>window.innerHeight+90||rect.bottom<0))return;
     const top=state.ranked[0];
-    if(!top||nSupport(top.key)<1)return;
+    if(!top||confirmed(top.key)<1)return;
     // Decorative reprise of a genuinely supported issue. NO ballot or click increment.
     fireBomb(top.key,{real:false});
   }
+  function saveClicks(){
+    try{
+      localStorage.setItem(STORAGE,String(state.localClicks));
+      localStorage.setItem(QUEUE_STORAGE,JSON.stringify([...state.pendingBySeat].filter(([,v])=>v>0)));
+      state.lastSave=Date.now();
+    }catch(error){/* Taps still work when storage is unavailable. */}
+  }
   function readClicks(){
-    try{const v=Number(localStorage.getItem(STORAGE));state.localClicks=Number.isSafeInteger(v)&&v>=0?v:0;}
-    catch(error){state.localClicks=0;}
+    try{
+      const v=Number(localStorage.getItem(STORAGE));
+      state.localClicks=Number.isSafeInteger(v)&&v>=0?v:0;
+      const raw=JSON.parse(localStorage.getItem(QUEUE_STORAGE)||"[]");
+      if(Array.isArray(raw)){
+        for(const entry of raw.slice(0,300)){
+          if(!Array.isArray(entry)||entry.length!==2)continue;
+          const [key,value]=entry;
+          const validKey=typeof key==="string" &&
+            /^(topic:[a-z0-9_]+|question:[0-9a-f-]{36})$/.test(key);
+          if(validKey&&Number.isSafeInteger(value)&&value>0){
+            state.pendingBySeat.set(key,value);
+            state.pendingClicks+=value;
+          }
+        }
+      }
+    }catch(error){state.localClicks=0;state.pendingBySeat.clear();state.pendingClicks=0;}
     $("petition-total").textContent=fmt(state.localClicks);
     $("petition-combo").textContent="0 连击";
-  }
-  function saveClicks(){
-    try{localStorage.setItem(STORAGE,String(state.localClicks));state.lastSave=Date.now();}
-    catch(error){/* Browsers in private mode can refuse storage. */}
+    $("petition-global-total").textContent="—";
   }
   function onGlobalCount(data){
     const number=Number(data?.total);
     if(!Number.isFinite(number)||number<0)return;
     state.totalKnown=true;
-    $("petition-global").textContent="🌍 全站真实投弹累计 "+fmt(number)+" 次";
+    const label=$("petition-global-total");
+    if(label)label.textContent=fmt(number);
+    $("petition-global").textContent="🌍 全站实时累计 · 每次点击都计入（同步后更新）";
   }
-  function queueFlush(wait=3800){
-    if(state.flushTimer||state.busy||state.pendingClicks<=0||state.dailyLimit)return;
+  function queueFlush(wait=950){
+    if(state.flushTimer||state.submitting||state.pendingClicks<=0)return;
     state.flushTimer=window.setTimeout(()=>{
       state.flushTimer=0;
-      flush().catch(error=>console.warn("Planner count sync",error));
+      flush().catch(error=>console.warn("Planner click sync",error));
     },wait);
   }
   async function flush(){
-    if(state.submitting||state.dailyLimit||state.pendingClicks<=0)return;
-    if(!LIVE?.isReady?.()||document.hidden){queueFlush(6500);return;}
+    if(state.submitting||state.pendingClicks<=0)return;
+    if(!LIVE?.isReady?.()||document.hidden){queueFlush(2500);return;}
+    const next=[...state.pendingBySeat.entries()].find(([,count])=>count>0);
+    if(!next){state.pendingClicks=0;saveClicks();return;}
+    const [seat,pending]=next,batch=Math.min(25,pending);
     state.submitting=true;
-    const count=Math.min(25,state.pendingClicks);
     try{
-      const data=await LIVE.addPetition(count);
-      const accepted=Math.max(0,Math.min(count,Number(data?.accepted)||0));
-      state.pendingClicks=Math.max(0,state.pendingClicks-accepted);
-      onGlobalCount(data);
-      if(data?.reason==="daily_limit"||Number(data?.remaining)===0){
-        state.dailyLimit=true;state.pendingClicks=0;
-        $("petition-global").textContent+=" · 今日计数已满";
+      const result=await LIVE.bombIssue(seat,batch);
+      const accepted=Math.max(0,Math.min(batch,Number(result?.accepted)||0));
+      if(accepted>0){
+        const remaining=Math.max(0,(state.pendingBySeat.get(seat)||0)-accepted);
+        if(remaining===0)state.pendingBySeat.delete(seat);
+        else state.pendingBySeat.set(seat,remaining);
+        state.pendingClicks=Math.max(0,state.pendingClicks-accepted);
+        saveClicks();
+        onGlobalCount(result);
+        syncRows();
       }
+      // A short request cooldown protects the database, not the total click count.
+      if(result?.reason==="cooldown")queueFlush(1200);
     }catch(error){
-      if(!state.totalKnown)$("petition-global").textContent="🌍 全站计数暂不可用 · 本机可继续玩";
+      if(!state.totalKnown)$("petition-global").textContent="🌍 暂时无法同步 · 已在本机排队";
+      console.warn("Planner click sync waiting to retry",error);
     }finally{
       state.submitting=false;
-      if(state.pendingClicks>0&&!state.dailyLimit)queueFlush(5000);
+      if(state.pendingClicks>0)queueFlush(1300);
     }
   }
   function tap(){
+    const row=state.ranked.find(x=>x.key===state.selected);
+    if(!row)return;
     const now=Date.now();
     state.combo=now-state.lastClick<1100?state.combo+1:1;
     state.lastClick=now;
-    state.localClicks=Math.min(Number.MAX_SAFE_INTEGER,state.localClicks+1);
+    state.localClicks+=1;
+    state.pendingClicks+=1;
+    state.pendingBySeat.set(row.key,(state.pendingBySeat.get(row.key)||0)+1);
     $("petition-total").textContent=fmt(state.localClicks);
     $("petition-combo").textContent="💥 "+fmt(state.combo)+" 连击";
-    fireBomb();
+    fireBomb(row.key);
+    syncRows();
     const msg=state.combo===10?"⚡ 10 连炸！策划快看！":state.combo===30?"💥 30 连炸！全桌都听见了！":
       state.combo===100?"👑 100 连炸！整场都炸响！":state.combo>=5?"🔥 "+fmt(state.combo)+" 连击！火力全开！":
-      "💣 投弹成功！再来一发！";
+      "💣 策划又被炸一下！当前问题热度 +1";
     $("petition-feedback").textContent=msg;
     if(state.localClicks%5===0||now-state.lastSave>1100)saveClicks();
-    state.pendingClicks=Math.min(3000,state.pendingClicks+1);
-    queueFlush();
+    queueFlush(950);
     window.clearTimeout(state.timer);
     state.timer=window.setTimeout(()=>{state.combo=0;$("petition-combo").textContent="0 连击";},1750);
   }
