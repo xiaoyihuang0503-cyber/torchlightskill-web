@@ -267,8 +267,10 @@ async function voteHero(id,clicked){
    if(clicked&&clicked.classList.contains("roster-card"))animateTap(clicked);
    showActivity("你投给了 "+sourceName(hero)+(previous?"（已改选）":""),false);
    toast("已投给 "+sourceName(hero)+"，分享给朋友来支持吧");
+   return true;
  } catch(error) {
    toast(String(error?.message||error));
+   return false;
  }
 }
 function showActivity(value,simulated){
@@ -592,11 +594,10 @@ function setUp(){
  $("hero-search").addEventListener("input",searchRoster);
  $("open-lottery").addEventListener("click",openSlot);
  $("lottery-spin").addEventListener("click",spin);
- $("lottery-accept").addEventListener("click",()=>{
+ $("lottery-accept").addEventListener("click",async()=>{
   if(!state.slotResult)return;
-  voteHero(state.slotResult.id,null);
-  closeModal($("lottery-dialog"));
-  document.getElementById("all-heroes").scrollIntoView({behavior:reducedMotion?"auto":"smooth"});
+  const ok=await voteHero(state.slotResult.id,null);
+  if(ok){closeModal($("lottery-dialog"));document.getElementById("all-heroes").scrollIntoView({behavior:reducedMotion?"auto":"smooth"});}
  });
  $("lottery-share").addEventListener("click",()=>share("slot"));
  $("share-lottery-game").addEventListener("click",()=>share("lottery"));
@@ -606,10 +607,7 @@ function setUp(){
  $("share-maze").addEventListener("click",()=>share("maze"));
  $("share-roundtable").addEventListener("click",()=>share("roundtable"));
  $("native-share").addEventListener("click",nativeShare);
- $("simulate-btn").addEventListener("click",()=>{
-  if(!loaded||isHeroClosed())return;
-  const prev=state.motion;state.motion=true;tickDemo();state.motion=prev;
- });
+ /* The former fake-vote button remains hidden; no listener can generate artificial votes. */
  $("motion-toggle").addEventListener("click",toggleMotion);
  document.querySelectorAll("[data-close]").forEach(button=>button.addEventListener("click",()=>closeModal($(button.dataset.close))));
  document.querySelectorAll(".modal").forEach(modal=>{
@@ -634,19 +632,15 @@ async function init(){
  setUp();
  try{
   await getManifest();
-  readChoice();loaded=true;
+  loaded=true;
   buildRoster();chart();
   const incoming=new URLSearchParams(location.search);
   const sharedHero=heroMap.get(safeChoice(incoming.get("hero")));
   if(sharedHero){
-   const ref=rosterCards.get(sharedHero.id);
-   if(ref)ref.button.classList.add("invited");
-   $("my-camp").textContent="朋友邀请你支持 "+sourceName(sharedHero)+"。可以直接点击下方卡片投票。";
-   const hash=location.hash;
-   if(hash==="#all-heroes"){
-    $("hero-search").value=sharedHero.alias;
-    searchRoster();
-   }
+    const ref=rosterCards.get(sharedHero.id);
+    if(ref)ref.button.classList.add("invited");
+    $("my-camp").textContent="朋友邀请你支持 "+sourceName(sharedHero)+"，可以直接点击下方卡片投票。";
+    if(location.hash==="#all-heroes"){$("hero-search").value=sharedHero.alias;searchRoster();}
   }
   const pollId=incoming.get("poll"),choice=incoming.get("choice");
   const topic=polling.find(t=>t.id===pollId);
@@ -655,18 +649,59 @@ async function init(){
     if(target)target.classList.add("invited");
   }
   if(incoming.get("open")==="lottery"){
-   window.setTimeout(()=>{if(!isHeroClosed())openSlot();},220);
+    window.setTimeout(()=>{if(!isHeroClosed())openSlot();},220);
   }
   $("open-lottery").disabled=isHeroClosed();
-  $("simulate-btn").disabled=isHeroClosed();
-  showActivity("模拟有人投票时，会冒出 +1 气泡",true);
-  setInterval(tickDemo,5100);
-  setTimeout(tickDemo,2100);
+  $("simulate-btn").disabled=true;
+  if(!LIVE?.available){
+    $("vote-source-label").textContent="实时服务连接失败";
+    showActivity("无法加载实时投票模块，请刷新页面重试",false);
+    $("roundtable-submit-feedback").textContent="提问服务暂时不可用，请刷新页面重试。";
+    return;
+  }
+  LIVE.hooks.onCounts=()=>{
+    remoteReady=true;
+    polling.forEach(t=>{
+      t.choices.forEach(c=>{c[2]=LIVE.getCount(t.id,c[0]);});
+    });
+    chart();updateRoster();polling.forEach(renderTopic);
+    $("vote-source-label").textContent="真实投票 · 即时更新";
+  };
+  LIVE.hooks.onOwnVotes=values=>{
+    state.hero=heroMap.has(values.hero)?values.hero:null;
+    polling.forEach(t=>{state[t.id]=t.choices.some(c=>c[0]===values[t.id])?values[t.id]:null;});
+    chart();updateRoster();polling.forEach(renderTopic);
+  };
+  LIVE.hooks.onVoteEvent=event=>{
+    if(!state.motion||document.hidden)return;
+    if(event.topic==="hero"){
+      const h=heroMap.get(event.choice);
+      if(h){bubble(h,"真实 +1",false);showActivity("有玩家投给了 "+sourceName(h),false);}
+    }else{
+      const poll=polling.find(t=>t.id===event.topic);
+      const option=poll?.choices.find(c=>c[0]===event.choice);
+      if(option)showActivity("有玩家选择了「"+option[1]+"」",false);
+    }
+  };
+  LIVE.hooks.onKeywordStats=rows=>{keywordRows=rows;renderRoundQuestions();};
+  LIVE.hooks.onQuestions=rows=>{roundQuestions=rows;renderRoundQuestions();};
+  LIVE.hooks.onStatus=status=>{
+    if(status?.state==="error"&&!remoteReady){
+      $("vote-source-label").textContent="连接失败";
+    }else if(status?.state==="polling"){
+      $("vote-source-label").textContent="真实票数 · 定时刷新";
+    }else if(status?.state==="ready"){
+      $("vote-source-label").textContent="真实票数 · 实时更新";
+    }
+    if(status?.message)showActivity(status.message,false);
+  };
+  await LIVE.start();
  }catch(error){
-  $("hero-list").textContent="头像清单加载失败，请刷新重试。";
-  $("chart").textContent="暂时无法读取英雄资料。";
-  $("hero-search-summary").textContent="加载失败";
-  state.motion=false;$("motion-toggle").disabled=true;
+  $("hero-list").textContent="暂时无法读取英雄资料，请刷新重试。";
+  $("chart").textContent="暂时无法读取真实票数。";
+  $("hero-search-summary").textContent="连接失败";
+  $("vote-source-label").textContent="连接失败";
+  $("roundtable-submit-feedback").textContent="无法连接数据服务："+String(error?.message||error);
  }
 }
 init();
