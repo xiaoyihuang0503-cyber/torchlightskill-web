@@ -413,44 +413,112 @@ function setupRoundtable(){
    $("roundtable-submit-feedback").textContent="本轮圆桌提问已结束。";
  }
 }
-function renderTopic(topic){
- const host=$(topic.host);
- if(host.children.length!==topic.choices.length){
-  const frag=document.createDocumentFragment();
-  topic.choices.forEach((option,index)=>{
-   const b=document.createElement("button");b.type="button";b.className="poll-button";b.dataset.option=option[0];
-   b.innerHTML='<span class="poll-meter" aria-hidden="true"></span><span class="poll-option-index"></span><span class="poll-name"></span><span class="poll-pct"></span>';
-   b.querySelector(".poll-name").textContent=option[1];
-   b.addEventListener("click",()=>voteTopic(topic,option[0]));
-   frag.appendChild(b);
-  });
-  host.replaceChildren(frag);
- }
- const totals=topic.choices.map(c=>c[2]);
- const sum=totals.reduce((a,b)=>a+b,0)||1;
- Array.from(host.children).forEach((b,i)=>{
-  const option=topic.choices[i],amount=totals[i],pct=Math.round(amount/sum*100);
-  b.querySelector(".poll-meter").style.width=pct+"%";
-  b.querySelector(".poll-option-index").textContent=state[topic.id]===option[0]?"✓":String(i+1).padStart(2,"0");
-  b.querySelector(".poll-pct").textContent=pct+"%";
-  b.classList.toggle("selected",state[topic.id]===option[0]);
-  b.setAttribute("aria-pressed",String(state[topic.id]===option[0]));
-  b.disabled=isTopicClosed(topic)||!remoteReady;
+function topicById(id){return polling.find(p=>p.id===id)||null;}
+function seatCount(topic){return topic.choices.reduce((sum,c)=>sum+Number(c[2]||0),0);}
+function renderChairs(){
+ let combined=0;
+ polling.forEach(topic=>{
+   const chair=$("chair-"+topic.id);
+   if(!chair)return;
+   const votes=seatCount(topic);combined+=votes;
+   chair.querySelector(".chair-votes").textContent=fmt(votes)+" 票";
+   chair.classList.toggle("has-my-vote",!!state[topic.id]);
+   chair.setAttribute("aria-label",topic.short+"，"+votes+"票"+(state[topic.id]?"，我已投票":"")+"，点击坐下查看");
  });
- $(topic.summary).textContent= (isTopicClosed(topic)?"已结束 · ":"") + fmt(totals.reduce((a,b)=>a+b,0))+" 张投票";
- const shareButton=$(topic.id==="maze"?"share-maze":"share-roundtable");
- if(shareButton)shareButton.textContent=state[topic.id]?"分享我的选择 ↗":"分享这道投票 ↗";
+ const summary=$("all-topic-total");
+ if(summary)summary.textContent="🗳️ "+fmt(combined)+" 票 · 4 个议题";
+}
+function setActiveTopic(id,focus=false){
+ const topic=topicById(id);if(!topic)return;
+ const changed=activeTopicId!==id;
+ activeTopicId=id;
+ const focusPanel=$("active-topic-panel");
+ polling.forEach(t=>{
+   const chair=$("chair-"+t.id);
+   if(!chair)return;
+   const selected=t.id===id;
+   chair.setAttribute("aria-selected",String(selected));
+   chair.tabIndex=selected?0:-1;
+   chair.classList.toggle("active",selected);
+ });
+ focusPanel.setAttribute("aria-labelledby","chair-"+id);
+ $("focus-topic-index").textContent="席位 "+String(polling.indexOf(topic)+1).padStart(2,"0")+" / 04";
+ $("focus-topic-title").textContent=topic.title;
+ $("focus-topic-question").textContent=topic.question;
+ $("focus-followup-text").textContent=topic.followup;
+ $("chair-hint").textContent="已选第 "+(polling.indexOf(topic)+1)+" 席 · "+topic.short;
+ if(changed){$("topic-followup").open=false;renderedTopicId=null;}
+ renderTopic(topic);
+ if(focus){$("chair-"+id).focus();}
+}
+function renderTopic(topic){
+ renderChairs();
+ if(topic.id!==activeTopicId)return;
+ const host=$("focus-topic-options");
+ if(!host)return;
+ if(renderedTopicId!==topic.id||host.children.length!==topic.choices.length){
+   const fragment=document.createDocumentFragment();
+   topic.choices.forEach((option,index)=>{
+     const btn=document.createElement("button");btn.type="button";
+     btn.className="focus-choice";btn.dataset.option=option[0];btn.dataset.topic=topic.id;
+     const label=document.createElement("span");label.className="focus-choice-label";
+     const order=document.createElement("span");order.className="focus-choice-order";order.textContent=String(index+1);
+     const copy=document.createElement("span");copy.textContent=option[1];
+     label.append(order,copy);
+     const bottom=document.createElement("span");bottom.className="focus-choice-bottom";
+     const status=document.createElement("span");status.className="focus-choice-status";
+     const percentage=document.createElement("strong");percentage.className="focus-choice-pct";
+     bottom.append(status,percentage);
+     const meter=document.createElement("span");meter.className="focus-choice-bar";meter.setAttribute("aria-hidden","true");
+     btn.append(label,bottom,meter);
+     btn.addEventListener("click",()=>voteTopic(topic,option[0]));
+     fragment.append(btn);
+   });
+   host.replaceChildren(fragment);
+   renderedTopicId=topic.id;
+ }
+ const sum=seatCount(topic);
+ Array.from(host.children).forEach((btn,index)=>{
+   const item=topic.choices[index],votes=Number(item[2]||0);
+   const chosen=state[topic.id]===item[0];
+   btn.classList.toggle("selected",chosen);
+   btn.setAttribute("aria-pressed",String(chosen));
+   btn.disabled=!remoteReady||isTopicClosed(topic);
+   btn.querySelector(".focus-choice-order").textContent=chosen?"✓":String(index+1);
+   btn.querySelector(".focus-choice-status").textContent=chosen?"✅ 已选":fmt(votes)+" 票";
+   btn.querySelector(".focus-choice-pct").textContent=sum>0?(Math.round(votes/sum*100)+"%"):"0%";
+   btn.querySelector(".focus-choice-bar").style.width=(sum>0?votes/sum*100:0)+"%";
+   btn.setAttribute("aria-label",item[1]+"，"+votes+"票"+(chosen?"，已选":""));
+ });
+ $("focus-topic-total").textContent="🗳️ "+fmt(sum)+" 票";
+ $("share-active-topic").textContent=state[topic.id]?"📣 分享我的选择 ↗":"📣 分享这题 ↗";
+ const status=$("focus-topic-live");
+ if(!remoteReady){
+   status.textContent="⏳ 正在连接真实投票";status.classList.remove("live-success");
+ }else if(!sum&&!state[topic.id]){
+   status.textContent="🪑 这道题还没人投票，你可以投第一票";status.classList.remove("live-success");
+ }else if(!status.classList.contains("live-success")){
+   status.textContent="⚡ 真实票数自动更新，支持改选";
+ }
 }
 async function voteTopic(topic,id){
  if(!remoteReady){toast("正在连接真实投票，请稍后再试");return;}
  if(isTopicClosed(topic)){toast("这道题投票已结束");return;}
- if(state[topic.id]===id){toast("你已经选了这项");return;}
- try {
-   await LIVE.vote(topic.id,id);
+ if(state[topic.id]===id){toast("这项已经投过了");return;}
+ try{
+   const result=await LIVE.vote(topic.id,id);
    state[topic.id]=id;
    renderTopic(topic);
-   toast("已选择「"+topic.choices.find(c=>c[0]===id)[1]+"」，票数已同步");
- }catch(error){toast(String(error?.message||error));}
+   const chosen=topic.choices.find(c=>c[0]===id);
+   $("focus-topic-live").textContent="✅ 已投票 · "+chosen[1]+" · 📣 可以分享给朋友";
+   $("focus-topic-live").classList.add("live-success");
+   toast("✅ 投票成功，已经计入全站票数");
+   return result;
+ }catch(error){
+   toast(String(error?.message||error));
+   $("focus-topic-live").textContent="投票没成功，可以重试";
+   $("focus-topic-live").classList.remove("live-success");
+ }
 }
 function updateCountdown(){
  const el=$("countdown");const gap=Math.max(0,SS14_OPEN-Date.now());
