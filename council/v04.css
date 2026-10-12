@@ -285,3 +285,6 @@ body.modal-open{overflow:hidden}
 
 .mini-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 @media(max-width:700px){.mini-actions{gap:8px}.arena-below{flex-wrap:wrap}}
+
+/* The season is already stated above the chart; avoid overlap with the first rank. */
+.stage-stamp{display:none}
