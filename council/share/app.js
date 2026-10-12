@@ -6,15 +6,18 @@ const MANIFEST="/assets/torchlight-mentor-avatars/manifest.json";
 const LIVE=window.TorchCouncilLive;
 const HERO_END=Date.parse("2026-10-16T10:00:00+08:00");
 const ROUNDTABLE_END=Date.parse("2026-10-14T20:00:00+08:00");
-const ALLOWED=new Set(["hero","lottery","ranking","maze","roundtable"]);
-const POLLS={
- maze:{name:"迷城燃料被砍，你能接受吗？",choices:[["support","可以接受"],["oppose","改得太狠了"]],end:null,anchor:"#topics"},
- roundtable:{name:"10 月 14 日圆桌，你最想问什么？",choices:[["drops","掉落和刷图收益"],["balance","英雄和技能平衡"],["pets","契灵氪金体验"],["season","赛季玩法节奏"]],end:ROUNDTABLE_END,anchor:"#topics"}
+const ALLOWED=new Set(["hero","lottery","ranking","maze","roundtable","topic"]);
+const TOPICS={
+ mode_reduction:{id:"mode_reduction",index:1,short:"老玩法做减法",title:"新玩法不断加，老玩法什么时候做减法？",question:"你最支持哪种调整？",choices:[["rework","重做收益低、体验差的老玩法"],["merge","合并流程相似、奖励重复的玩法"],["rotation","部分玩法按赛季轮换，减少同时存在的数量"],["simplify","保留全部玩法，优先简化操作和规则"]]},
+ ember_drop_data:{id:"ember_drop_data",index:2,short:"初火掉率",title:"初火掉率怎么调，能不能把数字说清楚？",question:"你最希望官方公开什么？",choices:[["drop_numbers","初火掉率、单次掉落数量分别改了多少"],["build_gap","普通配置和高投入配置的收益差距"],["net_return","扣除门票、计入耗时后的实际收益对比"],["reasoning","调整依据，以及后续是否继续调整"]]},
+ reward_access:{id:"reward_access",index:3,short:"自由刷图",title:"我只想刷喜欢的玩法，为什么还要为构筑补其他玩法的课？",question:"限定装备和养成材料，你更接受哪种安排？",choices:[["exclusive","保留玩法专属奖励，维持各玩法特色"],["alternative","增加效率较低的替代获取途径"],["exchange","提供兑换，让玩家可以选择刷什么"],["general_access","普通养成通用，只有顶级奖励限定玩法"]]},
+ legacy_friction:{id:"legacy_friction",index:4,short:"重复劳动",title:"新玩法可以复杂，老玩法能不能少一点重复劳动？",question:"你最想先减少哪种负担？",choices:[["unlock","解锁、铺路和前置准备"],["item_handling","反复拾取、整理、兑换材料"],["ui_steps","进出界面、领奖和重复确认"],["rule_lookup","查规则、查掉落、查生效条件"]]}
 };
 const params=new URLSearchParams(location.search);
 const kind=ALLOWED.has(params.get("kind"))?params.get("kind"):"ranking";
 const heroId=/^[a-z0-9_]{1,32}$/.test(params.get("hero")||"")?params.get("hero"):"";
 const sharedChoice=/^[a-z0-9_]{1,32}$/.test(params.get("choice")||"")?params.get("choice"):"";
+const sharedTopicId=/^[a-z0-9_]{2,40}$/.test(params.get("topic")||"")?params.get("topic"):"";
 const sharedQuestion=(params.get("question")||"").trim().replace(/\s+/g," ").slice(0,160);
 const state={kind,hero:null,title:"",intro:"",choice:null,manifest:null};
 function labelHero(hero){return hero.name+" · "+hero.trait_name;}
