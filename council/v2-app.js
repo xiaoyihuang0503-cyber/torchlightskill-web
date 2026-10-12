@@ -1,3 +1,5 @@
+import { createHeatEngine } from "./heat-engine.js";
+import { createPlannerBattle } from "./planner-battle.js";
 /* Torchlight Council v2 — browser UI. All public counts and events come from Supabase. */
 (function(){
 "use strict";
@@ -40,9 +42,12 @@ const state={
  heroSort:"votes",search:"",motion:!reduced,loaded:false,ready:false,
  slotResult:null,spinning:false,slotTimer:null,toastTimer:null,eventIds:new Set(),
  recentRank:[],rankInitialized:false,lastEmoji:0,lastActivity:0,
- incomingHero:null
+ incomingHero:null,
+ demoOn:true,heat:null
 };
 let heroLoadPromise=null;
+/* Infinite local petition: repeated clicks are NOT votes and never reach Supabase. */
+const plannerGame=createPlannerBattle({LIVE,FOCUS,reduced,toast});
 const labelHero=hero=>hero.name+" · "+hero.trait;
 const fmt=v=>new Intl.NumberFormat("zh-CN").format(Number(v)||0);
 const emojiByPosition=i=>["👑","🔥","⚡","🚀","✨","💪"][i%6];
@@ -58,8 +63,17 @@ function statusText(msg){
  const el=$("activity-line");if(el)el.textContent=msg;
 }
 function realCount(hero){return getCount("hero",hero.id);}
+function shownHeroCount(hero){
+ return state.demoOn&&state.heat?state.heat.hero(hero.id):realCount(hero);
+}
+function shownTopicCount(topic,choice){
+ return state.demoOn&&state.heat?state.heat.poll(topic,choice):getCount(topic,choice);
+}
+function shownSeatCount(seat){
+ return state.demoOn&&state.heat?state.heat.seat(seat):Number(LIVE?.getSeatCount?.(seat)||0);
+}
 function orderedHeroes(){
- return state.heroes.slice().sort((a,b)=>realCount(b)-realCount(a)||a.position-b.position);
+ return state.heroes.slice().sort((a,b)=>shownHeroCount(b)-shownHeroCount(a)||a.position-b.position);
 }
 function makeImage(asset,alt,className){
  const img=document.createElement("img");img.className=className||"";img.alt=alt;
@@ -186,11 +200,11 @@ function updateHeroChart(){
  const host=$("chart"),ranked=orderedHeroes(),limit=window.innerWidth<=700?4:6;
  const previous=new Map();
  host.querySelectorAll(".contender").forEach(node=>previous.set(node.dataset.hero,node.getBoundingClientRect()));
- const max=Math.max(0,realCount(ranked[0]));
+ const max=Math.max(0,shownHeroCount(ranked[0]));
  const fragment=document.createDocumentFragment();
  ranked.slice(0,limit).forEach((hero,i)=>{
   if(!state.rankNodes.has(hero.id))makeHeroColumn(hero);
-  const ref=state.rankNodes.get(hero.id),n=realCount(hero);
+  const ref=state.rankNodes.get(hero.id),n=shownHeroCount(hero);
   ref.rank.textContent=max>0&&i===0?"👑 01":String(i+1).padStart(2,"0");
   ref.num.textContent=fmt(n);
   const barRange=window.innerWidth<=380?130:window.innerWidth<=700?140:188;
@@ -199,7 +213,7 @@ function updateHeroChart(){
   ref.b.classList.toggle("mine",state.selected.hero===hero.id);
   ref.b.disabled=!state.ready||isClosed();
   ref.b.setAttribute("aria-pressed",String(state.selected.hero===hero.id));
-  ref.b.setAttribute("aria-label",labelHero(hero)+", "+fmt(n)+"票，第"+(i+1)+"名");
+  ref.b.setAttribute("aria-label",labelHero(hero)+", "+fmt(n)+(state.demoOn?" 点演示热度":" 张真实票")+",第"+(i+1)+"名");
   fragment.appendChild(ref.b);
  });
  host.replaceChildren(fragment);
@@ -213,16 +227,17 @@ function updateHeroChart(){
  }
  $("ranking-label").textContent=String(limit);
  $("hero-total").textContent=String(state.heroes.length);
- $("demo-vote-total").textContent=fmt(state.heroes.reduce((n,h)=>n+realCount(h),0));
+ $("demo-vote-total").textContent=fmt(state.heroes.reduce((n,h)=>n+shownHeroCount(h),0));
+ $("board-count-unit").textContent=state.demoOn?" 演示热度":" 张真实票";
  const mine=state.heroById.get(state.selected.hero);
  if(mine){
-  const rank=ranked.findIndex(h=>h.id===mine.id)+1;
-  $("my-camp").textContent="✅ 我的英雄："+labelHero(mine)+" · 当前第 "+rank+" 名";
+  const realRank=state.heroes.slice().sort((a,b)=>realCount(b)-realCount(a)||a.position-b.position).findIndex(h=>h.id===mine.id)+1;
+  $("my-camp").textContent="✅ 我的英雄："+labelHero(mine)+" · 真实榜第 "+realRank+" 名";
  }else if(state.incomingHero){
   $("my-camp").textContent="📣 朋友邀请你支持："+labelHero(state.incomingHero);
  }else{$("my-camp").textContent="还没投票？展开全部英雄选一个。";}
  const newRank=ranked.map(h=>h.id);
- if(state.rankInitialized&&max>0){
+ if(!state.demoOn&&state.rankInitialized&&max>0){
   const oldTop=state.recentRank[0],newTop=newRank[0];
   if(oldTop!==newTop&&Date.now()-state.lastEmoji>650){
    const hero=state.heroById.get(newTop);
@@ -239,7 +254,9 @@ async function voteHero(id,node){
  const h=state.heroById.get(id);if(!h)return false;
  try{
   const result=await LIVE.vote("hero",id);
-  state.selected.hero=id;updateHeroChart();updateCards();
+  state.selected.hero=id;
+  if(state.demoOn)setDemoMode(false);
+  updateHeroChart();updateCards();
   toast("✅ 已投给 "+labelHero(h)+"！📣 叫朋友来支持吧");
   if(node&&!reduced){
    const plus=document.createElement("span");plus.className="tap-plus";plus.textContent="🔥 +1";
@@ -272,9 +289,80 @@ function showCountdown(){
  const d=Math.floor(gap/86400000),h=Math.floor(gap%86400000/3600000);
  span.textContent=String(d).padStart(2,"0")+" 天 "+String(h).padStart(2,"0")+" 小时";
 }
+
+/* Explicit opt-in/out is visible. Synthetic heat NEVER changes server data. */
+function refreshHeatLabels(connection){
+ const demo=state.demoOn;
+ const valid=state.heroes.reduce((sum,hero)=>sum+realCount(hero),0);
+ $("real-vote-count").textContent="真实投票 "+fmt(valid)+" 张";
+ $("heat-mode-explain").textContent=demo
+  ?"🧪 热场演示中：排名与热度是虚构示例，不计入真实票数"
+  :"✅ 正在查看 Supabase 真实投票结果";
+ const label=$("vote-source-label");
+ label.classList.toggle("is-demo",demo);
+ label.textContent=demo?"🧪 演示热度 · 非真实票数":(state.ready?"✅ 真实票数 · 实时更新":connection==="error"?"真实票数 · 连接失败":"真实票数 · 连接中");
+ $("arena-stage").classList.toggle("demo-playing",demo);
+ const toggle=$("heat-switch");
+ toggle.textContent=demo?"👁 查看真实结果":"🎭 看热场演示";
+ toggle.setAttribute("aria-pressed",String(demo));
+ $("hero-board-subtitle").textContent=demo
+  ?"🧪 当前是演示热度榜，数字和排行仅作页面热场。真实票数随时可切换。"
+  :"实时记录每一张真实选票，排名可随玩家投票变化。";
+}
+function setDemoMode(enabled){
+ state.demoOn=!!enabled;
+ refreshHeatLabels();
+ if(!state.loaded)return;
+ updateHeroChart();updateCards();updateFocusCounts();updateSeatNumbers();
+ if(state.demoOn)statusText("🧪 正在播放模拟热场，不代表真实玩家投票");
+ else statusText(state.ready?"✅ 已切换真实数据 · 可直接投票":"⏳ 等待真实投票服务连接");
+ $("focus-activity").textContent=state.demoOn
+  ?"🧪 当前为虚构热场示意。投票会真实提交，提交后自动切回真实结果。"
+  :"✅ 当前显示真实票数，每题独立投票，可改选。";
+}
+function heatSpark(hero){
+ if(reduced||!state.motion||document.hidden)return;
+ const host=$("bubble-layer"),area=$("arena-stage").getBoundingClientRect();
+ const ref=state.rankNodes.get(hero.id);
+ const face=ref?.face?.isConnected?ref.face.getBoundingClientRect():null;
+ const x=face?Math.max(30,Math.min(area.width-30,face.left+face.width/2-area.left)):Math.max(40,area.width/2);
+ const y=face?Math.max(40,face.top-area.top-10):60;
+ const e=document.createElement("span");
+ e.className="heat-demo-particle";e.setAttribute("aria-hidden","true");
+ e.textContent=["🔥","⚡","✨","🚀","💥"][state.heat.ticks()%5];
+ e.style.left=x+"px";e.style.top=y+"px";
+ host.appendChild(e);
+ window.setTimeout(()=>e.remove(),1400);
+}
+function runHeatTick(){
+ if(!state.demoOn||!state.loaded||!state.heat||document.hidden)return;
+ const previous=orderedHeroes()[0]?.id;
+ const change=state.heat.advance();
+ if(change.type==="hero"){
+   updateHeroChart();
+   const hero=state.heroById.get(change.id);
+   if(hero){
+     heatSpark(hero);
+     const newFirst=orderedHeroes()[0]?.id;
+     statusText(previous!==newFirst
+       ?"🧪 虚构演示：👑 "+labelHero(state.heroById.get(newFirst))+" 冲上榜首！"
+       :"🧪 虚构演示：🔥 "+labelHero(hero)+" 热度 +"+change.delta);
+   }
+ }else if(change.type==="topic"){
+   updateTabCounts();updateFocusCounts();
+   const topic=FOCUS.find(t=>t.id===change.topic);
+   const label=topic?.options.find(o=>o[0]===change.id)?.[1]||"议题";
+   if(topic?.id===currentTopic().id)$("focus-activity").textContent="🧪 演示走势："+label+" 虚构热度 +"+change.delta;
+ }else{
+   updateSeatNumbers();
+   const seat=state.chairs.find(c=>c.key===change.id);
+   if(seat&&state.selectedSeat===seat.key)statusText("🧪 圆桌演示："+seat.title+" 热度 +"+change.delta);
+ }
+}
+
 /* One compact switchable poll board; exact original copy and independent counters. */
 const currentTopic=()=>FOCUS[state.activeTopic];
-function topicVotes(topic){return topic.options.reduce((sum,c)=>sum+getCount(topic.id,c[0]),0);}
+function topicVotes(topic){return topic.options.reduce((sum,c)=>sum+shownTopicCount(topic.id,c[0]),0);}
 function renderTabs(){
  const host=$("topic-tabs"),fragment=document.createDocumentFragment();
  FOCUS.forEach((t,i)=>{
@@ -285,7 +373,7 @@ function renderTabs(){
   const num=document.createElement("span");num.className="focus-tab-num";num.textContent=String(i+1).padStart(2,"0");
   const name=document.createElement("span");name.className="focus-tab-name";
   const title=document.createElement("strong");title.textContent=t.emoji+" "+t.short;
-  const votes=document.createElement("small");votes.textContent=fmt(topicVotes(t))+" 票";
+  const votes=document.createElement("small");votes.textContent=fmt(topicVotes(t))+(state.demoOn?" 演示热度":" 票");
   name.append(title,votes);
   const mark=document.createElement("span");mark.className="focus-tab-mark";
   mark.textContent=state.selected[t.id]?"✅":i===state.activeTopic?"●":"→";
@@ -299,7 +387,7 @@ function updateTabCounts(){
  const nodes=$("topic-tabs").querySelectorAll(".focus-tab");
  nodes.forEach((b,i)=>{
   const t=FOCUS[i],el=b.querySelector(".focus-tab-name small");
-  if(el)el.textContent=fmt(topicVotes(t))+" 票";
+  if(el)el.textContent=fmt(topicVotes(t))+(state.demoOn?" 演示热度":" 票");
   b.querySelector(".focus-tab-mark").textContent=state.selected[t.id]?"✅":i===state.activeTopic?"●":"→";
  });
 }
@@ -330,10 +418,10 @@ function selectTopic(i){
 }
 function updateFocusCounts(){
  const topic=currentTopic(),total=topicVotes(topic);
- $("focus-live-count").textContent=fmt(total)+" 票";
+ $("focus-live-count").textContent=(state.demoOn?"🧪 演示热度 ":"")+fmt(total)+(state.demoOn?"":" 票");
  const buttons=$("focus-options").querySelectorAll(".focus-vote-option");
  buttons.forEach(button=>{
-  const id=button.dataset.choice,n=getCount(topic.id,id),pct=total?Math.round(n/total*100):0;
+  const id=button.dataset.choice,n=shownTopicCount(topic.id,id),pct=total?Math.round(n/total*100):0;
   button.querySelector(".focus-vote-percent").textContent=pct+"%";
   button.querySelector(".focus-vote-meter").style.width=pct+"%";
   const chosen=state.selected[topic.id]===id;
@@ -341,7 +429,7 @@ function updateFocusCounts(){
   button.setAttribute("aria-pressed",String(chosen));
   button.querySelector(".focus-vote-num").textContent=chosen?"✅":String(topic.options.findIndex(x=>x[0]===id)+1);
   button.disabled=!state.ready;
-  button.setAttribute("aria-label",topic.options.find(x=>x[0]===id)?.[1]+", "+fmt(n)+"票，占"+pct+"%");
+  button.setAttribute("aria-label",topic.options.find(x=>x[0]===id)?.[1]+", "+fmt(n)+(state.demoOn?" 点虚构演示热度":" 张真实票")+",占"+pct+"%");
  });
  const shareText=state.selected[topic.id]?"📣 分享我的选择 ↗":"📣 分享这道题 ↗";
  $("focus-share").textContent=shareText;
@@ -353,6 +441,8 @@ async function voteFocus(topic,choice){
  try{
   await LIVE.vote(topic.id,choice);
   state.selected[topic.id]=choice;
+  plannerGame.onFormalVote(topic.id);
+  if(state.demoOn)setDemoMode(false);
   updateFocusCounts();
   const label=topic.options.find(c=>c[0]===choice)?.[1]||"选项";
   const message="✅ 已投票： "+label+"  📣 快分享给朋友！";
@@ -392,6 +482,8 @@ function makeSeatButton(seat,index,mini){
  button.classList.toggle("main-empty",!!seat.main);
  button.classList.toggle("seat-official",seat.kind==="official");
  button.classList.toggle("selected",state.selectedSeat===seat.key);
+ button.classList.toggle("is-demo",state.demoOn&&seat.kind!=="empty");
+ button.setAttribute("aria-pressed",String(state.selectedSeat===seat.key));
  if(!mini){
   button.style.setProperty("--seat-x",SEAT_POS[index][0]+"%");
   button.style.setProperty("--seat-y",SEAT_POS[index][1]+"%");
@@ -399,7 +491,8 @@ function makeSeatButton(seat,index,mini){
  const icon=document.createElement("span");icon.className="seat-chair-emoji";icon.textContent=seat.emoji;
  const title=document.createElement(mini?"strong":"span");title.className=mini?"":"seat-chair-title";title.textContent=seat.title;
  const count=document.createElement(mini?"small":"span");count.className=mini?"":"seat-chair-count";
- count.textContent=seat.kind==="empty"?"点这里提问":fmt(LIVE?.getSeatCount?.(seat.key)||0)+" 人想问";
+ count.textContent=seat.kind==="empty"?"点这里提问":(state.demoOn?"🧪 "+fmt(shownSeatCount(seat.key))+" 示意热度":fmt(shownSeatCount(seat.key))+" 人想问");
+ count.classList.toggle("is-demo",seat.kind!=="empty"&&state.demoOn);
  button.append(icon,title,count);
  button.setAttribute("aria-label",seat.title+(seat.kind==="empty"?"，点击提交问题":"，"+count.textContent));
  button.addEventListener("click",()=>selectSeat(seat.key,true));
@@ -417,10 +510,12 @@ function renderSeatMap(){
  state.chairs.forEach((seat,i)=>{
   fragment.appendChild(makeSeatButton(seat,i,false));
   mini.appendChild(makeSeatButton(seat,i,true));
-  if(seat.kind!=="empty")total+=LIVE?.getSeatCount?.(seat.key)||0;
+  if(seat.kind!=="empty")total+=shownSeatCount(seat.key);
  });
  root.appendChild(fragment);strip.appendChild(mini);
- $("table-total").textContent=total?"🔥 "+fmt(total)+" 次问题支持":"🪑 支持喜欢的问题，帮它上桌";
+ syncSeatNavigation(false);
+ $("table-total").textContent=state.demoOn?"🧪 演示热度 "+fmt(total):total?"🔥 "+fmt(total)+" 次真实支持":"🪑 等待第一票真实支持";
+ $("seat-map").querySelector(".table-center")?.classList.toggle("is-demo",state.demoOn);
  if(state.selectedSeat&&!state.chairs.some(x=>x.key===state.selectedSeat)){
   state.selectedSeat="topic:mode_reduction";
  }
@@ -428,18 +523,41 @@ function renderSeatMap(){
 }
 function updateSeatNumbers(){
  if(!state.chairs.length)return;
- const total=state.chairs.reduce((sum,seat)=>sum+(seat.kind==="empty"?0:LIVE?.getSeatCount?.(seat.key)||0),0);
- $("table-total").textContent=total?"🔥 "+fmt(total)+" 次问题支持":"🪑 等待第一票支持";
+ const total=state.chairs.reduce((sum,seat)=>sum+(seat.kind==="empty"?0:shownSeatCount(seat.key)),0);
+ $("table-total").textContent=state.demoOn?"🧪 演示热度 "+fmt(total):total?"🔥 "+fmt(total)+" 次真实支持":"🪑 等待第一票真实支持";
  for(const host of [$("seat-map"),$("seat-strip")]){
   host.querySelectorAll("[data-seat]").forEach(el=>{
    const seat=state.chairs.find(x=>x.key===el.dataset.seat);
    if(!seat)return;
    const number=el.querySelector(".seat-chair-count")||el.querySelector("small");
-   if(number)number.textContent=seat.kind==="empty"?"点这里提问":fmt(LIVE?.getSeatCount?.(seat.key)||0)+" 人想问";
+   if(number){
+     number.textContent=seat.kind==="empty"?"点这里提问":state.demoOn?"🧪 "+fmt(shownSeatCount(seat.key))+" 示意热度":fmt(shownSeatCount(seat.key))+" 人想问";
+     number.classList.toggle("is-demo",state.demoOn&&seat.kind!=="empty");
+   }
+   el.classList.toggle("is-demo",state.demoOn&&seat.kind!=="empty");
    el.classList.toggle("selected",state.selectedSeat===seat.key);
+   el.setAttribute("aria-pressed",String(state.selectedSeat===seat.key));
   });
  }
+ syncSeatNavigation(false);
  updateSeatDetail();
+}
+function syncSeatNavigation(scroll){
+ const total=state.chairs.length;
+ const index=state.chairs.findIndex(c=>c.key===state.selectedSeat);
+ const label=$("seat-position");
+ if(label)label.textContent=String(index<0?1:index+1).padStart(2,"0")+" / "+String(total||8).padStart(2,"0");
+ for(const id of ["seat-prev","seat-next"]){const button=$(id);if(button)button.disabled=total<2;}
+ if(scroll&&index>=0){
+  const selected=Array.from($("seat-strip").children).find(c=>c.dataset.seat===state.selectedSeat);
+  selected?.scrollIntoView?.({behavior:reduced?"auto":"smooth",inline:"center",block:"nearest"});
+ }
+}
+function moveSeat(direction){
+ if(!state.chairs.length)return;
+ const index=state.chairs.findIndex(c=>c.key===state.selectedSeat);
+ const next=(index+direction+state.chairs.length)%state.chairs.length;
+ selectSeat(state.chairs[next].key,true);
 }
 function selectSeat(key,scroll){
  const chair=state.chairs.find(s=>s.key===key);
@@ -450,6 +568,7 @@ function selectSeat(key,scroll){
  $("seat-ask-panel").hidden=!ask;
  updateSeatDetail();
  updateSeatNumbers();
+ syncSeatNavigation(scroll);
  if(scroll&&window.innerWidth<=700){
   const panel=$("seat-panel")||$("seat-detail");
   panel?.scrollIntoView?.({block:"nearest",behavior:reduced?"auto":"smooth"});
@@ -463,7 +582,7 @@ function updateSeatDetail(){
  $("seat-detail-title").textContent=seat.title;
  $("seat-detail-body").textContent=seat.body;
  const n=LIVE?.getSeatCount?.(seat.key)||0;
- $("seat-detail-count").textContent=n?"🔥 "+fmt(n)+" 人想让策划回答":"等第一位玩家支持";
+ $("seat-detail-count").textContent="🔥 真实支持 "+fmt(n)+" 人"+(state.demoOn?" · 🧪 虚构热度 "+fmt(shownSeatCount(seat.key)):"");
  const voted=!!LIVE?.hasSupported?.(seat.key);
  $("seat-support").textContent=voted?"✅ 你已经支持这道问题":"🔥 我也想问这个";
  $("seat-support").disabled=voted||!state.ready;
@@ -477,6 +596,7 @@ async function supportSeat(){
  const button=$("seat-support");button.disabled=true;
  try{
   const result=await LIVE.supportSeat(seat.key);
+  if(state.demoOn)setDemoMode(false);
   updateSeatNumbers();
   toast(result?.changed?"🔥 支持成功！这道问题 +1，分享出去让更多人看见":"✅ 已经支持过这个问题");
  }catch(error){toast(String(error?.message||error));button.disabled=false;}
@@ -641,9 +761,14 @@ function share(kind,args={}){
  }else if(kind==="seat"){
   url.searchParams.set("kind","seat");
   const seat=args.seat||state.selectedSeat;
-  const chair=state.chairs.find(c=>c.key===seat);
-  if(chair){url.searchParams.set("seat",seat);heading="🪑 我想让策划回答："+chair.body;}
-  else heading="🪑 你最想让策划回答什么？";
+  const chair=state.chairs.find(c=>c.key===seat&&c.kind!=="empty");
+  const official=FOCUS.find(t=>seat==="topic:"+t.id);
+  const player=(LIVE?.getQuestions?.()||[]).find(q=>q.status==="approved"&&seat==="question:"+q.id);
+  const body=chair?.body||official?.followup||player?.text;
+  if(body){
+   url.searchParams.set("seat",seat);
+   heading="💣 帮我把这道问题顶上去："+body;
+  }else heading="💣 你最想让策划回答什么？";
  }else{
   url.searchParams.set("kind","ranking");heading="开荒选谁？让朋友也投一票";
  }
@@ -665,6 +790,7 @@ async function nativeShare(){
  await copyShare();
 }
 function bind(){
+ plannerGame.mount();
  $("open-hero-pool").addEventListener("click",()=>{
   $("all-heroes").open=true;$("all-heroes").scrollIntoView({behavior:reduced?"auto":"smooth",block:"start"});
   arrangeCards();
@@ -696,11 +822,15 @@ function bind(){
   $("roundtable").scrollIntoView({behavior:reduced?"auto":"smooth",block:"start"});
  });
  $("share-roundtable").addEventListener("click",()=>share("seat"));
+ $("planner-share").addEventListener("click",()=>share("seat",{seat:plannerGame.getState().selected}));
  $("seat-support").addEventListener("click",supportSeat);
  $("seat-share").addEventListener("click",()=>share("seat"));
  $("seat-ask-back").addEventListener("click",()=>selectSeat("topic:mode_reduction",false));
+ $("seat-prev").addEventListener("click",()=>moveSeat(-1));
+ $("seat-next").addEventListener("click",()=>moveSeat(1));
  $("roundtable-question-input").addEventListener("input",e=>{$("question-length").textContent=[...e.target.value].length+" / 160 字";});
  $("roundtable-question-form").addEventListener("submit",sendQuestion);
+ $("heat-switch").addEventListener("click",()=>setDemoMode(!state.demoOn));
  $("motion-toggle").addEventListener("click",()=>{
   state.motion=!state.motion;
   $("motion-toggle").textContent=state.motion?"隐藏气泡":"显示气泡";
@@ -725,17 +855,18 @@ function bind(){
 function wireLive(){
  LIVE.hooks.onCounts=()=>{
   state.ready=true;
+  plannerGame.notifyReady();
   syncSlotVoteAction();
   if(state.slotResult&&!isClosed())$("lottery-result-sub").textContent="可以将抽签结果投进实时榜单，也可以分享";
   updateHeroChart();updateCards();updateFocusCounts();
-  $("vote-source-label").textContent="真实票数 · 实时更新";
+  refreshHeatLabels();
  };
  LIVE.hooks.onOwnVotes=values=>{
   state.selected=values||{};
   updateHeroChart();updateCards();updateFocusCounts();updateSeatDetail();
  };
  LIVE.hooks.onVoteEvent=event=>{
-  if(!state.motion)return;
+  if(!state.motion||state.demoOn)return;
   if(event.topic==="hero"){
    const h=state.heroById.get(event.choice);
    if(h){handleBubble(h,event.action==="switch"?"🔁 改选 +1":"🗳️ 真实 +1");statusText("🔥 有人支持 "+labelHero(h));}
@@ -749,19 +880,22 @@ function wireLive(){
  };
  LIVE.hooks.onSeatStats=()=>{
   updateSeatNumbers();
+  plannerGame.refreshSeats();
  };
- LIVE.hooks.onMySeats=()=>updateSeatDetail();
+ LIVE.hooks.onMySeats=()=>{updateSeatDetail();plannerGame.refreshSeats();};
  LIVE.hooks.onSeatEvent=event=>{
-  if(!state.motion)return;
-  if(event.seat===state.selectedSeat)toast("🔥 这把椅子刚刚多了一票支持");
+  plannerGame.onSeatEvent(event);
+  if(state.motion&&event.seat===state.selectedSeat)toast("🔥 这把椅子刚刚多了一票真实支持");
  };
- LIVE.hooks.onQuestions=()=>renderRoundQuestions();
+ LIVE.hooks.onQuestions=()=>{renderRoundQuestions();plannerGame.updateQuestions();};
  LIVE.hooks.onKeywordStats=()=>renderRoundQuestions();
+ LIVE.hooks.onPetition=plannerGame.onGlobalCount;
  LIVE.hooks.onStatus=message=>{
-  if(message?.state==="error"&&!state.ready)$("vote-source-label").textContent="连接失败，请刷新";
-  else if(message?.state==="polling")$("vote-source-label").textContent="定时同步中";
-  else if(message?.state==="ready")$("vote-source-label").textContent="真实票数 · 实时更新";
-  if(message?.message)statusText(message.message);
+  refreshHeatLabels(message?.state);
+  if(message?.message){
+   if(state.demoOn)statusText("🧪 热场演示进行中 · "+message.message+"（仅真实投票服务状态）");
+   else statusText(message.message);
+  }
  };
 }
 async function init(){
@@ -770,6 +904,9 @@ async function init(){
  if(Date.now()>=ASK_CLOSE_AT){$("submit-roundtable-question").disabled=true;$("roundtable-question-input").disabled=true;}
  try{
   await ensureHeroes();
+  state.heat=createHeatEngine(state.heroes,FOCUS,FOCUS.map(t=>"topic:"+t.id),Math.floor(Date.now()/3600000));
+  refreshHeatLabels();
+  window.setInterval(runHeatTick,3200);
   const group=document.createDocumentFragment();
   state.heroes.forEach(h=>group.appendChild(makeHeroCard(h)));
   $("hero-list").replaceChildren(group);
@@ -783,7 +920,7 @@ async function init(){
   if(location.hash==="#all-heroes"||state.incomingHero&&location.hash.includes("heroes")){
    $("all-heroes").open=true;arrangeCards();
   }
-  if(!LIVE?.available){$("vote-source-label").textContent="实时服务加载失败";statusText("刷新页面后重试");return;}
+  if(!LIVE?.available){refreshHeatLabels("error");statusText("🧪 热场演示可以继续玩；实时投票服务暂不可用");return;}
   wireLive();await LIVE.start();
   if(query.get("open")==="lottery"&&!isClosed())window.setTimeout(openLottery,200);
   const seat=decodeURIComponent(query.get("seat")||"");
@@ -791,7 +928,7 @@ async function init(){
   if(query.get("open")==="ask")selectSeat("empty:main",false);
  }catch(error){
   console.warn("Council homepage initialization",error);
-  $("vote-source-label").textContent=state.loaded?"实时投票暂不可用":"英雄资料加载失败";
+  refreshHeatLabels("error");
   statusText(state.loaded?"🎰 抽英雄可继续玩，实时投票正在恢复":String(error?.message||error));
   toast(state.loaded?"实时投票暂不可用，随机抽签仍可使用":"英雄资料加载失败，请刷新页面再试");
  }

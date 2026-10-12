@@ -1,0 +1,217 @@
+@charset "UTF-8";
+/* v3: the roundtable and four former focus polls become one playable battle arena.
+   The hero poll intentionally stays separate and unchanged. */
+.bomb-game-section{position:relative;margin-top:70px;scroll-margin-top:20px}
+.bomb-legacy-anchor{position:absolute;top:0;left:0;width:1px;height:1px}
+.bomb-section-heading{align-items:center}
+.bomb-section-heading h2{font-size:clamp(28px,3.8vw,40px)}
+.bomb-section-disclosure{
+  flex-shrink:0;display:inline-flex;align-items:center;text-align:center;
+  border:1.5px solid var(--ink);border-radius:999px;background:#fff0bd;
+  box-shadow:2px 2px 0 var(--ink);padding:8px 12px;
+  color:#794b26;font-size:11px;font-weight:800;
+}
+.bomb-game-body{
+ position:relative;isolation:isolate;max-width:100%;
+ border:2px solid var(--ink);border-radius:18px;
+ box-shadow:6px 7px 0 var(--ink);overflow:hidden;
+ background:linear-gradient(180deg,#eee1ff 0,#fff5de 29%,#ffefc9 100%);
+}
+.bomb-game-body .petition-card{
+  width:100%;max-width:none;margin:0;border:0;box-shadow:none;
+  background:transparent;border-radius:16px;padding:22px 26px 23px;
+  display:flex;flex-direction:column;
+}
+.bomb-game-body .petition-kicker{font-size:13px}
+.bomb-game-body .planner-stage{
+ height:250px;min-height:250px;margin:6px 0 14px;
+ border:2px dashed #998dc5;border-radius:15px;
+ background:radial-gradient(ellipse at 48% 82%,#e7d8f8 0,#b2a7db 57%,#9488c6 100%);
+}
+.bomb-game-body .planner-target{
+ display:grid;place-items:center;align-content:center;
+ width:218px;height:235px;max-height:100%;filter:none;
+ background:none;border:0;position:relative;transition:filter .18s;
+}
+.bomb-game-body .planner-target .planner-hair,
+.bomb-game-body .planner-target .planner-head{display:none}
+.planner-mascot{
+ display:block;width:185px;height:218px;
+ background-image:url("./assets/planner-mascot-strip.svg");
+ background-position:0% center;background-repeat:no-repeat;
+ background-size:400% 100%;
+ filter:drop-shadow(0 4px 1px rgba(74,43,84,.25));
+ transition:filter .1s;
+}
+.planner-mascot[data-reaction="normal"]{background-position:0% center}
+.planner-mascot[data-reaction="shock"]{background-position:33.3333% center}
+.planner-mascot[data-reaction="hit"]{background-position:66.6666% center}
+.planner-mascot[data-reaction="knockout"]{background-position:100% center}
+.bomb-game-body .planner-target .planner-title{
+ font-size:12px;background:#fffdf7;border:1.5px solid #362a41;
+ position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
+ white-space:nowrap;box-shadow:2px 2px 0 #362a41;
+}
+.bomb-game-body .planner-status{
+ top:11px;right:12px;font-size:12px;max-width:33%;padding:8px 10px;
+ background:#fffdf7;border-radius:12px 12px 2px 12px;
+ box-shadow:2px 2px 0 #3d3050;
+}
+.bomb-game-body .planner-battle-board{
+ max-height:365px;gap:8px;overflow-y:auto;padding:10px;
+ border:1.5px solid #c8b3db;background:#fffdf7;
+ border-radius:12px;
+}
+.bomb-game-body .planner-battle-board .planner-issue{
+ min-height:57px;padding:9px 13px 11px;border-radius:10px;gap:12px;
+}
+.bomb-game-body .planner-battle-board .planner-issue.is-leader{
+ min-height:72px;background:#ffd98e;border-color:#a4451c;box-shadow:3px 3px 0 #d98f43;
+}
+.bomb-game-body .planner-battle-board .planner-issue.is-chaser{min-height:63px}
+.bomb-game-body .planner-row-title{font-size:13px}
+.bomb-game-body .planner-row-source{font-size:10px}
+.bomb-game-body .planner-row-score{font-size:12px;flex-basis:94px}
+.bomb-game-body .planner-rank{font-size:14px;flex-basis:35px}
+.bomb-game-body .planner-row-meter{height:7px}
+.bomb-game-body .planner-board-heading{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap}
+.bomb-game-body .planner-issue-prompt{font-size:14px}
+.bomb-game-body .planner-write{min-height:44px;font-size:12px}
+.bomb-game-body .planner-current{font-size:15px;margin-top:12px;text-align:left}
+.bomb-game-body .planner-action-row{grid-template-columns:1fr 1fr;max-width:760px;margin:auto;width:100%;gap:16px}
+.bomb-game-body .planner-bomb-button,
+.bomb-game-body .planner-vote-button{min-height:66px;font-size:15px}
+.bomb-game-body .planner-bomb-button strong{font-size:16px}
+.bomb-game-body .planner-bomb-button .petition-orb-emoji{font-size:34px}
+.bomb-game-body .planner-battle-note{font-size:11px;text-align:center;margin-top:12px}
+.bomb-game-body .planner-question-form{
+ margin:12px 0;padding:14px 16px;background:#f8f4ff;border-color:#735785
+}
+.bomb-game-body .planner-question-form label{font-size:13px}
+.bomb-game-body .planner-question-form textarea{min-height:88px;font-size:16px}
+.bomb-game-body .petition-feedback{text-align:center;margin:10px 0;font-size:14px}
+.bomb-game-body .petition-hint{margin:6px 0 8px;text-align:center;font-size:11px}
+.bomb-game-body .petition-stats{max-width:750px;margin:12px auto 0;width:100%}
+.bomb-game-body .petition-countdown{display:none}
+.bomb-game-footer-note{
+ padding:10px 4px 0;margin:9px 0;font-size:11px;
+ color:var(--muted);line-height:1.6;
+}
+.legacy-v2-hidden{display:none!important}
+.planner-mascot.reaction-shake{animation:characterSmash .45s cubic-bezier(.15,.85,.25,1.25)}
+.planner-stage.planner-finale{
+ background:radial-gradient(circle at 47% 50%,#fffbd1 0,#ffc576 31%,#dc97d5 70%,#a89add 100%);
+}
+.planner-stage.planner-finale:before{
+ content:"";position:absolute;inset:0;z-index:1;
+ background:radial-gradient(circle at center,rgba(255,255,255,.86) 0,rgba(255,248,201,.4) 42%,transparent 80%);
+ animation:plannerFlash .45s ease-out forwards;
+}
+.bomb-game-body .planner-projectile-3{font-size:45px;filter:drop-shadow(0 0 15px #ffc136)}
+.bomb-game-body .planner-impact-3{font-size:115px}
+@keyframes characterSmash{
+  0%,100%{transform:translateX(0) rotate(0) scale(1)}
+  18%{transform:translateX(-10px) rotate(-8deg) scale(.98)}
+  40%{transform:translateX(10px) rotate(11deg) scale(1.08)}
+  60%{transform:translateX(-6px) rotate(-5deg) scale(.93)}
+}
+@keyframes plannerFlash{
+ 0%{opacity:0}20%{opacity:1}100%{opacity:0}
+}
+@media(max-width:700px){
+ .bomb-game-section{margin-top:63px}
+ .bomb-section-heading{flex-wrap:wrap}
+ .bomb-section-heading h2{font-size:29px}
+ .bomb-section-disclosure{font-size:10px;padding:6px 9px}
+ .bomb-game-body .petition-card{padding:14px 11px}
+ .bomb-game-body .planner-stage{height:205px;min-height:205px;margin-top:4px}
+ .bomb-game-body .planner-target{height:197px;width:190px}
+ .bomb-game-body .planner-mascot{width:156px;height:190px}
+ .bomb-game-body .planner-status{font-size:9.5px;max-width:36%;padding:6px 8px}
+ .bomb-game-body .planner-battle-board{max-height:285px;padding:7px;gap:6px}
+ .bomb-game-body .planner-battle-board .planner-issue{min-height:56px;padding:7px 8px 10px;gap:7px}
+ .bomb-game-body .planner-battle-board .planner-issue.is-leader{min-height:66px}
+ .bomb-game-body .planner-row-title{font-size:11.5px}
+ .bomb-game-body .planner-row-score{font-size:10px;flex-basis:66px}
+ .bomb-game-body .planner-rank{font-size:10px;flex-basis:29px}
+ .bomb-game-body .planner-current{font-size:13px}
+ .bomb-game-body .planner-action-row{gap:9px}
+ .bomb-game-body .planner-bomb-button,
+ .bomb-game-body .planner-vote-button{min-height:56px;font-size:12px}
+ .bomb-game-body .planner-bomb-button strong{font-size:13px}
+ .bomb-game-body .planner-bomb-button .petition-orb-emoji{font-size:25px}
+ .bomb-game-body .planner-issue-prompt{font-size:11px;margin:9px 0}
+ .bomb-game-body .petition-feedback{font-size:12px}
+ .bomb-game-footer-note{font-size:10px}
+}
+@media(max-width:370px){
+ .bomb-game-body .planner-stage{height:185px;min-height:185px}
+ .bomb-game-body .planner-target{height:183px;width:170px}
+ .bomb-game-body .planner-mascot{width:140px;height:177px}
+ .bomb-game-body .planner-row-score{flex-basis:54px;font-size:9px}
+ .bomb-game-body .planner-battle-board .planner-issue{gap:5px}
+ .bomb-game-body .planner-action-row{grid-template-columns:1fr}
+ .bomb-game-body .planner-bomb-button,
+ .bomb-game-body .planner-vote-button{min-height:49px}
+}
+@media(prefers-reduced-motion:reduce){
+ .planner-mascot.reaction-shake,.planner-stage.planner-finale:before{animation:none!important}
+}
+
+
+.planner-board-footer{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;padding:8px 1px 5px}
+.planner-board-footer span{font-size:10px;color:#816b63;font-weight:670}
+.planner-board-footer button,.planner-share-button{
+ display:inline-flex;align-items:center;justify-content:center;min-height:42px;
+ padding:8px 13px;background:#fffdf7;border:1.5px solid var(--ink);
+ box-shadow:2px 2px 0 var(--ink);border-radius:9px;
+ font:800 12px/1.35 var(--sans);color:#643a24;cursor:pointer;touch-action:manipulation;
+}
+.planner-board-footer button:hover,.planner-share-button:hover{background:#ffd84d}
+.planner-share-button{display:flex;margin:11px auto 0;max-width:540px;width:100%;background:#b8e3a4}
+.planner-share-button:focus-visible,.planner-board-footer button:focus-visible{outline:3px solid var(--orange);outline-offset:3px}
+.planner-battle-board .planner-row-fill{position:relative;overflow:hidden}
+.planner-battle-board .planner-row-fill:after{
+ content:"";position:absolute;inset:0;width:34%;
+ background:linear-gradient(100deg,transparent,rgba(255,255,255,.42),transparent);
+ transform:translateX(-160%);animation:plannerEnergy 4s ease-in-out infinite;
+}
+.planner-battle-board .planner-issue.is-leader .planner-row-fill:after{animation-duration:2.7s}
+@keyframes plannerEnergy{
+ 0%,20%{transform:translateX(-160%)}
+ 55%,100%{transform:translateX(350%)}
+}
+@media(max-width:700px){
+ .planner-board-footer{padding:9px 1px 5px}
+ .planner-board-footer span{flex:1;min-width:140px;line-height:1.4}
+ .planner-board-footer button{min-height:44px}
+ .planner-share-button{min-height:46px;margin-top:9px;font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){.planner-battle-board .planner-row-fill:after{animation:none!important}}
+
+
+/* Real-support growth: cards expand as actual supporters accumulate, no synthetic votes. */
+.bomb-game-body .planner-battle-board .planner-issue{
+ min-height:calc(57px + var(--issue-grow,0px));transition:min-height .48s ease,background .2s ease,box-shadow .2s ease;
+}
+.bomb-game-body .planner-battle-board .planner-issue.is-chaser{
+ min-height:calc(63px + var(--issue-grow,0px));
+}
+.bomb-game-body .planner-battle-board .planner-issue.is-leader{
+ min-height:calc(72px + var(--issue-grow,0px));
+}
+.bomb-game-body .planner-battle-board .planner-issue.is-burning .planner-row-fill{
+ background:linear-gradient(90deg,#ff9532,#f24928,#ff6d30);
+ box-shadow:0 -1px 8px rgba(255,104,42,.24);
+}
+.bomb-game-body .planner-battle-board .planner-issue.is-heavy{
+ border-color:#a84521;background:#ffe9b5;
+}
+.bomb-game-body .planner-battle-board .planner-issue.is-heavy .planner-row-title{font-weight:920}
+@media(max-width:700px){
+ .bomb-game-body .planner-battle-board .planner-issue{min-height:calc(56px + var(--issue-grow,0px))}
+ .bomb-game-body .planner-battle-board .planner-issue.is-leader{min-height:calc(66px + var(--issue-grow,0px))}
+}
+@media(prefers-reduced-motion:reduce){
+ .bomb-game-body .planner-battle-board .planner-issue{transition:none}
+}

@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#fff4dd">
-  <meta name="description" content="火炬议会 Torchlight Council。选 SS14 开荒英雄、随机抽签，看看玩家最关心什么。">
+  <meta name="description" content="火炬议会：SS14 开荒英雄实时榜与炸策划大会。提交问题、支持玩家议题、发射卡通炸弹，让高热问题追逐登榜。">
   <meta property="og:type" content="website">
   <meta property="og:title" content="火炬议会 · SS14 开荒英雄投票">
   <meta property="og:description" content="28 个英雄特性都能投票，还能随机抽个开荒英雄。">
   <meta property="og:url" content="https://torchlightskill.com/council/">
-  <title>火炬议会 · SS14 开荒英雄投票</title>
+  <title>火炬议会 · 英雄实时榜 × 炸策划大会</title>
   <link rel="canonical" href="https://torchlightskill.com/council/">
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="stylesheet" href="./v04.css?v=20261012-1">
@@ -17,7 +17,9 @@
   <link rel="stylesheet" href="./roundtable.css?v=20261012-1">
   <link rel="stylesheet" href="./v2.css?v=20261012-1">
   <link rel="stylesheet" href="./mobile-fixes.css?v=20261012-2">
-  <script type="module" src="./live-bootstrap.js?v=20261012-3"></script>
+  <link rel="stylesheet" href="./heat-scene.css?v=20261012-1">
+  <link rel="stylesheet" href="./bomb-game.css?v=20261012-v3">
+  <script type="module" src="./live-bootstrap.js?v=20261012-bombv3"></script>
 </head>
 <body>
 <div class="council-shell">
@@ -30,8 +32,8 @@
     </a>
     <nav class="header-actions" aria-label="导航">
       <a class="sticker-nav" href="#hero-board">🔥 开荒榜</a>
-      <a class="sticker-nav" href="#topics">🗳️ 焦点投票</a>
-      <a class="sticker-nav" href="#roundtable">🪑 策划圆桌</a>
+      <a class="sticker-nav" href="#topics">💣 炸策划</a>
+      <a class="sticker-nav" href="#all-heroes">🎰 选英雄</a>
     </nav>
   </header>
 
@@ -52,15 +54,20 @@
     <section class="arena-section" id="hero-board" aria-labelledby="arena-title">
       <div class="section-heading">
         <div><span class="section-index">01 / 英雄投票</span><h2 id="arena-title">英雄实时榜 👑</h2>
-        <p>真实票数决定排名，随时可能反超。</p></div>
-        <span class="sample-label" id="vote-source-label">真实票数 · 连接中</span>
+        <p id="hero-board-subtitle">真实票数决定排名，随时可能反超。</p></div>
+        <span class="sample-label is-demo" id="vote-source-label">🧪 热场演示 · 非真实票数</span>
       </div>
       <div class="arena-panel">
         <div class="arena-toolbar">
           <div class="arena-toolbar-label"><span class="live-indicator">●</span><strong>开荒排行榜</strong><span>TOP <span id="ranking-label">6</span></span></div>
-          <span class="arena-meta"><strong id="hero-total">28</strong> 个特性 · <strong id="demo-vote-total">—</strong> 张票</span>
+          <span class="arena-meta"><strong id="hero-total">28</strong> 个特性 · <strong id="demo-vote-total">—</strong><span id="board-count-unit"> 演示热度</span></span>
         </div>
-        <div class="arena-stage" id="arena-stage">
+        <div class="heat-disclosure" id="heat-disclosure">
+          <strong id="heat-mode-explain">🧪 正在播放模拟热场，数字与动效均为虚构示意</strong>
+          <span id="real-vote-count">真实投票 0 张</span>
+          <button type="button" class="heat-switch" id="heat-switch" aria-pressed="true">👁 查看真实结果</button>
+        </div>
+        <div class="arena-stage demo-playing" id="arena-stage">
           <span class="stage-stamp">SS14 / 2026</span>
           <div class="chart-guides" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
           <div class="chart" id="chart" aria-label="当前真实排行"><p class="loading-note">正在加载英雄头像…</p></div>
@@ -69,7 +76,7 @@
         <div class="activity-row">
           <div class="activity-main">
             <span class="activity-dot" aria-hidden="true"></span>
-            <span class="activity-heading">真实投票动态</span>
+            <span class="activity-heading">热度动态</span>
             <span id="activity-line" class="activity-line" role="status" aria-live="polite">正在连接投票服务…</span>
           </div>
           <button type="button" class="inline-control" id="motion-toggle" aria-pressed="true">隐藏气泡</button>
@@ -82,7 +89,7 @@
           <button id="open-hero-pool" type="button" class="button primary">查看全部 28 个英雄 <span aria-hidden="true">↓</span></button>
           <div class="lottery-main-action"><button type="button" id="open-lottery" class="button secondary">🎰 不知道选谁？抽一个 <span aria-hidden="true">↗</span></button><button type="button" class="minor-share" id="share-lottery-game">分享随机开荒玩法 ↗</button></div>
         </div>
-        <p class="demo-disclosure">排行榜显示数据库中的真实票数。点击投票会匿名创建账号，不需要填写手机号。每个匿名账号每题保留一票，改选会撤回旧票。</p>
+        <p class="demo-disclosure">🧪 热场演示仅用于展示页面氛围，不是真实玩家投票。切换「查看真实结果」可看到 Supabase 实际票数。真实投票匿名记录，每个匿名账号每题一票，改选会撤回旧票。</p>
       </div>
     </section>
 
@@ -99,22 +106,87 @@
       <label class="roster-sort-wrap" for="hero-sort">排序 <select id="hero-sort"><option value="votes">按实时票数</option><option value="name">按英雄名字</option></select></label>
       <div id="hero-list" class="roster-grid" aria-label="全部英雄投票选项"><p class="loading-note">正在核对头像和英雄特性…</p></div>
       <p id="roster-empty" class="roster-empty" hidden>没找到这个英雄，换个名字试试。</p>
-      <p class="roster-hint">点卡片投票，点右下角「分享」就能邀请朋友支持那个英雄。</p>
+      <p class="roster-hint">这里始终显示真实票数。点卡片投票，右下角可分享对应英雄；顶部的演示热度不进入真实榜。</p>
     </div></details>
 
-    <section class="focus-section" id="topics" aria-labelledby="topics-title">
+    <section class="bomb-game-section" id="topics" aria-labelledby="bomb-game-title">
+      <span id="roundtable" class="bomb-legacy-anchor" aria-hidden="true"></span>
+      <div class="section-heading bomb-section-heading">
+        <div><span class="section-index">02 / 炸策划大会</span>
+          <h2 id="bomb-game-title">💣 把问题顶上去，炸策划！</h2>
+          <p>自己写问题、支持热门问题、看问题长大追榜。真票越高，炸弹越猛。</p>
+        </div>
+        <span class="bomb-section-disclosure">真实支持数 · 卡通互动 · 不伤真人</span>
+      </div>
+      <div class="bomb-game-body">
+        <aside class="countdown-card petition-card" aria-label="虚拟策划吐槽互动，反复点击不会增加正式投票">
+        <div class="petition-kicker">💣 火炬议会 · 炸策划小游戏 <span class="planner-fiction">卡通虚拟策划</span></div>
+        <div class="planner-stage" id="planner-stage">
+          <div id="planner-status" class="planner-status" aria-hidden="true">策划：正在听取意见…</div>
+          <button type="button" id="planner-target" class="planner-target" aria-label="轻点卡通策划，发射一颗吐槽炸弹，不增加正式票数">
+            <span class="planner-hair" aria-hidden="true">〰️</span>
+            <span class="planner-head" aria-hidden="true">🧑‍💻</span>
+            <span class="planner-mascot" id="planner-mascot" data-reaction="normal" aria-hidden="true"></span>
+            <span class="planner-title" aria-hidden="true">策划</span>
+          </button>
+          <div id="petition-effects" class="petition-effects" aria-hidden="true"></div>
+        </div>
+        <div class="planner-board-heading">
+          <p class="planner-issue-prompt">🏆 问题攻防榜 · 真实支持数决定排名</p>
+          <button type="button" id="planner-write" class="planner-write">✍️ 我来写问题</button>
+        </div>
+        <div class="planner-issue-grid planner-battle-board" id="planner-issue-grid" role="group" aria-label="按真实支持人数排序的问题攻防榜">
+          <span class="planner-board-loading">加载真实问题排行中…</span>
+        </div>
+        <div class="planner-board-footer"><span id="planner-pool-count">正在加载问题池</span><button type="button" id="planner-more" hidden>查看更多玩家问题 ↓</button></div>
+        <form id="planner-question-form" class="planner-question-form" hidden>
+          <label for="planner-question-input">你最想让策划回答什么？（8～160 字）</label>
+          <textarea id="planner-question-input" maxlength="160" minlength="8" rows="3" placeholder="例如：老玩法的重复操作到底什么时候减少？" required></textarea>
+          <div class="planner-compose-actions">
+            <span id="planner-question-length">0 / 160 字</span>
+            <button type="submit" id="planner-question-submit">提交上桌 ↗</button>
+            <button type="button" id="planner-question-cancel">取消</button>
+          </div>
+          <p id="planner-question-status" class="planner-question-status" role="status">玩家问题先审核，通过后进入排行榜。</p>
+        </form>
+        <p id="planner-pending-count" class="planner-pending-count" hidden></p>
+        <p id="planner-current" class="planner-current" aria-live="polite">🛠️ 老玩法到底改不改？</p>
+        <div class="planner-action-row">
+          <button id="petition-orb" class="petition-orb planner-bomb-button" type="button" aria-label="对当前选中的问题发射卡通炸弹，可连续点击" aria-describedby="petition-hint">
+            <span class="petition-orb-emoji" aria-hidden="true">💣</span>
+            <strong>扔炸弹</strong>
+            <span class="petition-orb-mini" aria-hidden="true">无限连击 · 不刷票</span>
+          </button>
+          <button id="planner-vote" class="planner-vote-button" type="button">🗳️ 支持这道问题 +1</button>
+        </div>
+        <button id="planner-share" class="planner-share-button" type="button">📣 分享当前问题，喊朋友来支持 ↗</button>
+        <p class="planner-battle-note">✅ 每个账号每题只能支持一次；点击投弹不限次数。真票更高的题，炸弹更强。</p>
+        <div class="planner-fx-layer" id="planner-fx-layer" aria-hidden="true"></div>
+        <div class="petition-stats">
+          <span><strong id="petition-total">0</strong> 本机已炸次数</span>
+          <span id="petition-combo">0 连击</span>
+          <span class="petition-global" id="petition-global">🌍 全站真实累计 · 连接中</span>
+        </div>
+        <p class="petition-feedback" id="petition-feedback" role="status" aria-live="polite">💥 点策划或炸弹，连续炸更有意思！</p>
+        <p class="petition-hint" id="petition-hint">炸策划是卡通互动，本机可反复点；每天最多 1,000 次计入全站点击数。正式投票仍每题一票。</p>
+        </aside>
+      </div>
+      <p class="bomb-game-footer-note">玩家投稿审核通过后进入公开问题榜；每个匿名账号每题仅能支持一次。自由投弹只增加娱乐互动次数。</p>
+    </section>
+
+    <section class="focus-section legacy-v2-hidden" id="legacy-topics" hidden aria-hidden="true" aria-labelledby="topics-title">
       <div class="section-heading v2-heading">
         <div><span class="section-index">02 / 本周焦点投票</span><h2 id="topics-title">这四件事，你站哪边？ 🗳️</h2><p>每道题单独投票，想改随时改。</p></div>
-        <span class="focus-meta">4 个议题 · 真实票数</span>
+        <span class="focus-meta">4 个议题 · 演示/真实可切换</span>
       </div>
       <div class="focus-board">
         <nav class="focus-tabs" id="topic-tabs" aria-label="选择焦点议题"></nav>
         <article class="focus-current">
-          <div class="focus-current-head"><span class="focus-step" id="focus-step">议题 01</span><span class="focus-live-count" id="focus-live-count">0 票</span></div>
+          <div class="focus-current-head"><span class="focus-step" id="focus-step">议题 01</span><span class="focus-live-count" id="focus-live-count">🧪 演示热度</span></div>
           <h3 id="focus-title">正在加载议题…</h3>
           <p class="focus-question" id="focus-prompt"></p>
           <div id="focus-options" class="focus-votes" role="group" aria-label="当前议题的四个选项"></div>
-          <p id="focus-activity" class="focus-activity" role="status" aria-live="polite">票数来自所有玩家的真实投票。</p>
+          <p id="focus-activity" class="focus-activity" role="status" aria-live="polite">🧪 当前展示演示热度；真实投票独立计数，不混入模拟票。</p>
           <details class="focus-followup" id="focus-followup"><summary>💬 圆桌追问 <span aria-hidden="true">⌄</span></summary><p id="focus-followup-body"></p>
             <button type="button" id="focus-ask" class="focus-ask">🪑 去圆桌支持这个问题 ↗</button></details>
           <div class="focus-actions">
@@ -125,7 +197,7 @@
       </div>
     </section>
 
-    <section class="roundtable-section v2-roundtable" id="roundtable" aria-labelledby="roundtable-title">
+    <section class="roundtable-section v2-roundtable legacy-v2-hidden" id="legacy-roundtable" hidden aria-hidden="true" aria-labelledby="roundtable-title">
       <div class="section-heading v2-heading">
         <div><span class="section-index">03 / 策划圆桌</span><h2 id="roundtable-title">来圆桌给问题占个座 🪑</h2>
           <p>每把椅子代表一道问题。点一下，看详情、投支持票。</p></div>
@@ -141,8 +213,16 @@
               <span id="table-total" class="table-total">等待玩家参与</span>
             </div>
           </div>
-          <div class="seat-strip" id="seat-strip" aria-label="滑动查看更多问题席位"></div>
-          <p class="seat-hint">🔥 每人每把椅子可支持一次。空椅子可以提交问题。</p>
+          <div class="seat-navigation" aria-label="切换圆桌八个席位">
+            <span class="seat-nav-intro">🪑 8 个席位 · 点椅子或左右滑动查看全部</span>
+            <div class="seat-nav-controls">
+              <button type="button" id="seat-prev" aria-label="上一把圆桌椅子">← 上一席</button>
+              <output id="seat-position" aria-live="polite">01 / 08</output>
+              <button type="button" id="seat-next" aria-label="下一把圆桌椅子">下一席 →</button>
+            </div>
+          </div>
+          <div class="seat-strip" id="seat-strip" aria-label="圆桌全部八个席位，可横向滑动选择"></div>
+          <p class="seat-hint">🔥 每人每把椅子可支持一次。点任意椅子打开详情；空椅子可提交问题。</p>
         </div>
         <div class="seat-panel" id="seat-panel">
           <div id="seat-detail" class="seat-detail">
@@ -191,7 +271,7 @@
 
   <footer class="site-footer">
     <div class="footer-logo">✳ <strong>火炬议会</strong> <small>TORCHLIGHT COUNCIL</small></div>
-    <p>玩家制作的免费投票页面，与《火炬之光：无限》官方没有隶属关系。投票数字来自独立数据库；玩家提问须审核后公开。</p>
+    <p>玩家制作的免费互动站，与《火炬之光：无限》官方无隶属关系。🧪 演示热度为虚构示意，不代表玩家票数；真实投票由独立数据库记录，玩家问题审核后公开。</p>
     <div><span>© 2026 Torchlight Council</span><a href="https://torchlightskill.com/" target="_blank" rel="noopener noreferrer">刷宝游戏工具箱 ↗</a></div>
   </footer>
 </div>

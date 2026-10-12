@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 216" width="760" height="216">
+<defs>
+ <linearGradient id="hair" x2="1" y2="1"><stop stop-color="#b9a4ef"/><stop offset="1" stop-color="#8068bf"/></linearGradient>
+ <linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fffdf9"/><stop offset="1" stop-color="#f6ecdf"/></linearGradient>
+ <g id="head">
+  <path d="M-38 1Q-56 -16 -49 -38Q-40 -63 -16 -63Q-15 -91 11 -89Q34 -88 36 -66Q62 -67 64 -42Q75 -19 53 -8Q65 13 49 24L-39 23Q-54 14 -38 1Z" fill="url(#hair)" stroke="#392e45" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M-42 -7Q-48 -21 -35 -29Q-22 -35 -16 -24Q-12 -42 5 -34Q19 -29 23 -16Q32 -27 43 -16L49 17Q38 42 10 43Q-24 43 -42 19Z" fill="#fff0dc" stroke="#392e45" stroke-width="3.7"/>
+  <ellipse cx="-32" cy="17" rx="11" ry="7" fill="#f9acba" opacity=".8"/>
+  <ellipse cx="36" cy="17" rx="11" ry="7" fill="#f9acba" opacity=".8"/>
+  <path d="M-35 -57Q-19 -44 -9 -63Q-11 -77 7 -78Q-6 -93 6 -98Q28 -98 37 -75Q32 -58 20 -57Q52 -56 50 -35Q43 -26 30 -32" fill="url(#hair)" stroke="#392e45" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M32 -82Q48 -105 53 -89" fill="none" stroke="#392e45" stroke-width="4" stroke-linecap="round"/>
+  <path d="M-42 -18Q-58 -25 -60 -9Q-58 3 -45 5" fill="#fff0dc" stroke="#392e45" stroke-width="3.7"/>
+  <path d="M47 -18Q65 -24 64 -8Q60 3 48 5" fill="#fff0dc" stroke="#392e45" stroke-width="3.7"/>
+ </g>
+ <g id="torso">
+  <path d="M-26 4L23 4L33 63L-30 63Z" fill="url(#paper)" stroke="#392e45" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M-5 4L4 4L9 13L2 30L-3 45L-9 24L-11 13Z" fill="#8d70c6" stroke="#392e45" stroke-width="2"/>
+  <path d="M-20 4L-38 43L-23 51L-11 28M18 6L37 42L23 52L13 31" fill="#fff3e7" stroke="#392e45" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M-30 62L-25 92L-6 92L-5 63M9 63L11 92L29 92L32 62" fill="#332b3c" stroke="#392e45" stroke-width="4"/>
+  <ellipse cx="-22" cy="94" rx="16" ry="6" fill="#292333"/><ellipse cx="23" cy="94" rx="16" ry="6" fill="#292333"/>
+  <path d="M14 24H27V47H11Z" fill="#bbdcea" stroke="#392e45" stroke-width="2"/>
+  <path d="M18 26V20" stroke="#392e45" stroke-width="2.5"/>
+ </g>
+ <g id="clipboard">
+  <rect x="-22" y="-29" width="45" height="63" rx="4" fill="#996847" stroke="#392e45" stroke-width="3.2"/>
+  <rect x="-16" y="-23" width="33" height="47" rx="2" fill="#f9f3eb"/>
+  <rect x="-10" y="-32" width="20" height="8" rx="3" fill="#56435f"/>
+  <path d="M-9 -6H10M-9 3H12M-9 12H5" stroke="#b4a6a4" stroke-width="2" stroke-linecap="round"/>
+ </g>
+</defs>
+<!-- 1: listening -->
+<g transform="translate(95 100)">
+ <ellipse cy="107" rx="60" ry="5" fill="#6d569f" opacity=".26"/>
+ <g transform="translate(2 -4)"><use href="#torso"/></g>
+ <use href="#head"/>
+ <circle cx="-18" cy="3" r="4.8" fill="#322738"/><circle cx="18" cy="3" r="4.8" fill="#322738"/>
+ <path d="M-6 22Q0 29 7 21" fill="none" stroke="#332638" stroke-width="2.6" stroke-linecap="round"/>
+ <g transform="translate(-18 54) rotate(-8) scale(.57)"><use href="#clipboard"/></g>
+ <path d="M-66 -30l-8 -12M-69 -18l-13 -5" stroke="#ffce67" stroke-width="6" stroke-linecap="round"/>
+</g>
+<!-- 2: startled -->
+<g transform="translate(286 101)">
+ <ellipse cy="107" rx="63" ry="5" fill="#6d569f" opacity=".26"/>
+ <g transform="translate(5 -4) rotate(-8)"><use href="#torso"/></g>
+ <g transform="translate(-7 2) rotate(-11)"><use href="#head"/>
+ <circle cx="-18" cy="2" r="6.8" fill="#fff" stroke="#392e45" stroke-width="3"/>
+ <circle cx="20" cy="1" r="6.8" fill="#fff" stroke="#392e45" stroke-width="3"/>
+ <ellipse cx="0" cy="24" rx="9" ry="12" fill="#ac5e65" stroke="#392e45" stroke-width="3"/>
+ </g>
+ <path d="M55 -56Q75 -81 85 -59" stroke="#ffcf75" stroke-width="5" fill="none" stroke-linecap="round"/>
+ <g transform="translate(66 -64) rotate(21)"><circle r="21" fill="#30303d" stroke="#181923" stroke-width="4"/><path d="M15 -16Q25 -37 37 -30" stroke="#181923" stroke-width="4" fill="none"/><path d="M36 -36l6 -10m-3 17l15 0" stroke="#ffc943" stroke-width="5" stroke-linecap="round"/></g>
+ <g transform="translate(-67 62) rotate(-38) scale(.48)"><use href="#clipboard"/></g>
+</g>
+<!-- 3: explosion -->
+<g transform="translate(475 102)">
+ <ellipse cy="105" rx="65" ry="6" fill="#6d569f" opacity=".28"/>
+ <g transform="translate(-4 38) rotate(-16) scale(.9)"><use href="#torso"/></g>
+ <g transform="translate(3 -5) rotate(17)"><use href="#head"/>
+ <path d="M-27 1l11 8m0 -8l-11 8m35 -8l11 8m0 -8l-11 8" stroke="#392e45" stroke-width="4" stroke-linecap="round"/>
+ <path d="M-4 25Q1 36 6 25" fill="none" stroke="#392e45" stroke-width="4" stroke-linecap="round"/>
+ </g>
+ <path d="M41 -52l12 -23l22 8l5 -26l15 15l25 -9l-7 30l20 13l-25 15l-14 26l-30 -13l-21 6Z" fill="#ffcd62" stroke="#db6841" stroke-width="4"/>
+ <g transform="translate(77 -63) rotate(20)"><circle r="23" fill="#33343e" stroke="#20202a" stroke-width="4"/><path d="M20 -12l15 -13" stroke="#21202b" stroke-width="5"/></g>
+ <circle cx="-59" cy="-65" r="9" fill="#f3c6d5"/><circle cx="58" cy="30" r="6" fill="#e9a8d7"/>
+ <g transform="translate(79 65) rotate(50) scale(.48)"><use href="#clipboard"/></g>
+</g>
+<!-- 4: flattened knockout -->
+<g transform="translate(666 125)">
+ <ellipse cy="76" rx="79" ry="7" fill="#6d569f" opacity=".3"/>
+ <path d="M-67 29Q-78 16 -58 1L-36 -24Q0 -47 39 -28L67 -3Q84 16 64 29L44 37L-46 37Z" fill="url(#hair)" stroke="#392e45" stroke-width="4"/>
+ <path d="M-55 21Q-47 -1 -25 -2Q0 -10 27 -2Q54 0 60 21Q49 43 18 45L-20 45Q-49 43 -55 21Z" fill="#fff0dc" stroke="#392e45" stroke-width="3"/>
+ <path d="M-31 12l11 11m0 -11l-11 11m34 -11l11 11m0 -11l-11 11" stroke="#392e45" stroke-width="4" stroke-linecap="round"/>
+ <path d="M-2 32Q0 38 2 32" stroke="#392e45" stroke-width="3" fill="none"/>
+ <path d="M-35 -32Q-30 -41 -7 -34Q30 -38 38 -30" fill="none" stroke="#392e45" stroke-width="3"/>
+ <path d="M-1 -42Q-19 -67 0 -81Q27 -94 10 -107Q-5 -123 12 -132" fill="none" stroke="#64586e" stroke-width="8" stroke-linecap="round" opacity=".65"/>
+ <g transform="translate(-71 45) rotate(-45) scale(.33)"><use href="#clipboard"/></g>
+ <path d="M-90 37l-10 -7m89 -60l17 -12" stroke="#392e45" stroke-width="4" stroke-linecap="round"/>
+ <circle cx="-42" cy="18" r="6" fill="#f49bb5" opacity=".7"/><circle cx="41" cy="18" r="6" fill="#f49bb5" opacity=".7"/>
+</g>
+</svg>

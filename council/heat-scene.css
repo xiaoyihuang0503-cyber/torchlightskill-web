@@ -1,0 +1,460 @@
+@charset "UTF-8";
+/* Council v2.3: clear demo-vs-real status and always accessible roundtable seats. */
+.heat-disclosure{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  margin:0;padding:10px 17px 5px;
+  border-top:1.5px dashed #c9aa73;background:#fff8df;
+}
+.heat-disclosure strong{font-size:11px;font-weight:820;color:#85401e}
+.heat-disclosure span{font-size:11px;font-weight:730;color:#6c4c35}
+.heat-switch{
+  display:inline-flex;justify-content:center;align-items:center;gap:6px;
+  min-height:38px;padding:8px 13px;
+  color:#26201a;border:1.5px solid #26201a;border-radius:99px;background:#fffdf7;
+  box-shadow:2px 2px 0 #26201a;font:790 11px/1.25 var(--sans);
+  touch-action:manipulation;white-space:normal;text-align:center;
+}
+.heat-switch:hover{background:#ffd84d}
+.heat-switch[aria-pressed="true"]{background:#ffcead}
+.heat-demo-tag{display:inline-flex;align-items:center;gap:5px;color:#a44927;background:#ffe6c8;padding:3px 8px;font-weight:800;border-radius:7px}
+#vote-source-label.is-demo{background:#ffcead;color:#69381f}
+.arena-stage.demo-playing .contender.leader .contender-rank{background:#ffe6a1}
+.heat-demo-particle{
+ position:absolute;pointer-events:none;z-index:4;top:0;left:0;
+ animation:demoFlare 1.3s ease-out both;
+ font-size:23px;line-height:1;filter:drop-shadow(1px 2px 0 #26201a);
+}
+@keyframes demoFlare{
+ 0%{opacity:0;transform:translate(-50%,5px) scale(.6)}
+ 18%{opacity:1;transform:translate(-50%,-8px) scale(1.12)}
+ 100%{opacity:0;transform:translate(-50%,-55px) scale(.85)}
+}
+.focus-demo-note{display:inline-block;font-weight:750;color:#a64421}
+.seat-chair .seat-chair-count.is-demo,
+.seat-strip-button small.is-demo{color:#9d452c;font-size:9px}
+.table-center.is-demo{background:radial-gradient(circle at 35% 28%,#fff5db 0,#ffd84d 60%,#ffb38e 100%)}
+.seat-chair.is-demo{box-shadow:3px 4px 0 var(--ink);animation:seatBreath 4.5s ease-in-out infinite}
+.seat-chair.is-demo:nth-child(odd){animation-delay:-1.5s}
+.seat-chair.is-demo:nth-child(even){animation-delay:-3s}
+@keyframes seatBreath{
+ 0%,100%{filter:brightness(1)}
+ 50%{filter:brightness(1.09)}
+}
+.seat-navigation{display:none}
+.seat-nav-intro{font-size:11px;font-weight:790;color:#854327}
+.seat-nav-controls{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.seat-nav-controls button{
+ display:inline-flex;align-items:center;justify-content:center;
+ min-height:42px;padding:7px 13px;background:#fffdf7;border:1.5px solid var(--ink);
+ border-radius:8px;color:var(--ink);font-size:12px;font-weight:780;touch-action:manipulation;
+}
+.seat-nav-controls button:focus-visible{outline:3px solid var(--orange);outline-offset:3px}
+.seat-nav-controls output{font:790 12px ui-monospace,monospace;color:#8c4526}
+@media(max-width:700px){
+ .heat-disclosure{padding:10px 10px;flex-direction:column;align-items:stretch;gap:7px}
+ .heat-disclosure strong{font-size:10.5px;line-height:1.5}
+ .heat-switch{min-height:45px;width:100%;font-size:12px}
+ .demo-disclosure{font-size:10px;line-height:1.55}
+ .seat-navigation{display:flex;flex-direction:column;gap:9px;margin:4px 0 7px;padding:11px;background:#fff7de;border:1.5px solid var(--ink);border-radius:11px}
+ .seat-map{
+  display:block;width:100%;max-width:400px;aspect-ratio:1/1;overflow:visible;
+  margin:8px auto 9px;
+ }
+ /* All eight seats remain visible. Previously three players + two empty seats were hidden. */
+ .seat-map .seat-chair.player,
+ .seat-map .seat-chair.empty:not(.main-empty){display:flex}
+ .seat-map .seat-chair{
+  width:23%;min-height:51px;
+  padding:5px 3px;border-width:2px;border-radius:12px 12px 7px 7px;
+  gap:2px;transform:translate(-50%,-50%);
+ }
+ .seat-map .seat-chair-title{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  overflow:hidden;font-size:9px;line-height:1.2;
+ }
+ .seat-map .seat-chair-emoji{font-size:12px}
+ .seat-map .seat-chair-count{font-size:8px;line-height:1.15}
+ .seat-map .seat-chair:before{height:9px;top:-9px;border-width:1.5px}
+ .seat-map .seat-chair:after{height:8px;bottom:-7px;border-width:1.5px}
+ .seat-map .seat-chair:hover{transform:translate(-50%,-51%) scale(1.02)}
+ .seat-map .table-center{
+  width:43%;padding:7px;border-width:3px;gap:3px;
+  box-shadow:3px 4px 0 #a56c37,6px 7px 0 var(--ink);
+ }
+ .seat-map .table-center strong{font-size:clamp(14px,4vw,21px);line-height:1.1}
+ .seat-map .table-center small{font-size:8px;line-height:1.2}
+ .seat-map .table-center .table-symbol{font-size:25px}
+ .seat-map .table-center .table-total{font-size:8px;line-height:1.15;margin-top:3px}
+ .seat-strip{display:flex;gap:8px;scroll-padding-inline:14px;-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain}
+ .seat-strip-button{min-width:137px;flex-basis:137px;min-height:65px}
+ .seat-strip-button.selected{outline:2px solid var(--orange);outline-offset:-2px}
+ .seat-hint{text-align:left;padding-inline:4px;line-height:1.5}
+}
+@media(max-width:380px){
+ .seat-map{max-width:100%}
+ .seat-map .seat-chair{width:22%;min-height:48px;padding:4px 2px}
+ .seat-map .seat-chair-title{font-size:8.5px;line-height:1.14}
+ .seat-map .seat-chair-count{font-size:7.5px}
+ .seat-map .table-center{width:40%;padding:5px}
+ .seat-map .table-center strong{font-size:15px}
+ .seat-map .table-center .table-symbol{font-size:21px}
+ .seat-map .table-center small{font-size:7px}
+ .seat-nav-controls button{padding:7px 8px;min-height:44px;font-size:11px}
+ .seat-nav-controls output{font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){
+ .seat-map .seat-chair.is-demo{animation:none!important}
+ .heat-demo-particle{animation:none!important;display:none!important}
+}
+
+
+/* Infinite-tap petition: deliberate, clearly separated from the official vote. */
+.petition-card{
+ position:relative;isolation:isolate;overflow:hidden;
+ padding:16px 14px 13px;background:#fff2c8;
+}
+.petition-kicker{font:850 12px/1.4 var(--sans);letter-spacing:-.01em;color:#8a3920;margin-bottom:10px;text-align:center}
+.petition-play-area{display:flex;justify-content:center;align-items:center;gap:11px;position:relative;z-index:2}
+.petition-orb{
+ display:flex;flex:0 0 122px;flex-direction:column;align-items:center;justify-content:center;
+ width:122px;height:122px;border:3px solid var(--ink);border-radius:50%;
+ background:radial-gradient(circle at 36% 25%,#fff1a0 0,#ffb153 28%,#ff632e 64%,#d84d27 100%);
+ box-shadow:0 5px 0 #a73d24,4px 7px 0 var(--ink),inset 0 1px 6px #fff5b4;
+ color:#3a1a0c;cursor:pointer;position:relative;user-select:none;-webkit-user-select:none;
+ touch-action:manipulation;transition:transform .12s,filter .12s;
+}
+.petition-orb:before{
+ content:"";position:absolute;inset:-8px;border:2px dashed #ba5a29;border-radius:50%;
+ animation:petitionHalo 9s linear infinite;pointer-events:none;
+}
+.petition-orb:hover{filter:brightness(1.07)}
+.petition-orb:active{transform:translateY(4px) scale(.95);box-shadow:0 2px 0 #a73d24,2px 4px 0 var(--ink)}
+.petition-orb.petition-burst{animation:petitionTap .23s cubic-bezier(.2,.9,.3,1.4)}
+.petition-orb-emoji{font-size:42px;line-height:1;filter:drop-shadow(1px 1px 0 #762d20)}
+.petition-orb strong{font:850 16px/1.28 var(--sans);margin-top:4px;white-space:nowrap}
+.petition-orb-mini{font:800 10px/1.3 var(--sans);color:#78341e;margin-top:1px}
+.petition-stats{display:flex;flex:1;min-width:0;flex-direction:column;justify-content:center;gap:1px;align-items:flex-start}
+.petition-stats #petition-total{font:850 clamp(29px,3.3vw,36px)/1.07 var(--display);font-variant-numeric:tabular-nums}
+.petition-stats span{font:720 10px/1.4 var(--sans);color:#6e4e38}
+.petition-stats #petition-combo{font:850 15px/1.3 var(--sans);color:#bc4922;margin-top:6px}
+.petition-stats small{font:650 9px/1.4 var(--sans);color:#7b6853}
+.petition-hint{text-align:center;font-size:10px;line-height:1.55;color:#825238;margin:13px 0 6px}
+.petition-feedback{text-align:center;font:800 12px/1.45 var(--sans);color:#9f4829;min-height:19px;margin:5px 0}
+.petition-countdown{border-top:1.5px dashed #bb9e73;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:2px 9px;margin-top:9px;padding-top:9px}
+.petition-countdown .countdown-label{font-size:10px}
+.petition-countdown .countdown-time{display:block;font-size:19px;white-space:nowrap;margin:0;color:var(--ink)}
+.petition-countdown small{flex-basis:100%;text-align:right;color:var(--muted);font-size:9px}
+.petition-effects{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;border-radius:inherit}
+.petition-spark{
+ position:absolute;top:var(--spark-y,45%);left:var(--spark-x,40%);
+ z-index:3;font-size:var(--spark-size,19px);
+ transform:translate(-50%,-50%);
+ filter:drop-shadow(1px 1px 1px #ac562e);
+ animation:petitionSpark 1.05s cubic-bezier(.2,.7,.45,1) forwards;
+}
+.petition-spark.is-plus{font:900 19px/1.2 var(--sans);color:#a43719;background:#fffce9;border:1px solid #88421d;border-radius:7px;padding:1px 3px}
+.petition-card.petition-party .petition-orb{filter:saturate(1.32) brightness(1.09)}
+@keyframes petitionSpark{
+ 0%{opacity:0;transform:translate(-50%,5px) scale(.5)}
+ 17%{opacity:1;transform:translate(-50%,-7px) scale(1.3)}
+ 65%{opacity:1}
+ 100%{opacity:0;transform:translate(calc(-50% + var(--spark-dx,0px)),calc(-115px + var(--spark-dy,0px))) scale(.8)}
+}
+@keyframes petitionTap{0%{transform:scale(1)}38%{transform:scale(.88)}75%{transform:scale(1.07)}100%{transform:scale(1)}}
+@keyframes petitionHalo{to{transform:rotate(360deg)}}
+@media(max-width:700px){
+ .petition-card{display:block;padding:14px 13px 11px}
+ .petition-kicker{text-align:left;font-size:13px;margin-bottom:8px}
+ .petition-play-area{justify-content:flex-start;gap:22px;padding:4px 0 6px}
+ .petition-orb{flex-basis:132px;width:132px;height:132px}
+ .petition-orb strong{font-size:17px}
+ .petition-stats #petition-total{font-size:36px}
+ .petition-stats span{font-size:11px}
+ .petition-stats #petition-combo{font-size:17px}
+ .petition-stats small{font-size:10px}
+ .petition-hint{text-align:left;margin:10px 0 2px;font-size:11px}
+ .petition-feedback{text-align:left;margin:2px 0;min-height:18px;font-size:12px}
+ .petition-countdown{margin-top:7px}
+}
+@media(max-width:380px){
+ .petition-play-area{gap:15px}
+ .petition-orb{flex-basis:116px;width:116px;height:116px}
+ .petition-orb-emoji{font-size:36px}
+ .petition-orb strong{font-size:15px}
+ .petition-stats #petition-total{font-size:32px}
+ .petition-stats #petition-combo{font-size:15px}
+}
+@media(prefers-reduced-motion:reduce){
+ .petition-orb:before,.petition-orb.petition-burst,.petition-spark{animation:none!important}
+ .petition-orb:before{display:none}
+ .petition-spark{display:none!important}
+}
+
+
+/* v2.4: Cartoon planner above selectable issues, comic feedback without simulated ballots. */
+@media(min-width:861px){
+  .hero-intro{grid-template-columns:minmax(0,1fr) minmax(360px,425px);align-items:center;gap:22px}
+  .hero-intro .intro-main{align-self:center}
+}
+.planner-fiction{float:right;color:#925a39;font-size:10px;font-weight:650;line-height:1.7}
+.petition-card{padding:14px 17px 12px;overflow:hidden}
+.petition-kicker{text-align:left;font-size:12px;margin-bottom:6px}
+.planner-stage{
+  height:148px;min-height:148px;position:relative;isolation:isolate;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;border:1.5px dashed #d7b783;border-radius:12px;
+  background:radial-gradient(ellipse at 47% 86%,#fff5d9 0,#ffdbb4 68%,#fff4dd 100%);
+}
+.planner-stage:before{content:"";position:absolute;inset:auto 10% 9px;height:13px;border-radius:50%;background:rgba(148,72,39,.11);pointer-events:none}
+.planner-status{position:absolute;top:8px;right:8px;z-index:4;background:#fffdf7;border:1.5px solid #26201a;border-radius:10px 10px 10px 0;padding:4px 8px;max-width:50%;font-size:9px;font-weight:750;line-height:1.35;color:#71391e}
+.planner-target{
+  display:flex;position:relative;z-index:2;flex-direction:column;align-items:center;justify-content:center;
+  width:125px;height:118px;border:0;background:transparent;color:#26201a;
+  filter:drop-shadow(0 4px 0 rgba(124,73,39,.14));
+  touch-action:manipulation;user-select:none;-webkit-user-select:none;
+}
+.planner-target:focus-visible,.petition-orb:focus-visible,.planner-vote-button:focus-visible,.planner-issue:focus-visible{
+  outline:3px solid var(--orange);outline-offset:3px;
+}
+.planner-target .planner-head{font-size:67px;line-height:1;display:block;pointer-events:none}
+.planner-target .planner-hair{font-size:18px;position:absolute;top:-2px;left:2px;transform:rotate(-22deg)}
+.planner-target .planner-title{font-size:12px;font-weight:900;border:1.5px solid #26201a;border-radius:9px;background:#a5dcff;padding:0 14px;box-shadow:1.5px 1.5px 0 #26201a}
+.planner-stage.is-hit .planner-target{animation:plannerWobble .37s cubic-bezier(.22,.83,.35,1.35)}
+.planner-stage.is-hit:after{content:"💥";position:absolute;z-index:4;font-size:52px;top:15%;left:47%;transform:rotate(-16deg);animation:plannerBoom .55s ease-out forwards;pointer-events:none}
+.planner-stage .petition-effects{border:0;border-radius:inherit}
+.planner-issue-prompt{font-size:11px;font-weight:850;margin:10px 0 7px;color:#743a21}
+.planner-issue-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.planner-issue{
+  padding:7px 6px;border:1.5px solid #26201a;border-radius:9px;
+  background:#fffdf7;min-height:40px;line-height:1.2;font:760 11px/1.3 var(--sans);
+  text-align:center;color:#26201a;touch-action:manipulation;
+}
+.planner-issue.selected,.planner-issue[aria-pressed="true"]{background:#ffd84d;box-shadow:2px 2px 0 #26201a}
+.planner-issue:not(.selected):hover{background:#fff4d6}
+.planner-current{font:850 13px/1.45 var(--sans);text-align:center;margin:9px 0 7px;color:#a13e21;overflow-wrap:anywhere}
+.planner-action-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:stretch}
+.petition-orb.planner-bomb-button{
+  width:auto;height:auto;min-height:64px;min-width:0;flex:none;border-radius:12px;
+  display:flex;flex-direction:row;flex-wrap:wrap;column-gap:5px;row-gap:1px;
+  box-shadow:2px 3px 0 #a73d24,3px 4px 0 #26201a;padding:9px 7px;
+  background:linear-gradient(140deg,#ffc968 0,#ff7844 70%,#f0542e 100%);
+}
+.planner-bomb-button:before{display:none}
+.petition-orb.planner-bomb-button .petition-orb-emoji{font-size:24px}
+.petition-orb.planner-bomb-button strong{font-size:12px;margin:0}
+.petition-orb.planner-bomb-button .petition-orb-mini{font-size:9px;width:100%;margin-top:0}
+.planner-vote-button{
+  min-height:64px;min-width:0;padding:9px 7px;line-height:1.35;
+  font:850 11px/1.4 var(--sans);border:2px solid #26201a;border-radius:12px;
+  background:#fffdf7;box-shadow:2px 3px 0 #26201a;color:#26201a;
+  touch-action:manipulation;
+}
+.planner-vote-button:hover{background:#a5dcff}
+.petition-card .petition-stats{
+  display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;
+  margin-top:12px;padding:8px 10px;border:1.5px solid #d4aa73;border-radius:9px;
+  background:#fff9e9;min-width:0;
+}
+.petition-card .petition-stats>span{font-size:10px;font-weight:750;line-height:1.45;color:#74533d}
+.petition-card .petition-stats>span strong{font:850 18px/1.1 var(--display);color:#26201a}
+.petition-card .petition-stats #petition-combo{font-size:12px;color:#b44123;text-align:right;font-weight:850}
+.petition-card .petition-stats #petition-global{grid-column:1/-1;font-size:10px;font-weight:850;border-top:1px dashed #d4aa73;padding-top:6px;margin-top:2px;color:#8e482b}
+.petition-hint{text-align:left;margin:7px 0 4px;font-size:10px;line-height:1.4}
+.petition-feedback{text-align:left;margin:4px 0;font-size:11px}
+.petition-countdown{margin-top:7px}
+.petition-countdown .countdown-time{font-size:18px}
+@keyframes plannerWobble{
+  0%,100%{transform:translateX(0) rotate(0)}
+  25%{transform:translateX(-12px) rotate(-11deg)}
+  58%{transform:translateX(9px) rotate(8deg)}
+  79%{transform:translateX(-4px) rotate(-3deg)}
+}
+@keyframes plannerBoom{
+  0%{opacity:0;transform:rotate(-16deg) scale(.2)}
+  20%{opacity:1;transform:rotate(5deg) scale(1.12)}
+  100%{opacity:0;transform:rotate(11deg) translateY(-23px) scale(1.3)}
+}
+@media(max-width:860px){
+  .hero-intro{grid-template-columns:1fr}
+  .petition-card{max-width:100%;width:100%}
+  .planner-stage{height:146px}
+}
+@media(max-width:700px){
+ .petition-card{padding:13px 12px}
+ .petition-kicker{font-size:12px}
+ .planner-stage{height:137px;min-height:137px}
+ .planner-target .planner-head{font-size:68px}
+ .planner-status{font-size:9px}
+ .planner-issue-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .planner-issue{min-height:44px;font-size:12px}
+ .planner-action-row{gap:9px}
+ .petition-orb.planner-bomb-button,.planner-vote-button{min-height:57px}
+ .petition-orb.planner-bomb-button strong{font-size:13px}
+ .planner-vote-button{font-size:12px}
+ .petition-stats{margin-top:9px}
+ .petition-hint{font-size:10px}
+}
+@media(max-width:365px){
+  .planner-action-row{grid-template-columns:1fr}
+  .petition-orb.planner-bomb-button,.planner-vote-button{min-height:48px}
+  .planner-issue{font-size:10.5px}
+  .petition-orb.planner-bomb-button strong{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+ .planner-stage.is-hit .planner-target,.planner-stage.is-hit:after{animation:none!important}
+ .planner-stage.is-hit:after{display:none!important}
+}
+
+
+/* v2.5 — The player-question chase board, real support numbers and ranked bomb physics. */
+.planner-board-heading{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:10px 0 7px}
+.planner-board-heading .planner-issue-prompt{flex:1;min-width:0;margin:0;font-size:11px}
+.planner-write{flex:0 0 auto;padding:6px 8px;min-height:34px;border:1.5px solid var(--ink);border-radius:8px;background:#fffdf7;color:#803c21;font-size:10px;font-weight:830}
+.planner-write:hover,.planner-write:focus-visible{background:#a5dcff}
+.planner-battle-board{
+ display:flex;flex-direction:column;gap:6px;max-height:236px;
+ overflow-y:auto;scrollbar-gutter:stable;overscroll-behavior-y:contain;
+ background:rgba(255,253,247,.55);border:1.5px solid #d4ad83;border-radius:9px;
+ padding:7px;min-width:0;
+}
+.planner-battle-board .planner-issue{
+ position:relative;display:flex;align-items:center;width:100%;min-width:0;
+ gap:7px;min-height:49px;flex-shrink:0;overflow:hidden;white-space:normal;
+ padding:6px 8px 9px;border:1.5px solid var(--ink);border-radius:9px;
+ background:#fffdf7;text-align:left;
+ transition:height .3s,background .15s,box-shadow .15s;
+}
+.planner-battle-board .planner-issue.is-leader{
+ min-height:60px;background:#ffe0a3;box-shadow:2px 2px 0 #e58d48;border-color:#a94c1d;
+}
+.planner-battle-board .planner-issue.is-chaser{background:#fff3cc}
+.planner-battle-board .planner-issue.selected{
+ background:#ffd84d;outline:2px solid #e3672c;outline-offset:-3px;
+}
+.planner-battle-board .planner-issue.selected.is-leader{background:#ffce8b}
+.planner-rank{position:relative;z-index:1;flex:0 0 28px;font:820 11px/1.2 ui-monospace,monospace;text-align:center}
+.planner-issue-copy{position:relative;z-index:1;display:flex;min-width:0;flex:1;flex-direction:column;gap:2px}
+.planner-row-title{
+ font:840 11px/1.36 var(--sans);color:#26201a;
+ display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+ overflow:hidden;overflow-wrap:anywhere;
+}
+.planner-row-source{font-size:9px;line-height:1.3;color:#875f41}
+.planner-row-score{position:relative;z-index:1;flex:0 0 56px;text-align:right;font:850 10px/1.3 ui-monospace,monospace;color:#9f4420}
+.planner-row-meter{pointer-events:none;position:absolute;left:0;bottom:0;width:100%;height:5px;background:#f5e4cd;border-top:1px solid rgba(38,32,26,.25)}
+.planner-row-fill{display:block;height:100%;background:linear-gradient(90deg,#ff823a,#f74320);transition:width .55s cubic-bezier(.2,.8,.25,1)}
+.planner-board-loading{font-size:11px;color:#7f674d;padding:9px 3px}
+.planner-current{line-height:1.5}
+.planner-battle-note{
+ margin:6px 0 0;padding:0 1px;font:680 10px/1.55 var(--sans);
+ color:#87563c;
+}
+.planner-question-form{
+ display:flex;flex-direction:column;gap:7px;margin:9px 0 0;
+ padding:10px;background:#fffdf7;border:1.5px solid var(--ink);border-radius:10px;
+}
+.planner-question-form[hidden]{display:none!important}
+.planner-question-form label{font:830 11px/1.35 var(--sans)}
+.planner-question-form textarea{
+ min-height:72px;width:100%;max-width:100%;resize:vertical;
+ padding:8px;border:1.5px solid var(--ink);border-radius:7px;
+ background:#fffaf0;color:#26201a;font:13px/1.5 var(--sans);
+}
+.planner-compose-actions{display:flex;align-items:center;justify-content:space-between;gap:5px;flex-wrap:wrap}
+.planner-compose-actions>span{font-size:9px;color:#826649}
+.planner-compose-actions button{
+ min-height:36px;border:1.5px solid var(--ink);border-radius:7px;padding:6px 8px;
+ background:#ffd84d;font-size:11px;font-weight:800;
+}
+#planner-question-cancel{background:#fffdf7}
+.planner-question-status,.planner-pending-count{
+ margin:0;color:#894a30;font-size:10px;line-height:1.5;
+}
+.planner-pending-count{margin:5px 1px}
+.planner-vote-button:disabled{opacity:.65;cursor:default}
+.planner-fx-layer{position:absolute;inset:0;z-index:12;pointer-events:none;overflow:visible}
+.planner-projectile{
+ position:absolute;display:grid;place-items:center;width:30px;height:32px;
+ font-size:27px;line-height:1;pointer-events:none;z-index:5;
+ will-change:transform,opacity;
+ filter:drop-shadow(2px 4px 0 rgba(85,43,23,.6));
+}
+.planner-projectile:before{
+ content:"🔥";position:absolute;top:65%;left:-12px;font-size:14px;
+ transform:rotate(-40deg);z-index:-1;
+}
+.planner-projectile-2{font-size:32px}
+.planner-projectile-3{font-size:38px;filter:drop-shadow(0 0 7px #ffa633) drop-shadow(2px 3px 0 #9c3921)}
+.planner-impact{
+ position:absolute;pointer-events:none;z-index:9;
+ transform:translate(-50%,-50%);font-size:56px;
+ animation:plannerBigImpact .68s ease-out forwards;
+ filter:drop-shadow(0 0 9px #ff5a32) drop-shadow(0 3px 0 #7c2f1b);
+}
+.planner-impact-2{font-size:74px}
+.planner-impact-3{font-size:100px;filter:drop-shadow(0 0 15px #ffad3c) drop-shadow(0 0 22px #f24c24)}
+.planner-shockwave{
+ position:absolute;z-index:6;width:16px;height:16px;
+ border:5px solid #ffe09d;border-radius:50%;background:rgba(255,199,66,.32);
+ box-shadow:0 0 0 2px #ff662a,0 0 14px #ff9b52;
+ transform:translate(-50%,-50%) scale(.2);
+ animation:plannerShockwave .72s ease-out forwards;
+}
+.planner-shockwave-2{border-width:7px}
+.planner-shockwave-3{border-width:9px;box-shadow:0 0 0 4px #ff662a,0 0 25px #ff9b52}
+.planner-debris{
+ position:absolute;z-index:10;pointer-events:none;
+ font-size:18px;transform:translate(-50%,-50%);
+ animation:plannerDebris .96s cubic-bezier(.15,.6,.33,1) forwards;
+}
+.planner-combo-hit{
+ position:absolute;z-index:11;pointer-events:none;
+ font:920 17px/1.2 var(--sans);color:#fff5e2;
+ -webkit-text-stroke:1.3px #752b1f;
+ white-space:nowrap;text-shadow:2px 2px 0 #a33a1c;
+ transform:translate(-50%,-50%);
+ animation:plannerHitText 1s ease-out forwards;
+}
+.planner-stage.is-hit{
+ background:radial-gradient(ellipse at center,#ffeeb7 0,#ffc7a9 48%,#ffac69 100%);
+}
+.planner-stage.is-hit .planner-target{animation:plannerWobble .42s cubic-bezier(.2,.85,.35,1.25)}
+.planner-stage.is-hit:after{animation:plannerBoom .62s ease-out forwards}
+@keyframes plannerBigImpact{
+ 0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-18deg)}
+ 28%{opacity:1;transform:translate(-50%,-50%) scale(1.45) rotate(12deg)}
+ 63%{opacity:1;transform:translate(-50%,-50%) scale(1.12) rotate(-8deg)}
+ 100%{opacity:0;transform:translate(-50%,-67%) scale(1.75) rotate(12deg)}
+}
+@keyframes plannerShockwave{
+ 0%{opacity:1;transform:translate(-50%,-50%) scale(.2)}
+ 100%{opacity:0;transform:translate(-50%,-50%) scale(10)}
+}
+@keyframes plannerDebris{
+ 0%{opacity:0;transform:translate(-50%,-50%) scale(.4) rotate(0)}
+ 22%{opacity:1}
+ 100%{opacity:0;transform:translate(calc(-50% + var(--debris-x,0px)),calc(-50% + var(--debris-y,0px))) scale(.85) rotate(var(--debris-rotate,20deg))}
+}
+@keyframes plannerHitText{
+ 0%{opacity:0;transform:translate(-50%,-25%) scale(.6)}
+ 20%{opacity:1;transform:translate(-50%,-75%) scale(1.13)}
+ 80%{opacity:1}
+ 100%{opacity:0;transform:translate(-50%,-150%) scale(1)}
+}
+@media(max-width:700px){
+ .planner-battle-board{max-height:205px;padding:6px;gap:5px}
+ .planner-battle-board .planner-issue{min-height:50px;padding:7px 8px 10px}
+ .planner-battle-board .planner-issue.is-leader{min-height:58px}
+ .planner-row-title{font-size:11px}
+ .planner-row-score{flex-basis:61px;font-size:10px}
+ .planner-question-form textarea{font-size:16px}
+ .planner-compose-actions button{min-height:44px}
+ .planner-fx-layer{overflow:hidden;inset:-6px}
+ .planner-projectile-3{font-size:33px}
+ .planner-impact-3{font-size:73px}
+ .planner-debris{font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){
+ .planner-projectile,.planner-impact,.planner-shockwave,.planner-debris,.planner-combo-hit{display:none!important}
+ .planner-row-fill{transition:none!important}
+}
