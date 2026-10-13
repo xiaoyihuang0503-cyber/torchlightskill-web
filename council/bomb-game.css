@@ -370,3 +370,122 @@ main .hero-intro .site-bomb-counter #petition-global {
   .hero-intro + .bomb-game-section { margin-top:3px; }
   .bomb-game-section + .arena-section { margin-top:24px; }
 }
+
+
+/* v4.3: #1 most-bombed question is always visible next to the REAL global total.
+   Styling deliberately follows the original cream/black-stroke/sticker design. */
+main .hero-intro > .site-bomb-counter{
+  display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);
+  gap:16px;align-items:stretch;padding:17px 20px;
+}
+main .hero-intro .bomb-counter-primary{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-content:start;
+  align-items:center;gap:10px 13px;min-width:0;
+}
+main .hero-intro .bomb-counter-primary .planner-global-headline{
+  grid-column:1/-1;display:flex;align-items:baseline;justify-content:flex-start;
+  flex-wrap:wrap;gap:6px 14px;padding:4px 0 11px;
+  border-bottom:1.5px dashed #d5a56a;
+}
+main .hero-intro .bomb-counter-primary .planner-global-headline strong{
+  font:900 clamp(49px,6.3vw,85px)/1 var(--display);color:#aa401d;
+}
+main .hero-intro .bomb-counter-primary .planner-global-headline>span{
+  font-size:clamp(13px,1.55vw,18px);color:#8b4c32;
+}
+main .hero-intro .bomb-counter-primary .bomb-counter-my{
+  font-size:12px;font-weight:780;color:#81543b;
+}
+main .hero-intro .bomb-counter-primary #petition-total{
+  font:900 27px/1 var(--display);color:#2b231d;
+}
+main .hero-intro .bomb-counter-primary #petition-combo{
+  justify-self:end;font-size:15px;color:#a43f1f;font-weight:900;
+  white-space:nowrap;
+}
+main .hero-intro .bomb-counter-primary #petition-global{
+  grid-column:1/-1;margin-top:2px;padding-top:9px;
+  border-top:1px dashed #dab080;color:#8c5134;
+  font-size:11px;font-weight:760;text-align:left;line-height:1.45;
+}
+main .hero-intro .top-issue-spotlight{
+  display:flex;flex-direction:column;justify-content:space-between;
+  min-width:0;min-height:156px;width:100%;
+  padding:14px 17px;gap:9px;
+  border:2px solid var(--ink);border-radius:13px;
+  background:linear-gradient(145deg,#ffedbf,#ffdba2);
+  color:var(--ink);text-align:left;
+  box-shadow:3px 4px 0 var(--ink);
+  cursor:pointer;touch-action:manipulation;
+}
+main .hero-intro .top-issue-spotlight:hover:not(:disabled){
+  background:#ffe19d;
+}
+main .hero-intro .top-issue-spotlight:active:not(:disabled){
+  transform:translateY(2px);box-shadow:1px 2px 0 var(--ink);
+}
+main .hero-intro .top-issue-spotlight:focus-visible{
+  outline:3px solid var(--orange);outline-offset:3px;
+}
+main .hero-intro .top-issue-spotlight:disabled{cursor:default;opacity:.72}
+main .hero-intro .top-issue-kicker{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font:850 12px/1.35 var(--sans);color:#9d411e;
+}
+main .hero-intro .top-issue-rank{
+  flex:0 0 auto;padding:4px 7px;border:1.5px solid var(--ink);
+  border-radius:8px;background:#fffaf0;font-size:10px;color:#79421b;
+}
+main .hero-intro #top-issue-title{
+  display:block;font:900 clamp(17px,1.75vw,24px)/1.35 var(--display);
+  letter-spacing:-.012em;color:#2c241d;
+  white-space:normal;overflow-wrap:anywhere;
+}
+main .hero-intro .top-issue-bottom{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:7px 12px;
+}
+main .hero-intro .top-issue-hit-count{
+  font:850 12px/1.5 var(--sans);color:#a94122;
+}
+main .hero-intro #top-issue-count{
+  font:900 21px/1 var(--display);font-variant-numeric:tabular-nums;
+}
+main .hero-intro .top-issue-cta{
+  font:850 12px/1.3 var(--sans);color:#603824;
+  text-decoration:underline;text-underline-offset:3px;
+}
+main .hero-intro .top-issue-spotlight.is-new-leader{
+  animation:topIssueCrown .55s ease-out;
+}
+@keyframes topIssueCrown{
+  0%{filter:brightness(1);transform:scale(1)}
+  35%{filter:brightness(1.15);transform:scale(1.012)}
+  100%{filter:brightness(1);transform:scale(1)}
+}
+@media(max-width:700px){
+  main .hero-intro > .site-bomb-counter{
+    grid-template-columns:1fr;gap:12px;padding:14px;
+  }
+  main .hero-intro .bomb-counter-primary{gap:8px}
+  main .hero-intro .bomb-counter-primary .planner-global-headline strong{
+    font-size:clamp(54px,14vw,75px);
+  }
+  main .hero-intro .bomb-counter-primary .planner-global-headline>span{font-size:14px}
+  main .hero-intro .bomb-counter-primary #petition-total{font-size:25px}
+  main .hero-intro .bomb-counter-primary #petition-combo{font-size:13px}
+  main .hero-intro .bomb-counter-primary #petition-global{font-size:11px}
+  main .hero-intro .top-issue-spotlight{
+    min-height:136px;padding:12px 14px;gap:7px;
+  }
+  main .hero-intro #top-issue-title{font-size:20px;line-height:1.36}
+  main .hero-intro #top-issue-count{font-size:21px}
+  main .hero-intro .top-issue-kicker{font-size:12px}
+}
+@media(max-width:365px){
+  main .hero-intro #top-issue-title{font-size:18px}
+  main .hero-intro .top-issue-spotlight{min-height:125px}
+}
+@media(prefers-reduced-motion:reduce){
+  main .hero-intro .top-issue-spotlight.is-new-leader{animation:none}
+}
