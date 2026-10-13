@@ -31,13 +31,19 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
       ||b.time-a.time||a.order-b.order);
   }
   function randomizeBatch(all){
-    const pool=all.slice();
-    // Fisher-Yates: every question can be shown, and switches retain recorded heat.
+    // The confirmed global leader always has a place; the remaining seven
+    // questions are random and changing the batch never resets their counters.
+    const top=globalTopIssue();
+    const champion=top&&confirmed(top.key)>0?top.key:null;
+    const pool=all.filter(row=>row.key!==champion);
     for(let i=pool.length-1;i>0;i--){
       const j=Math.floor(Math.random()*(i+1));
       [pool[i],pool[j]]=[pool[j],pool[i]];
     }
-    state.batchKeys=pool.slice(0,8).map(row=>row.key);
+    state.batchKeys=[
+      ...(champion?[champion]:[]),
+      ...pool.slice(0,champion?7:8).map(row=>row.key)
+    ];
   }
   function nextBatch(){
     const all=candidates();
@@ -184,6 +190,11 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
     const host=$("planner-issue-grid");if(!host)return;
     const all=candidates(),before=new Map();
     if(!state.batchKeys.length)randomizeBatch(all);
+    const champion=globalTopIssue();
+    if(!state.expanded&&champion&&confirmed(champion.key)>0&&
+       !state.batchKeys.includes(champion.key)){
+      state.batchKeys=[champion.key,...state.batchKeys].slice(0,8);
+    }
     const group=new Set(state.batchKeys);
     const order=(state.expanded?all:all.filter(row=>group.has(row.key))).slice(0,state.expanded?100:8);
     host.querySelectorAll("[data-planner-seat]").forEach(b=>{
