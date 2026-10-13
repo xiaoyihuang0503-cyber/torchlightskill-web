@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#fff4dd">
+  <title>问题管理 · 火炬议会</title>
+  <link rel="icon" type="image/svg+xml" href="../icon.svg">
+  <link rel="stylesheet" href="./admin.css">
+</head>
+<body>
+  <header class="site-header wrap">
+    <a href="../" class="brand"><span aria-hidden="true">✳</span><strong>火炬议会<small>问题管理</small></strong></a>
+    <div class="header-actions"><a href="../">查看网站 ↗</a><span id="account" hidden></span><button id="logout" type="button" hidden>退出登录</button></div>
+  </header>
+  <main class="wrap">
+    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <section id="login-panel" class="login-panel panel" aria-labelledby="login-title">
+      <span class="eyebrow">运营工作台</span>
+      <h1 id="login-title">把玩家的问题<br>好好收起来。</h1>
+      <p>查看原始投稿、审核公开内容，整理玩家最关心的事。</p>
+      <form id="login-form">
+        <label for="email">管理员邮箱</label><input id="email" type="email" autocomplete="username" required placeholder="请输入管理员邮箱">
+        <label for="password">密码</label><input id="password" type="password" autocomplete="current-password" required>
+        <button id="login-button" class="primary" type="submit" disabled>正在连接…</button>
+        <button id="retry" type="button" hidden>重新连接</button>
+      </form>
+      <p class="muted">仅已授权的管理员可以进入。登录会话保存在当前标签页。</p>
+    </section>
+    <section id="workspace" hidden aria-labelledby="workspace-title">
+      <div class="page-heading"><div><span class="eyebrow">玩家投稿</span><h1 id="workspace-title">问题收件箱</h1><p class="muted">保留原文，把反馈整理成可以跟进的问题。</p></div><button id="refresh" type="button">刷新数据</button></div>
+      <div class="stats" id="stats" aria-label="投稿统计"></div>
+      <div class="panel trends"><strong>投稿关键词</strong><div id="keywords" class="chips"></div><small class="muted">按全部投稿汇总，点击关键词可筛选。</small></div>
+      <form id="filters" class="panel filters">
+        <label class="search-field">搜索原文<input id="query" type="search" maxlength="160" placeholder="试试“初火”“宠物”“交易”"></label>
+        <label>审核状态<select id="status"><option value="all">全部状态</option><option value="pending">待审核</option><option value="approved">已公开</option><option value="rejected">已拒绝 / 已归并</option></select></label>
+        <label>关键词 / 分类<select id="keyword"><option value="">全部关键词</option></select></label>
+        <label>开始日期<input id="from-date" type="date"></label>
+        <label>结束日期<input id="to-date" type="date"></label>
+        <label>排序<select id="sort"><option value="recent">最新投稿</option><option value="hot">点击热度</option></select></label>
+        <div class="filter-actions"><button type="submit" class="primary">筛选</button><button id="reset-filters" type="button">重置</button></div>
+      </form>
+      <div class="list-toolbar"><label><input id="select-all" type="checkbox"> 选中本页</label><span id="selected-count" class="muted">已选 0 条</span><div class="toolbar-actions"><button id="bulk-approve" type="button" disabled>批量公开</button><button id="bulk-reject" type="button" disabled>批量拒绝</button><button id="export" type="button">导出筛选结果 CSV</button></div></div>
+      <div id="questions" aria-busy="false"></div>
+      <div class="pagination"><span id="page-label" class="muted"></span><div><button id="previous" type="button" disabled>上一页</button><button id="next" type="button" disabled>下一页</button></div></div>
+    </section>
+  </main>
+  <dialog id="editor" aria-labelledby="editor-title">
+    <form id="edit-form">
+      <div class="dialog-heading"><h2 id="editor-title">整理问题</h2><button id="close-editor" type="button" aria-label="关闭">×</button></div>
+      <p id="original-body" class="original-body"></p>
+      <label for="edit-status">审核状态</label><select id="edit-status"><option value="pending">待审核</option><option value="approved">已公开</option><option value="rejected">已拒绝</option></select>
+      <label for="edit-category">运营分类</label><select id="edit-category"><option value="">未分类</option></select>
+      <label for="edit-note">内部备注</label><textarea id="edit-note" maxlength="500" rows="3" placeholder="例如：与掉率透明度有关，等待策划回应"></textarea>
+      <fieldset class="merge-fields"><legend>归并相似问题</legend><p class="muted">归并后本条停止公开，原文和已有点击记录保留。目标问题需已公开。</p><label for="merge-search">查找已公开的问题</label><div class="inline"><input id="merge-search" type="search" maxlength="160" placeholder="输入相似问题的关键词"><button id="find-targets" type="button">查找</button></div><label for="merge-target">归并到</label><select id="merge-target"><option value="">不归并</option></select></fieldset>
+      <div id="history" class="history"></div>
+      <div id="edit-error" role="alert" hidden></div>
+      <div class="dialog-actions"><button id="cancel-editor" type="button">取消</button><button id="save-editor" type="submit" class="primary">保存处理</button></div>
+    </form>
+  </dialog>
+  <script type="module" src="./admin.js"></script>
+</body>
+</html>
