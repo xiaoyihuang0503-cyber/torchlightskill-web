@@ -106,6 +106,54 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
       return $("mobile-bomb-fx")||$("planner-fx-layer");
     return $("planner-fx-layer");
   }
+  /* Spotlight is the absolute, SERVER-CONFIRMED #1 across all public questions.
+     It must not be derived from the eight randomized cards or local queued clicks. */
+  function globalTopIssue(){
+    return candidates().slice().sort((a,b)=>confirmed(b.key)-confirmed(a.key)
+      ||a.order-b.order)[0]||null;
+  }
+  function refreshTopSpotlight(){
+    const button=$("top-issue-spotlight");
+    const title=$("top-issue-title");
+    const hits=$("top-issue-count");
+    if(!button||!title||!hits)return;
+    const leader=globalTopIssue();
+    if(!leader){
+      title.textContent="暂时还没有公开问题";
+      hits.textContent="0";
+      button.disabled=true;
+      button.removeAttribute?.("data-seat");
+      return;
+    }
+    const previous=button.dataset.seat||"";
+    const value=confirmed(leader.key);
+    button.dataset.seat=leader.key;
+    title.textContent=leader.title;
+    hits.textContent=LIVE?.isReady?.()?fmt(value):"—";
+    button.disabled=false;
+    button.setAttribute("aria-label","当前全站被炸次数最多的问题："+leader.title+
+      "。已确认"+fmt(value)+"次点击。点击前往炸策划大会。");
+    if(previous&&previous!==leader.key&&value>0&&!reduced){
+      button.classList.remove("is-new-leader");
+      void button.offsetWidth;
+      button.classList.add("is-new-leader");
+      window.setTimeout(()=>button.classList.remove("is-new-leader"),650);
+    }
+  }
+  function openTopSpotlight(){
+    const leader=globalTopIssue();
+    if(!leader)return;
+    state.selected=leader.key;
+    // Temporarily include the champion in the eight-card batch, so it is
+    // actually selectable even when the current batch was randomized.
+    if(!state.expanded&&!state.batchKeys.includes(leader.key)){
+      state.batchKeys=[leader.key,...state.batchKeys.filter(key=>key!==leader.key)].slice(0,8);
+    }
+    syncRows();
+    const stage=$("planner-stage")||$("topics");
+    stage?.scrollIntoView?.({behavior:reduced?"auto":"smooth",block:"start"});
+    window.setTimeout(syncMobileDock,150);
+  }
   function tierFor(key){
     const place=state.ranked.findIndex(row=>row.key===key);
     const votes=nSupport(key);
@@ -190,6 +238,7 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
     if(!order.some(row=>row.key===state.selected))state.selected=order[0]?.key||"topic:bomb_01";
     refreshSelected();
     updateMobileDockLabel();
+    refreshTopSpotlight();
     const pending=$("planner-pending-count");
     if(pending){
       pending.hidden=!state.pending.length;
@@ -533,6 +582,7 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
     $("share-dialog")?.addEventListener("close",syncMobileDock);
     $("planner-more").addEventListener("click",()=>{state.expanded=!state.expanded;syncRows();});
     $("planner-shuffle").addEventListener("click",nextBatch);
+    $("top-issue-spotlight")?.addEventListener("click",openTopSpotlight);
     $("planner-write").addEventListener("click",()=>openForm($("planner-question-form").hidden));
     $("planner-question-cancel").addEventListener("click",()=>openForm(false));
     $("planner-question-input").addEventListener("input",e=>{
