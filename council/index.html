@@ -9,7 +9,7 @@
   <meta property="og:title" content="火炬议会 · SS14 开荒英雄投票">
   <meta property="og:description" content="28 个英雄特性都能投票，还能随机抽个开荒英雄。">
   <meta property="og:url" content="https://torchlightskill.com/council/">
-  <title>火炬议会 · 英雄实时榜 × 炸策划大会</title>
+  <title>火炬议会 · 炸策划大会 × 英雄实时榜</title>
   <link rel="canonical" href="https://torchlightskill.com/council/">
   <link rel="icon" type="image/svg+xml" href="./icon.svg">
   <link rel="stylesheet" href="./v04.css?v=20261012-1">
@@ -32,8 +32,8 @@
       <span class="logo-copy"><strong>火炬议会</strong><small>TORCHLIGHT COUNCIL</small></span>
     </a>
     <nav class="header-actions" aria-label="导航">
-      <a class="sticker-nav" href="#hero-board">🔥 开荒榜</a>
       <a class="sticker-nav" href="#topics">💣 炸策划</a>
+      <a class="sticker-nav" href="#hero-board">👑 英雄榜</a>
       <a class="sticker-nav" href="#all-heroes">🎰 选英雄</a>
     </nav>
   </header>
@@ -41,9 +41,9 @@
   <main>
     <section class="hero-intro" aria-labelledby="site-title">
       <div class="intro-main">
-        <div class="eyebrow"><span class="eyebrow-burst">✳</span> SS14 · 塔罗斯的困兽 <span class="eyebrow-sep">/</span> 开荒投票</div>
-        <h1 id="site-title">SS14 开荒，<br><em>你玩谁？</em></h1>
-        <p class="intro-description">28 个英雄特性都能选。点一下投票，想换随时换。</p>
+        <div class="eyebrow"><span class="eyebrow-burst">✳</span> SS14 · 塔罗斯的困兽 <span class="eyebrow-sep">/</span> 玩家议会</div>
+        <h1 id="site-title">火炬议会，<br><em>炸策划大会！</em></h1>
+        <p class="intro-description">你最想问策划什么？选问题、扔炸弹，把它顶上去。英雄开荒投票在页面下方。</p>
       </div>
       <aside class="countdown-card" aria-label="新赛季开服时间">
         <span class="countdown-label">距离新赛季开服</span>
@@ -58,68 +58,10 @@
         </div>
     </section>
 
-    <section class="arena-section" id="hero-board" aria-labelledby="arena-title">
-      <div class="section-heading">
-        <div><span class="section-index">01 / 英雄投票</span><h2 id="arena-title">英雄实时榜 👑</h2>
-        <p id="hero-board-subtitle">真实票数决定排名，随时可能反超。</p></div>
-        <span class="sample-label" id="vote-source-label">✅ 真实票数 · 连接中</span>
-      </div>
-      <div class="arena-panel">
-        <div class="arena-toolbar">
-          <div class="arena-toolbar-label"><span class="live-indicator">●</span><strong>开荒排行榜</strong><span>TOP <span id="ranking-label">6</span></span></div>
-          <span class="arena-meta"><strong id="hero-total">28</strong> 个特性 · <strong id="demo-vote-total">—</strong><span id="board-count-unit"> 张真实票</span></span>
-        </div>
-        <div class="heat-disclosure" id="heat-disclosure" hidden aria-hidden="true">
-          <strong id="heat-mode-explain">🧪 正在播放模拟热场，数字与动效均为虚构示意</strong>
-          <span id="real-vote-count">真实投票 0 张</span>
-          <button type="button" class="heat-switch" id="heat-switch" aria-pressed="true">👁 查看真实结果</button>
-        </div>
-        <div class="arena-stage" id="arena-stage">
-          <span class="stage-stamp">SS14 / 2026</span>
-          <div class="chart-guides" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-          <div class="chart" id="chart" aria-label="当前真实排行"><p class="loading-note">正在加载英雄头像…</p></div>
-          <div class="bubble-layer" id="bubble-layer" aria-hidden="true"></div>
-        </div>
-        <div class="activity-row">
-          <div class="activity-main">
-            <span class="activity-dot" aria-hidden="true"></span>
-            <span class="activity-heading">热度动态</span>
-            <span id="activity-line" class="activity-line" role="status" aria-live="polite">正在连接投票服务…</span>
-          </div>
-          <button type="button" class="inline-control" id="motion-toggle" aria-pressed="true">隐藏气泡</button>
-        </div>
-        <div class="arena-below">
-          <div id="my-camp" aria-live="polite">还没投票，往下选一个英雄。</div>
-          <div class="mini-actions"><button type="button" class="inline-control" id="share-arena">分享投票 ↗</button></div>
-        </div>
-        <div class="arena-actions">
-          <button id="open-hero-pool" type="button" class="button primary">查看全部 28 个英雄 <span aria-hidden="true">↓</span></button>
-          <div class="lottery-main-action"><button type="button" id="open-lottery" class="button secondary">🎰 不知道选谁？抽一个 <span aria-hidden="true">↗</span></button><button type="button" class="minor-share" id="share-lottery-game">分享随机开荒玩法 ↗</button></div>
-        </div>
-        <p class="demo-disclosure">排行榜只显示 Supabase 的真实选票，不包含模拟热度。英雄每个匿名账号一票，支持改选；「炸策划」单独按点击次数累计。</p>
-      </div>
-    </section>
-
-    <details class="roster-drawer" id="all-heroes"><summary id="roster-toggle"><strong>展开全部 28 个英雄</strong><span id="roster-summary-right">⌄</span></summary><div class="roster-drawer-content" aria-labelledby="roster-title">
-      <div class="section-heading">
-        <div><span class="section-index">02 / 选择英雄</span><h2 id="roster-title">全部 28 个英雄特性</h2>
-        <p>每张卡片都能投票。已经投过的英雄可以改选。</p></div>
-        <span class="roster-tally" id="hero-search-summary">正在加载…</span>
-      </div>
-      <label class="search-box" for="hero-search"><span class="search-glass" aria-hidden="true">⌕</span>
-        <input type="search" id="hero-search" placeholder="搜名字、特性或简称，比如宾2" autocomplete="off">
-        <span>搜索</span>
-      </label>
-      <label class="roster-sort-wrap" for="hero-sort">排序 <select id="hero-sort"><option value="votes">按实时票数</option><option value="name">按英雄名字</option></select></label>
-      <div id="hero-list" class="roster-grid" aria-label="全部英雄投票选项"><p class="loading-note">正在核对头像和英雄特性…</p></div>
-      <p id="roster-empty" class="roster-empty" hidden>没找到这个英雄，换个名字试试。</p>
-      <p class="roster-hint">这里始终显示真实票数。点卡片投票，右下角可分享对应英雄；顶部的演示热度不进入真实榜。</p>
-    </div></details>
-
     <section class="bomb-game-section" id="topics" aria-labelledby="bomb-game-title">
       <span id="roundtable" class="bomb-legacy-anchor" aria-hidden="true"></span>
       <div class="section-heading bomb-section-heading">
-        <div><span class="section-index">02 / 炸策划大会</span>
+        <div><span class="section-index">01 / 炸策划大会</span>
           <h2 id="bomb-game-title">💣 把问题顶上去，炸策划！</h2>
           <p>自己写问题、支持热门问题、看问题长大追榜。真票越高，炸弹越猛。</p>
         </div>
@@ -176,6 +118,64 @@
       </div>
       <p class="bomb-game-footer-note">玩家问题审核通过后加入排行榜；「炸策划」按真实点击次数累计，点击越多问题热度越高。英雄投票规则不变。</p>
     </section>
+
+    <section class="arena-section" id="hero-board" aria-labelledby="arena-title">
+      <div class="section-heading">
+        <div><span class="section-index">02 / 英雄投票</span><h2 id="arena-title">英雄实时榜 👑</h2>
+        <p id="hero-board-subtitle">真实票数决定排名，随时可能反超。</p></div>
+        <span class="sample-label" id="vote-source-label">✅ 真实票数 · 连接中</span>
+      </div>
+      <div class="arena-panel">
+        <div class="arena-toolbar">
+          <div class="arena-toolbar-label"><span class="live-indicator">●</span><strong>开荒排行榜</strong><span>TOP <span id="ranking-label">6</span></span></div>
+          <span class="arena-meta"><strong id="hero-total">28</strong> 个特性 · <strong id="demo-vote-total">—</strong><span id="board-count-unit"> 张真实票</span></span>
+        </div>
+        <div class="heat-disclosure" id="heat-disclosure" hidden aria-hidden="true">
+          <strong id="heat-mode-explain">🧪 正在播放模拟热场，数字与动效均为虚构示意</strong>
+          <span id="real-vote-count">真实投票 0 张</span>
+          <button type="button" class="heat-switch" id="heat-switch" aria-pressed="true">👁 查看真实结果</button>
+        </div>
+        <div class="arena-stage" id="arena-stage">
+          <span class="stage-stamp">SS14 / 2026</span>
+          <div class="chart-guides" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+          <div class="chart" id="chart" aria-label="当前真实排行"><p class="loading-note">正在加载英雄头像…</p></div>
+          <div class="bubble-layer" id="bubble-layer" aria-hidden="true"></div>
+        </div>
+        <div class="activity-row">
+          <div class="activity-main">
+            <span class="activity-dot" aria-hidden="true"></span>
+            <span class="activity-heading">热度动态</span>
+            <span id="activity-line" class="activity-line" role="status" aria-live="polite">正在连接投票服务…</span>
+          </div>
+          <button type="button" class="inline-control" id="motion-toggle" aria-pressed="true">隐藏气泡</button>
+        </div>
+        <div class="arena-below">
+          <div id="my-camp" aria-live="polite">还没投票，往下选一个英雄。</div>
+          <div class="mini-actions"><button type="button" class="inline-control" id="share-arena">分享投票 ↗</button></div>
+        </div>
+        <div class="arena-actions">
+          <button id="open-hero-pool" type="button" class="button primary">查看全部 28 个英雄 <span aria-hidden="true">↓</span></button>
+          <div class="lottery-main-action"><button type="button" id="open-lottery" class="button secondary">🎰 不知道选谁？抽一个 <span aria-hidden="true">↗</span></button><button type="button" class="minor-share" id="share-lottery-game">分享随机开荒玩法 ↗</button></div>
+        </div>
+        <p class="demo-disclosure">排行榜只显示 Supabase 的真实选票，不包含模拟热度。英雄每个匿名账号一票，支持改选；「炸策划」单独按点击次数累计。</p>
+      </div>
+    </section>
+
+    <details class="roster-drawer" id="all-heroes"><summary id="roster-toggle"><strong>展开全部 28 个英雄</strong><span id="roster-summary-right">⌄</span></summary><div class="roster-drawer-content" aria-labelledby="roster-title">
+      <div class="section-heading">
+        <div><span class="section-index">02 / 选择英雄</span><h2 id="roster-title">全部 28 个英雄特性</h2>
+        <p>每张卡片都能投票。已经投过的英雄可以改选。</p></div>
+        <span class="roster-tally" id="hero-search-summary">正在加载…</span>
+      </div>
+      <label class="search-box" for="hero-search"><span class="search-glass" aria-hidden="true">⌕</span>
+        <input type="search" id="hero-search" placeholder="搜名字、特性或简称，比如宾2" autocomplete="off">
+        <span>搜索</span>
+      </label>
+      <label class="roster-sort-wrap" for="hero-sort">排序 <select id="hero-sort"><option value="votes">按实时票数</option><option value="name">按英雄名字</option></select></label>
+      <div id="hero-list" class="roster-grid" aria-label="全部英雄投票选项"><p class="loading-note">正在核对头像和英雄特性…</p></div>
+      <p id="roster-empty" class="roster-empty" hidden>没找到这个英雄，换个名字试试。</p>
+      <p class="roster-hint">这里始终显示真实票数。点卡片投票，右下角可分享对应英雄；每个匿名账号只保留一张英雄选票。</p>
+    </div></details>
 
     <section class="focus-section legacy-v2-hidden" id="legacy-topics" hidden aria-hidden="true" aria-labelledby="topics-title">
       <div class="section-heading v2-heading">
