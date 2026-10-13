@@ -122,11 +122,13 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
     const button=$("top-issue-spotlight");
     const title=$("top-issue-title");
     const hits=$("top-issue-count");
+    const badge=$("top-issue-rank");
     if(!button||!title||!hits)return;
     const leader=globalTopIssue();
     if(!leader){
       title.textContent="暂时还没有公开问题";
       hits.textContent="0";
+      if(badge)badge.textContent="暂无问题";
       button.disabled=true;
       button.removeAttribute?.("data-seat");
       return;
@@ -134,11 +136,13 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
     const previous=button.dataset.seat||"";
     const value=confirmed(leader.key);
     button.dataset.seat=leader.key;
+    const ready=!!LIVE?.isReady?.();
     title.textContent=leader.title;
-    hits.textContent=LIVE?.isReady?.()?fmt(value):"—";
+    hits.textContent=ready?fmt(value):"—";
+    if(badge)badge.textContent=!ready?"读取中":value>0?"全站 TOP 1":"等待首炸";
     button.disabled=false;
-    button.setAttribute("aria-label","当前全站被炸次数最多的问题："+leader.title+
-      "。已确认"+fmt(value)+"次点击。点击前往炸策划大会。");
+    button.setAttribute("aria-label",(ready&&value>0?"当前全站被炸最多的问题：":"热门问题候选：")+
+      leader.title+(ready?"，累计"+fmt(value)+"次点击。":"，真实点击数同步中。")+" 点击前往炸策划大会。");
     if(previous&&previous!==leader.key&&value>0&&!reduced){
       button.classList.remove("is-new-leader");
       void button.offsetWidth;
