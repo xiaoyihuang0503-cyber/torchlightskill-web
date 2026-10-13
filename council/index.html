@@ -50,11 +50,21 @@
         <strong class="countdown-time" id="countdown">--</strong>
         <p class="countdown-caption">10 月 16 日 10:00（北京时间）</p>
       </aside>
-        <div class="petition-stats site-bomb-counter" aria-label="策划被炸次数全站累计与本机点击数">
-          <span class="planner-global-headline"><strong id="petition-global-total">—</strong><span>策划被炸次数 · 全站点击累计</span></span>
-          <span><strong id="petition-total">0</strong> 我扔出的炸弹</span>
-          <span id="petition-combo">0 连击</span>
-          <span class="petition-global" id="petition-global">🌍 连接中 · 每次点击都会累计</span>
+        <div class="petition-stats site-bomb-counter" aria-label="全站策划被炸次数与热度榜首">
+          <div class="bomb-counter-primary">
+            <span class="planner-global-headline"><strong id="petition-global-total">—</strong><span>策划被炸次数</span></span>
+            <span class="bomb-counter-my"><strong id="petition-total">0</strong> 我扔出的炸弹</span>
+            <span id="petition-combo">0 连击</span>
+            <span class="petition-global" id="petition-global">🌍 全站点击累计 · 正在同步</span>
+          </div>
+          <button type="button" id="top-issue-spotlight" class="top-issue-spotlight" aria-label="前往当前全站被炸最多的问题">
+            <span class="top-issue-kicker"><span>👑 当前最热问题</span><span class="top-issue-rank">全站 TOP 1</span></span>
+            <strong id="top-issue-title">正在加载真实点击榜…</strong>
+            <span class="top-issue-bottom">
+              <span class="top-issue-hit-count">💣 <strong id="top-issue-count">—</strong> 次被炸</span>
+              <span class="top-issue-cta">去炸这题 <span aria-hidden="true">↗</span></span>
+            </span>
+          </button>
         </div>
     </section>
 
