@@ -360,3 +360,13 @@ main .hero-intro .site-bomb-counter #petition-global {
  .bomb-game-body .planner-battle-board .planner-rank{flex-basis:23px}
  main .hero-intro .site-bomb-counter #petition-global{font-size:10px}
 }
+
+
+/* v4.2: priorities follow the actual page order. Bomb arena is first;
+   hero leaderboard and full 28-hero roster are the closing feature. */
+.hero-intro + .bomb-game-section { margin-top:10px; }
+.bomb-game-section + .arena-section { margin-top:76px; }
+@media(max-width:700px){
+  .hero-intro + .bomb-game-section { margin-top:3px; }
+  .bomb-game-section + .arena-section { margin-top:24px; }
+}
