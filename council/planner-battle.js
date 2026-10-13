@@ -31,13 +31,19 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
       ||b.time-a.time||a.order-b.order);
   }
   function randomizeBatch(all){
-    const pool=all.slice();
-    // Fisher-Yates: every question can be shown, and switches retain recorded heat.
+    // The confirmed global leader always has a place; the remaining seven
+    // questions are random and changing the batch never resets their counters.
+    const top=globalTopIssue();
+    const champion=top&&confirmed(top.key)>0?top.key:null;
+    const pool=all.filter(row=>row.key!==champion);
     for(let i=pool.length-1;i>0;i--){
       const j=Math.floor(Math.random()*(i+1));
       [pool[i],pool[j]]=[pool[j],pool[i]];
     }
-    state.batchKeys=pool.slice(0,8).map(row=>row.key);
+    state.batchKeys=[
+      ...(champion?[champion]:[]),
+      ...pool.slice(0,champion?7:8).map(row=>row.key)
+    ];
   }
   function nextBatch(){
     const all=candidates();
@@ -106,6 +112,58 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
       return $("mobile-bomb-fx")||$("planner-fx-layer");
     return $("planner-fx-layer");
   }
+  /* Spotlight is the absolute, SERVER-CONFIRMED #1 across all public questions.
+     It must not be derived from the eight randomized cards or local queued clicks. */
+  function globalTopIssue(){
+    return candidates().slice().sort((a,b)=>confirmed(b.key)-confirmed(a.key)
+      ||a.order-b.order)[0]||null;
+  }
+  function refreshTopSpotlight(){
+    const button=$("top-issue-spotlight");
+    const title=$("top-issue-title");
+    const hits=$("top-issue-count");
+    const badge=$("top-issue-rank");
+    if(!button||!title||!hits)return;
+    const leader=globalTopIssue();
+    if(!leader){
+      title.textContent="暂时还没有公开问题";
+      hits.textContent="0";
+      if(badge)badge.textContent="暂无问题";
+      button.disabled=true;
+      button.removeAttribute?.("data-seat");
+      return;
+    }
+    const previous=button.dataset.seat||"";
+    const value=confirmed(leader.key);
+    button.dataset.seat=leader.key;
+    const ready=!!LIVE?.isReady?.();
+    title.textContent=leader.title;
+    hits.textContent=ready?fmt(value):"—";
+    if(badge)badge.textContent=!ready?"读取中":value>0?"全站 TOP 1":"等待首炸";
+    button.disabled=false;
+    button.setAttribute("aria-label",(ready&&value>0?"当前全站被炸最多的问题：":"热门问题候选：")+
+      leader.title+(ready?"，累计"+fmt(value)+"次点击。":"，真实点击数同步中。")+" 点击前往炸策划大会。");
+    if(previous&&previous!==leader.key&&value>0&&!reduced){
+      button.classList.remove("is-new-leader");
+      void button.offsetWidth;
+      button.classList.add("is-new-leader");
+      window.setTimeout(()=>button.classList.remove("is-new-leader"),650);
+    }
+  }
+  function openTopSpotlight(){
+    const leader=globalTopIssue();
+    if(!leader)return;
+    state.selected=leader.key;
+    // Temporarily include the champion in the eight-card batch, so it is
+    // actually selectable even when the current batch was randomized.
+    if(!state.expanded&&!state.batchKeys.includes(leader.key)){
+      state.batchKeys=[leader.key,...state.batchKeys.filter(key=>key!==leader.key)].slice(0,8);
+    }
+    syncRows();
+    const stage=$("planner-stage")||$("topics");
+    stage?.scrollIntoView?.({behavior:reduced?"auto":"smooth",block:"start"});
+    window.setTimeout(syncMobileDock,150);
+  }
   function tierFor(key){
     const place=state.ranked.findIndex(row=>row.key===key);
     const votes=nSupport(key);
@@ -136,6 +194,11 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
     const host=$("planner-issue-grid");if(!host)return;
     const all=candidates(),before=new Map();
     if(!state.batchKeys.length)randomizeBatch(all);
+    const champion=globalTopIssue();
+    if(!state.expanded&&champion&&confirmed(champion.key)>0&&
+       !state.batchKeys.includes(champion.key)){
+      state.batchKeys=[champion.key,...state.batchKeys].slice(0,8);
+    }
     const group=new Set(state.batchKeys);
     const order=(state.expanded?all:all.filter(row=>group.has(row.key))).slice(0,state.expanded?100:8);
     host.querySelectorAll("[data-planner-seat]").forEach(b=>{
@@ -190,6 +253,7 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
     if(!order.some(row=>row.key===state.selected))state.selected=order[0]?.key||"topic:bomb_01";
     refreshSelected();
     updateMobileDockLabel();
+    refreshTopSpotlight();
     const pending=$("planner-pending-count");
     if(pending){
       pending.hidden=!state.pending.length;
@@ -533,6 +597,7 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
     $("share-dialog")?.addEventListener("close",syncMobileDock);
     $("planner-more").addEventListener("click",()=>{state.expanded=!state.expanded;syncRows();});
     $("planner-shuffle").addEventListener("click",nextBatch);
+    $("top-issue-spotlight")?.addEventListener("click",openTopSpotlight);
     $("planner-write").addEventListener("click",()=>openForm($("planner-question-form").hidden));
     $("planner-question-cancel").addEventListener("click",()=>openForm(false));
     $("planner-question-input").addEventListener("input",e=>{
