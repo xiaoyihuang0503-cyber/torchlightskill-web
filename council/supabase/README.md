@@ -1,5 +1,11 @@
 # 火炬议会 · Supabase Free + Realtime 交接
 
+## 问题管理后台
+
+新增代码在 `council/admin/`，数据库安装脚本为本目录 `admin-setup.sql`。
+功能、权限设计、本地启动、管理员绑定与测试见 `../admin/README.md`。
+脚本需要部署时单独执行；新增代码不代表正式项目已安装后台。
+
 状态：新加坡独立 Supabase Free 项目已建立，创建于 2026-10-12。仅涉及火炬议会，与旧 AI 面试项目分离。
 
 - Supabase 项目 ID：`eflkiihedqlcaibpyoqr`
