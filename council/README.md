@@ -1,5 +1,9 @@
 # 火炬议会 Torchlight Council — 首版交互预览
 
+## 2026-10-14 零票题更新
+
+按实时点击数保留已有票题，替换五道零票题；新含义使用 `bomb_11_v2`、`bomb_13_v2`、`bomb_16_v2`、`bomb_17_v2`、`bomb_19_v2`，旧题留档停用，题池仍为 20 道。社区依据、原文对照和发布校验见 [QUESTION_REFRESH_20261014.md](./QUESTION_REFRESH_20261014.md)。本节为当前规则，后文记录此前的原始 20 题方案。
+
 页面：`https://torchlightskill.com/council/`
 
 ## 发布边界

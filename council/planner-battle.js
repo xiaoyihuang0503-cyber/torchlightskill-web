@@ -503,13 +503,13 @@ export function createPlannerBattle({LIVE,FOCUS,ISSUES=[],reduced=false,toast=()
       if(result?.reason==="cooldown")queueFlush(1200);
     }catch(error){
       const reason=String(error?.message||error);
-      if(/not approved|invalid issue key|unknown official seat|问题.*未审核/i.test(reason)){
+      if(/not approved|invalid issue key|invalid or inactive question|unknown official seat|问题.*未审核/i.test(reason)){
         // Rejecting a public question must not leave an endless retry loop.
         const dropped=state.pendingBySeat.get(seat)||0;
         state.pendingBySeat.delete(seat);
         state.pendingClicks=Math.max(0,state.pendingClicks-dropped);
         saveClicks();
-        toast("这道问题暂不可投弹，请选择其他已审核问题");
+        toast("这道问题已更新或暂不可投弹，请刷新后选择其他问题");
         syncRows();
       }else{
         if(!state.totalKnown)$("petition-global").textContent="🌍 暂时无法同步 · 已在本机排队";

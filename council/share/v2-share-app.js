@@ -1,5 +1,5 @@
 import { drawCouncilPoster, SITE_QR_URL } from "./qr-poster.js";
-import { BOMB_ISSUES } from "../bomb-issues.js?v=20261013-issues20";
+import { BOMB_ISSUES, RETIRED_BOMB_ISSUES } from "../bomb-issues.js?v=20261014-community";
 /* Torchlight Council v2 share landing: deep links to real polls and chairs. */
 (function(){
 "use strict";
@@ -170,6 +170,13 @@ async function setupSeat(){
  let title="",body="";
  const official=seat.startsWith("topic:")?focus.find(t=>"topic:"+t.id===seat):null;
  const seed=BOMB_ISSUES.find(t=>seat==="topic:"+t.id);
+ const retired=RETIRED_BOMB_ISSUES.find(t=>seat==="topic:"+t.id);
+ if(retired){
+  display("炸策划大会","这道预置题已更新",retired.title,"原问题已停止投弹，历史记录保留。查看根据社区反馈整理的新问题。");
+  $("primary-action").textContent="查看新问题";$("primary-action").disabled=false;
+  const target="../?seat="+encodeURIComponent("topic:"+retired.replacementId)+"#topics";
+  $("primary-action").onclick=()=>route(target);setLink(target,"查看新问题 ↗");return;
+ }
  if(seed){title=seed.title;body="预置问题 · 每次点击都增加这道问题的热度";}
  else if(official){title=official.title;body=official.followup;}
  else if(seat.startsWith("question:")){
