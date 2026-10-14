@@ -12,4 +12,4 @@ try {
   window.TorchCouncilLive={available:false,isReady:()=>false,getCount:()=>0,
     hooks:{},start:async()=>{throw Error("实时服务连接失败，请刷新页面重试。");}};
 }
-await import("./v2-share-app.js?v=20261013-issues20");
+await import("./v2-share-app.js?v=20261014-community");
